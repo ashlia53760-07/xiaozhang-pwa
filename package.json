@@ -9,6 +9,7 @@
   },
   "type": "module",
   "scripts": {
+    "test:scene-floors": "node scripts/scene-floors.test.mjs",
     "test:scrolling-intros": "node scripts/scrolling-intros.test.mjs",
     "test:plus-menu": "node scripts/plus-menu.test.mjs",
     "test:themes": "node scripts/heritage-themes.test.mjs",

@@ -1,0 +1,19 @@
+.scene-entry-paper { touch-action:pan-y; -webkit-touch-callout:none; }
+.scene-entry-paper:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+#scene-floor-dialog { position:fixed; inset:0; width:min(560px,calc(100vw - 24px)); max-width:560px; max-height:85dvh; height:fit-content; margin:auto; padding:0; border:1px solid var(--ui-line); border-radius:12px; background:var(--panel); color:var(--text); box-shadow:0 20px 70px #0005; overflow:auto; }
+#scene-floor-dialog::backdrop { background:#0913159c; }
+#scene-floor-form { padding:18px; display:grid; gap:14px; }
+#scene-floor-form > header { display:flex; align-items:center; gap:12px; justify-content:space-between; }
+#scene-floor-title { margin:0; font-size:16px; font-weight:500; }
+#scene-floor-form section { display:grid; gap:10px; }
+#scene-floor-form [hidden] { display:none!important; }
+#scene-floor-form button { min-height:42px; padding:9px 13px; border:1px solid var(--ui-line); border-radius:7px; background:var(--paper); color:var(--text); text-align:left; font:inherit; font-size:14px; cursor:pointer; }
+#scene-floor-form button:disabled { opacity:.5; cursor:wait; }
+#scene-floor-form > header button { min-width:40px; text-align:center; }
+#scene-floor-form p { margin:0; font-size:12px; line-height:1.8; color:var(--ui-muted); overflow-wrap:anywhere; }
+#scene-floor-form label { font-size:13px; }
+#scene-floor-text { display:block; width:100%; min-height:160px; max-height:44dvh; resize:vertical; padding:12px; border:1px solid var(--ui-line); border-radius:7px; background:var(--paper); color:var(--text); font:inherit; font-size:16px; line-height:1.8; }
+#scene-floor-form :is(#scene-floor-save,#scene-floor-confirm-rewind) { background:var(--accent); color:var(--panel); text-align:center; }
+#scene-floor-error { color:var(--scrap-danger,#a53d3d)!important; }
+#scene-floor-form footer { display:flex; justify-content:flex-end; }
+@media(max-height:600px) { #scene-floor-dialog { max-height:95dvh; } #scene-floor-text { min-height:100px; max-height:34dvh; } }

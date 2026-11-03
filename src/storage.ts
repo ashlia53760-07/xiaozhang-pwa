@@ -1,11 +1,17 @@
 import type { ApiProfile, AudioAnalysisProfile, BirthdaySettings, CharacterSettings, ChatMessage, CustomGift, DateSession, DiaryRecord, FieldworkData, GameModelProfile, GroupRecord, ImageProfile, InteractionRecord, LifeEventRecord, LifeSceneState, MediaRecord, MemoryRecord, MomentRecord, MusicTrack, StickerRecord, TtsProfile } from "./types";
 import type { TravelState, PlayState } from "./leisure-types";
-import { characters, PRIMARY_CHARACTER, emptyCharacterSettings, ownsCharacter, characterById } from "./characters";
+import { characters, PRIMARY_CHARACTER, emptyCharacterSettings, ownsCharacter, characterById, lifeSession } from "./characters";
 import type { ContactPreferences, SharedCharacterSettings } from "./types";
 import { normalizeLegacyGroup } from "./groups";
 import { emptyCalendar, validCalendar, type CalendarData } from "./calendar";
 
 export interface LeisureEffects { messages?: ChatMessage[]; diary?: DiaryRecord[]; lifeEvents?: LifeEventRecord[]; memories?: MemoryRecord[]; moments?: MomentRecord[] }
+export type SceneFloorScope = { kind: "life"; characterId: string } | { kind: "date"; characterId: string; id: string } | { kind: "adventure"; id: string };
+export type SceneFloorRow = Pick<ChatMessage, "id" | "role" | "content" | "createdAt" | "speakerId" | "metadata">;
+export type SceneFloorChange = { type: "edit"; content: string } | { type: "rewind" };
+function floorSignature(rows: SceneFloorRow[]): string {
+  return JSON.stringify(rows.map(row => [row.id, row.role, row.content, row.createdAt, row.speakerId]));
+}
 
 const DB_NAME = "xiaozhang-pwa";
 const DB_VERSION = 4;
@@ -146,7 +152,7 @@ export interface RelationshipArchiveFile {
 }
 function cleanArchiveKv(rows: ArchiveRows["kv"]): ArchiveRows["kv"] {
   return rows.filter(row => typeof row.key === "string" && !sharedKey(row.key)
-    && /^(?:calendar-data|character-settings|birthday-settings|birthday-claims|affection-state|music-tracks|music-active|continuous-life(?::[^\s]+)?|date-sessions|active-session|travel-state|play-state|social-automation-state|starter-moments-seeded|contact:[^\s]+|draft:[^\s]+|read:[^\s]+|conversation-revision:[^\s]+)$/.test(row.key)).map(row => {
+    && /^(?:calendar-data|character-settings|birthday-settings|birthday-claims|affection-state|music-tracks|music-active|continuous-life(?::[^\s]+)?|date-sessions|fieldwork-data|active-session|travel-state|play-state|social-automation-state|starter-moments-seeded|contact:[^\s]+|draft:[^\s]+|read:[^\s]+|conversation-revision:[^\s]+)$/.test(row.key)).map(row => {
       if (!String(row.key).startsWith("contact:")) return row;
       const prefs = row.value as ContactPreferences;
       return { key: row.key, value: { settings: prefs.settings, affection: prefs.affection, updatedAt: prefs.updatedAt } };
@@ -960,6 +966,101 @@ export const storage = {
   },
   async dateSessions(): Promise<DateSession[]> {
     return (await readKv<DateSession[]>(DATE_SESSIONS_KEY) ?? []).sort((a, b) => b.updatedAt - a.updatedAt);
+  },
+  async sceneFloors(scope: SceneFloorScope): Promise<SceneFloorRow[]> {
+    if (scope.kind === "life") {
+      if (!characters.some(character => character.id === scope.characterId)) throw Error("找不到这位线下联系人");
+      return this.sessionMessages(lifeSession(scope.characterId));
+    }
+    if (scope.kind === "date") {
+      const scene = (await this.dateSessions()).find(value => value.id === scope.id && ownsCharacter(value, scope.characterId));
+      if (!scene) throw Error("这场约会已调整，请重新打开");
+      return scene.messages;
+    }
+    const scene = (await this.fieldwork<FieldworkData>())?.adventures.find(value => value.id === scope.id);
+    if (!scene) throw Error("找不到这次线下冒险");
+    return scene.messages;
+  },
+  /** Compare and write in one transaction; another tab cannot silently overwrite this edit. */
+  async changeSceneFloor(scope: SceneFloorScope, expected: SceneFloorRow[], id: string, change: SceneFloorChange): Promise<{ checkpoint?: string; removed: number }> {
+    const signature = floorSignature(expected);
+    const index = expected.findIndex(row => row.id === id);
+    if (index < 0) throw Error("找不到这一层，记录未修改");
+    if (change.type === "edit" && !change.content.trim()) throw Error("内容不能为空，原文仍保留");
+    if (floorSignature(await this.sceneFloors(scope)) !== signature) throw Error("记录已在其他页面变化，请重新打开这一层；你的编辑内容仍保留");
+    if (change.type === "edit" && change.content === expected[index].content) return { removed: 0 };
+    if (change.type === "rewind" && index === expected.length - 1) throw Error("这里已经是最后一层，可以直接继续");
+    const checkpoint = change.type === "rewind" ? await this.makeArchive(`${scope.kind === "date" ? "约会" : "线下"}回退前 · ${new Date().toLocaleString()}`, "checkpoint") : undefined;
+    const database = await db(), tx = database.transaction(["messages", "kv", "memories"], "readwrite"), done = transactionDone(tx);
+    const kv = tx.objectStore("kv"), at = Date.now();
+    let failure: Error | undefined;
+    const contextScope = scope.kind === "life" ? lifeSession(scope.characterId) : scope.kind === "date" ? `date:${scope.characterId}:${scope.id}` : `fieldwork:${scope.id}`;
+    const apply = <T extends SceneFloorRow>(rows: T[]): T[] => {
+      if (floorSignature(rows) !== signature) throw Error("记录已在其他页面变化，请重新打开这一层；你的编辑内容仍保留");
+      if (change.type === "rewind") return rows.slice(0, index + 1);
+      return rows.map(row => row.id === id ? { ...row, content: change.content, metadata: { ...row.metadata, editedAt: at } } : row);
+    };
+    const run = (write: () => void) => { try { write(); } catch (error) { failure = error instanceof Error ? error : Error("楼层保存失败"); tx.abort(); } };
+    if (scope.kind === "life") {
+      const get = tx.objectStore("messages").getAll();
+      get.onsuccess = () => run(() => {
+        const rows = (get.result as ChatMessage[]).filter(row => (row.sessionId ?? "private") === contextScope && !row.metadata?.hiddenAt && !row.metadata?.retractedAt).sort((a, b) => a.createdAt - b.createdAt);
+        const next = apply(rows);
+        if (change.type === "edit") tx.objectStore("messages").put(next[index]);
+        else for (const row of rows.slice(index + 1)) tx.objectStore("messages").put({ ...row, metadata: { ...row.metadata, hiddenAt: at, branchArchiveId: checkpoint!.id } });
+        const key = scope.characterId === PRIMARY_CHARACTER ? CONTINUOUS_LIFE_KEY : `${CONTINUOUS_LIFE_KEY}:${scope.characterId}`;
+        const state = kv.get(key);
+        state.onsuccess = () => run(() => {
+          if (!state.result?.value) return;
+          const latestUser = next.filter(row => row.role === "user").at(-1);
+          if (change.type === "rewind" || latestUser?.id === id) kv.put({ key, value: { ...state.result.value, activity: latestUser?.content.slice(0, 120) || "从保留的现场记录继续", ...(change.type === "rewind" ? { unfinished: "" } : {}), updatedAt: at } });
+        });
+      });
+    } else {
+      const key = scope.kind === "date" ? DATE_SESSIONS_KEY : "fieldwork-data", get = kv.get(key);
+      get.onsuccess = () => run(() => {
+        if (scope.kind === "date") {
+          const sessions = (get.result?.value ?? []) as DateSession[];
+          const scene = sessions.find(value => value.id === scope.id && ownsCharacter(value, scope.characterId));
+          if (!scene) throw Error("这场约会已变化，未修改记录");
+          scene.messages = apply(scene.messages); scene.updatedAt = at;
+          if (change.type === "rewind") {
+            for (const other of sessions) if (other.id !== scene.id && ownsCharacter(other, scope.characterId)) other.active = false;
+            scene.active = true;
+          }
+          kv.put({ key, value: sessions });
+        } else {
+          const data = get.result?.value as FieldworkData | undefined;
+          const scene = data?.adventures.find(value => value.id === scope.id);
+          if (!data || !scene) throw Error("这次冒险已变化，未修改记录");
+          scene.messages = apply(scene.messages); scene.updatedAt = at;
+          const latestUser = scene.messages.filter(row => row.role === "user").at(-1);
+          if (change.type === "rewind" || latestUser?.id === id) scene.activity = latestUser?.content.slice(0, 120) || "从保留的现场记录继续";
+          if (change.type === "rewind") {
+            scene.active = true;
+            const investigation = data.investigations.find(value => value.id === scene.investigationId);
+            if (investigation) { investigation.status = "adventure"; investigation.updatedAt = at; }
+          }
+          kv.put({ key, value: data });
+        }
+      });
+    }
+    kv.delete(`context-summary:${contextScope}`); kv.delete(`context-lease:${contextScope}`);
+    bumpConversationRevision(tx, contextScope);
+    const changedIds = new Set(change.type === "edit" ? [id] : expected.slice(index + 1).map(row => row.id));
+    const memories = tx.objectStore("memories").openCursor();
+    memories.onsuccess = () => {
+      const row = memories.result; if (!row) return;
+      const memory = row.value as MemoryRecord;
+      if (memory.sourceMessageIds?.some(source => changedIds.has(source))) {
+        memory.reviewReason = "来源楼层已编辑或回退，请核对";
+        if (memory.source === "conversation") memory.enabled = false;
+        row.update(memory);
+      }
+      row.continue();
+    };
+    try { await done; } catch (error) { throw failure ?? error; }
+    return { checkpoint: checkpoint?.id, removed: change.type === "rewind" ? expected.length - index - 1 : 0 };
   },
   async saveDateSession(value: DateSession): Promise<void> {
     const sessions = (await this.dateSessions()).filter((session) => session.id !== value.id);

@@ -7,6 +7,8 @@ import "./transactions.css";
 import "./fieldwork.css";
 import "./calendar.css";
 import "./heritage-themes.css";
+import "./scene-floors.css";
+import { SceneFloors } from "./scene-floors";
 import { themes, selectedTheme } from "./themes";
 import { CalendarUI } from "./calendar-ui";
 import { calendarContext, contactBirthday, diaryDay, mergeCalendar, moodLabel, validBirthday, validCalendar, validDay, type CalendarData } from "./calendar";
@@ -1396,6 +1398,30 @@ const sceneRenderRevisions = new WeakMap<HTMLElement, number>();
 let sceneSelectionMode: "life" | "date" | undefined;
 let sceneSelectedIds = new Set<string>();
 let sceneSelectionBusy = false;
+const sceneFloors = new SceneFloors({
+  scope: mode => mode === "date" ? activeDate ? { kind: "date", characterId: sceneCharacterId, id: activeDate.id } : undefined : fieldworkMeetId ? { kind: "adventure", id: fieldworkMeetId } : { kind: "life", characterId: sceneCharacterId },
+  busy: () => archiveBusy() || sceneSelectionBusy || !!sceneSelectionMode,
+  lock: value => { messageMutation = value; },
+  status: (mode, text) => showSceneStatus(mode === "life" ? meetDialog : dateDialog, text),
+  changed: async (scope, id, change) => {
+    const mode = scope.kind === "date" ? "date" : "life";
+    leaveSceneSelection();
+    if (scope.kind === "life") {
+      continuousLife = await storage.continuousLife(scope.characterId);
+      if (continuousLife) renderSceneState(lifeStateCard, continuousLife);
+      lifeEventNote.hidden = true;
+      renderSceneMessages(lifeMessages, await storage.sessionMessages(lifeSession(scope.characterId)));
+    } else if (scope.kind === "date") {
+      activeDate = (await storage.dateSessions()).find(value => value.id === scope.id);
+      if (!activeDate) throw Error("找不到约会记录");
+      document.querySelector<HTMLButtonElement>("#date-end")!.hidden = !activeDate.active;
+      dateStateCard.innerHTML = `<div class="scene-state-title"><strong>${escapeHtml(activeDate.title)}</strong><span>${activeDate.active ? "进行中" : "已结束 · 独立剧场"}</span></div><p>${escapeHtml(activeDate.setting)}</p><small>${escapeHtml(activeDate.atmosphere)}</small>`;
+      renderSceneMessages(dateMessages, activeDate.messages);
+    } else renderFieldworkMeet((await fieldworkAdventure(scope.id)).adventure);
+    const target = sceneTarget(mode);
+    requestAnimationFrame(() => target.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: change.type === "edit" ? "center" : "end" }));
+  }
+});
 
 function sceneTarget(mode: "life" | "date") { return mode === "life" ? lifeMessages : dateMessages; }
 
@@ -1439,6 +1465,12 @@ function renderSceneMessages(target: HTMLElement, values: ChatMessage[]) {
     return `<article class="scene-message ${message.role}${selected ? " is-selected" : ""}" data-message-id="${escapeHtml(message.id)}"><label class="scene-select-control" title="选择这条消息"><input type="checkbox" data-scene-select value="${escapeHtml(message.id)}" ${selected ? "checked" : ""}><span aria-hidden="true"></span></label><div class="scene-entry-portrait"><span class="scene-avatar-fallback" aria-hidden="true">${escapeHtml(name.slice(0, 1))}</span><img data-scene-avatar="${escapeHtml(avatarKey)}" src="./character/images/standing.png" alt="${escapeHtml(name)}的头像" ${avatarKey !== PRIMARY_CHARACTER ? "hidden" : ""}></div><div class="scene-entry-count">第 ${String(index + 1).padStart(2, "0")} 则 · ${message.role === "assistant" ? `${escapeHtml(name)}的回应` : "你的落笔"}</div><div class="scene-entry-paper"><header><strong>${escapeHtml(name)}</strong><time datetime="${Number.isNaN(time.getTime()) ? "" : time.toISOString()}">${escapeHtml(label)}</time></header><p>${escapeHtml(cleanTheatreReply(message.content))}</p></div></article>`;
   }).join("") : `<div class="scene-empty"><span>序 · 章</span><p>风景已经铺开。<br>从你的一句话开始。</p></div>`;
   if (mode === "date") target.prepend(dateStateCard);
+  target.querySelectorAll<HTMLElement>(".scene-entry-paper").forEach((paper, index) => {
+    paper.tabIndex = 0;
+    paper.setAttribute("aria-haspopup", "dialog");
+    paper.setAttribute("aria-label", `第 ${index + 1} 层，长按或按菜单键打开楼层操作`);
+  });
+  sceneFloors.bind(target, mode);
   target.classList.toggle("scene-selecting", sceneSelectionMode === mode);
   target.querySelectorAll<HTMLInputElement>("[data-scene-select]").forEach((input) => input.addEventListener("change", () => {
     if (input.checked) sceneSelectedIds.add(input.value); else sceneSelectedIds.delete(input.value);
