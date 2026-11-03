@@ -193,6 +193,8 @@ root.insertAdjacentHTML("beforeend", `<dialog id="call-dialog" aria-labelledby="
 const featureMenu = document.querySelector<HTMLDivElement>("#topbar-menu")!;
 featureMenu.insertAdjacentHTML("afterbegin", `<button id="meet-open" class="topbar-button" type="button">线下</button><button id="date-open" class="topbar-button" type="button">心动约会</button><button id="forum-open" class="topbar-button" type="button">线索论坛</button><button id="browser-open" class="topbar-button" type="button">内置浏览器</button><button id="reference-open" class="topbar-button" type="button">资料索引</button><button id="fieldwork-open" class="topbar-button" type="button">线索整理</button>`);
 const messageBox = document.querySelector<HTMLDivElement>("#messages")!;
+const themeKeepsake = document.querySelector<HTMLDivElement>(".theme-keepsake")!;
+themeKeepsake.remove();
 const errorBox = document.querySelector<HTMLParagraphElement>("#error")!;
 const draft = document.querySelector<HTMLTextAreaElement>("#draft")!;
 const sendButton = document.querySelector<HTMLButtonElement>("#send")!;
@@ -919,6 +921,7 @@ function renderMessages() {
   if (phoneTyping?.session === activeSession && phoneTyping.revision === sessionRevision) {
     messageBox.insertAdjacentHTML("beforeend", `<div class="contact-local-note" role="status" data-phone-typing>${escapeHtml(phoneTyping.name)}正在输入…</div>`);
   }
+  renderThemeKeepsake();
   void hydrateMedia();
   void hydrateMessageAvatars();
   void transactionUI.hydrateCards(messageBox);
@@ -1061,13 +1064,20 @@ function setSending(value: boolean) {
   document.querySelectorAll<HTMLButtonElement>("#life-send, #date-send, #life-end, #date-end, #date-restart, [data-scene-action]").forEach((button) => { button.disabled = value; });
   for (const id of ["life-send", "date-send"]) document.getElementById(id)!.textContent = value ? "回应中…" : "发送";
 }
+function renderThemeKeepsake() {
+  if (["rococo", "bronze"].includes(document.documentElement.dataset.theme ?? "")) messageBox.prepend(themeKeepsake);
+  else themeKeepsake.remove();
+}
 function applyTheme(theme: string) {
+  const atBottom = messageBox.scrollHeight - messageBox.scrollTop - messageBox.clientHeight < 2;
   const chosen = selectedTheme(theme);
   document.documentElement.dataset.theme = chosen.id;
   localStorage.setItem("xiaozhang-theme", chosen.id);
   document.querySelectorAll<HTMLButtonElement>(".theme-row button[data-theme]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.theme === chosen.id)));
   document.querySelector("meta[name=theme-color]")?.setAttribute("content", chosen.color);
   document.querySelector("#theme-caption")!.textContent = `正在使用：${chosen.name} · ${chosen.detail}`;
+  renderThemeKeepsake();
+  if (atBottom) messageBox.scrollTop = messageBox.scrollHeight;
 }
 
 function formatTime(seconds: number): string {
@@ -1428,6 +1438,7 @@ function renderSceneMessages(target: HTMLElement, values: ChatMessage[]) {
     const selected = sceneSelectionMode === mode && sceneSelectedIds.has(message.id);
     return `<article class="scene-message ${message.role}${selected ? " is-selected" : ""}" data-message-id="${escapeHtml(message.id)}"><label class="scene-select-control" title="选择这条消息"><input type="checkbox" data-scene-select value="${escapeHtml(message.id)}" ${selected ? "checked" : ""}><span aria-hidden="true"></span></label><div class="scene-entry-portrait"><span class="scene-avatar-fallback" aria-hidden="true">${escapeHtml(name.slice(0, 1))}</span><img data-scene-avatar="${escapeHtml(avatarKey)}" src="./character/images/standing.png" alt="${escapeHtml(name)}的头像" ${avatarKey !== PRIMARY_CHARACTER ? "hidden" : ""}></div><div class="scene-entry-count">第 ${String(index + 1).padStart(2, "0")} 则 · ${message.role === "assistant" ? `${escapeHtml(name)}的回应` : "你的落笔"}</div><div class="scene-entry-paper"><header><strong>${escapeHtml(name)}</strong><time datetime="${Number.isNaN(time.getTime()) ? "" : time.toISOString()}">${escapeHtml(label)}</time></header><p>${escapeHtml(cleanTheatreReply(message.content))}</p></div></article>`;
   }).join("") : `<div class="scene-empty"><span>序 · 章</span><p>风景已经铺开。<br>从你的一句话开始。</p></div>`;
+  if (mode === "date") target.prepend(dateStateCard);
   target.classList.toggle("scene-selecting", sceneSelectionMode === mode);
   target.querySelectorAll<HTMLInputElement>("[data-scene-select]").forEach((input) => input.addEventListener("change", () => {
     if (input.checked) sceneSelectedIds.add(input.value); else sceneSelectedIds.delete(input.value);

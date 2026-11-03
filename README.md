@@ -72,6 +72,8 @@ npm run build
 
 洛可可主题参考 [qimingjiu/Trianon](https://github.com/qimingjiu/Trianon)，使用其 CC0 装饰素材及 OFL 字体；许可与来源保存在 `public/themes/rococo/`。青铜夜札使用原创 SVG 舆图。主题交接与验证见 [docs/themes-20261103.md](docs/themes-20261103.md)。
 
+洛可可与青铜夜札的装饰卡片仅在聊天记录开头出现，随记录向上滚动；心动约会的场景设定也置于剧场记录开头，滑回顶部可重读。它们不会占用固定阅读区域，也不会作为聊天消息存储。生产预览启动后运行 `npm run test:scrolling-intros`，检查滚动、刷新、消息重绘和手机/桌面布局。
+
 本目录不读取或修改原工程的用户数据。DeepSeek、Kimi 和 OpenAI 预设使用 OpenAI-compatible 接口，实际模型名仍可在设置中修改。聊天 API 只收到文本历史：生图描述和表情包文本元数据会进入上下文，图片 Blob 不会发送给不支持图像输入的聊天 API。朋友圈原图、聊天媒体、录音和 TTS 音频均保存在本机 IndexedDB；浏览器清理站点数据会删除这些本地内容。
 
 GPT 音频分析要求所选模型和服务商支持 Chat Completions `input_audio` 内容格式；普通文本模型及不支持该格式的兼容 API 无法读取音频。Gemini 使用原生 `inlineData` 音频请求。网络/CORS/模型权限错误会显示失败，不会伪造分析结果。音频只在用户开启自动分析后上传一次，后续只用本地文字摘要。

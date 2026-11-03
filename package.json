@@ -9,6 +9,7 @@
   },
   "type": "module",
   "scripts": {
+    "test:scrolling-intros": "node scripts/scrolling-intros.test.mjs",
     "test:plus-menu": "node scripts/plus-menu.test.mjs",
     "test:themes": "node scripts/heritage-themes.test.mjs",
     "test:calendar": "node scripts/calendar.test.mjs",

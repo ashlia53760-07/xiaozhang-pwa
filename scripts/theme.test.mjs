@@ -23,8 +23,8 @@ try {
   await page.goto(origin); await page.waitForSelector('#draft');
   if (origin.startsWith('https:')) {
     await page.evaluate(() => navigator.serviceWorker.ready);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('xiaozhang-pwa-shell-v36'));
-    checks.push('production service worker v36 installed');
+    assert.ok((await page.evaluate(() => caches.keys())).includes('xiaozhang-pwa-shell-v37'));
+    checks.push('production service worker v37 installed');
   }
   const records = [
     { id: 'theme-assistant', role: 'assistant', kind: 'text', content: '外面风大，围巾带上。\n我在楼下等你。', createdAt: Date.now() - 10000, sessionId: 'private' },
