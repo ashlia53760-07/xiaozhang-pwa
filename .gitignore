@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.wrangler/
+*.local
+.local-review/
+artifacts/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+*.pem
+*.key
+*.pfx
+*.p12

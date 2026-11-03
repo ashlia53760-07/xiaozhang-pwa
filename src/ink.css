@@ -1,0 +1,221 @@
+/* Pale canvas, charcoal bubbles and crisp monochrome edges. Ink theme only. */
+:root[data-theme="ink"] {
+  color-scheme: light;
+  --paper: #dededd;
+  --panel: #fafaf8;
+  --accent: #242426;
+  --text: #29292b;
+  --ui-line: #c5c2b9;
+  --ui-muted: #68665f;
+  --chat-surface: #eeece5;
+  --message-outgoing: #e5e4de;
+  --scrap-edge: #b4b1a7;
+  --scrap-ink: #3e3d38;
+  --scrap-muted: #69675f;
+  --scrap-white: #fffdf6;
+  --scrap-surface: #faf8f1;
+  --scrap-tint: #e7e4dc;
+  --scrap-shadow: #39352c18;
+  --scrap-incoming: #303033;
+  --scrap-outgoing: #fcfcfa;
+  --scrap-danger: #9a4848;
+  --scrap-paper: url("./ink-paper.svg");
+  --call-incoming-text: #f2f2ef;
+  --call-incoming-label: #cfcec7;
+}
+:root[data-theme="ink"] body { background: #ddded9; }
+:root[data-theme="ink"] .app-shell { background: var(--paper); }
+:root[data-theme="ink"] .topbar {
+  background: linear-gradient(135deg, #fafaf8, #eeefed);
+  border-bottom-color: #b9b9b6;
+  box-shadow: inset 0 -1px #fff, 0 3px 10px #1616190b;
+}
+:root[data-theme="ink"] .topbar > div:first-child::before {
+  border-color: #b6b2a8;
+  background: repeating-linear-gradient(135deg, #eeece5 0 3px, #77746b 3px 6px);
+}
+:root[data-theme="ink"] .chat-panel {
+  background-color: #dededd;
+  background-image: var(--custom-background),
+    var(--scrap-paper),
+    radial-gradient(ellipse at 50% 0%, #ffffff65, transparent 68%),
+    linear-gradient(90deg, transparent 0 8%, #24242605 8.1% 8.25%, transparent 8.35% 91.7%, #24242605 91.8% 91.95%, transparent 92%),
+    repeating-linear-gradient(0deg, transparent 0 33px, #24242605 34px, transparent 35px);
+  background-size: cover, 470px 720px, 100% 100%, 100% 100%, 100% 100%;
+  background-position: center, center top, center, center, center;
+  background-repeat: no-repeat, repeat, no-repeat, no-repeat, repeat;
+}
+:root[data-theme="ink"] .messages:empty::before {
+  border-color: #c7c3b9;
+  background: #f5f2e9;
+  box-shadow: 4px 5px 0 #dedbd2, 5px 6px 0 #b4b1a7;
+  color: #69675f;
+}
+:root[data-theme="ink"] .message-row .bubble {
+  border: 1px solid #171719;
+  box-shadow: inset 0 0 0 1px #ffffff28, 0 3px 0 #171719, 0 6px 10px #1616191a;
+}
+:root[data-theme="ink"] .message-row.user .bubble { color: #34332f; }
+:root[data-theme="ink"] .message-row .message-speaker { color: #f2f2ef; }
+:root[data-theme="ink"] .message-row .message-meta { border-bottom: 1px solid #ffffff22; }
+:root[data-theme="ink"] .message-row.assistant .message-time { color: #c6c6c4; }
+:root[data-theme="ink"] .message-row.user .message-meta { border-bottom-color: #34332f38; }
+:root[data-theme="ink"] .message-row.user .message-speaker { color: #454239; }
+:root[data-theme="ink"] .message-row.user .message-time { color: #676359; }
+:root[data-theme="ink"] .message-row.user .bubble {
+  border-radius: 17px 6px 17px 17px;
+  box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 3px #dddeda, 0 3px 0 #28282b, 0 6px 10px #16161915;
+}
+:root[data-theme="ink"] .message-row.user .bubble::after { border-color: #171719; box-shadow: inset 1px -1px 0 #fff; }
+:root[data-theme="ink"] .message-row.assistant .bubble {
+  border-radius: 6px 17px 17px 17px; color: #f8f8f4;
+  background-image: linear-gradient(145deg, #ffffff07, transparent 60%);
+}
+:root[data-theme="ink"] .message-row.assistant .bubble::before { border-color: #171719; box-shadow: inset 1px -1px 0 #ffffff20; }
+:root[data-theme="ink"] .message-row.assistant .message-tools button { background: #ffffff16; color: #f7f7f2; }
+:root[data-theme="ink"] .message-row.assistant .message-tools .message-delete { color: #ffc1c1; }
+:root[data-theme="ink"] .message-row.user .message-tools button { color: #34332f; background: #34332f12; }
+:root[data-theme="ink"] .message-avatar, :root[data-theme="ink"] .message-avatar-button,
+:root[data-theme="ink"] .message-row .avatar-fallback { border-color: #faf8f1; box-shadow: 0 0 0 1px #b8b2a5, 0 3px 0 #39352c14; }
+:root[data-theme="ink"] .composer,
+:root[data-theme="ink"] .chat-presence,
+:root[data-theme="ink"] .sticker-suggest { background: #fafaf8; }
+:root[data-theme="ink"] .composer textarea {
+  background: #e8e6e0;
+  border-color: #b4b1a7;
+  box-shadow: inset 0 2px 5px #39352c18, 0 1px #ffffffb0;
+}
+:root[data-theme="ink"] .composer #send,
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) .primary,
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) button.music-play {
+  background: linear-gradient(180deg, #fffdf7, #d5d1c6);
+  border-color: #fffdf7;
+  color: #343330;
+  text-shadow: none;
+  box-shadow: inset 0 0 0 2px #ffffffb0, 0 2px 0 #b4b1a7, 0 4px 8px #39352c18;
+}
+:root[data-theme="ink"] .composer-plus {
+  color: #fafaf8 !important; border-color: #171719 !important;
+  background: linear-gradient(145deg, #404043, #222224) !important;
+  box-shadow: inset 0 0 0 2px #ffffff14, 0 2px 0 #151517;
+}
+:root[data-theme="ink"] .topbar-menu,
+:root[data-theme="ink"] .plus-menu,
+:root[data-theme="ink"] .pet-action-menu {
+  background: #f7f7f4;
+  border-color: #38383a;
+  box-shadow: inset 0 0 0 3px #fffdf6, 0 12px 32px #39352c25;
+}
+:root[data-theme="ink"] .topbar-menu-toggle,
+:root[data-theme="ink"] .topbar-menu .topbar-button,
+:root[data-theme="ink"] .plus-menu button,
+:root[data-theme="ink"] .plus-menu-label,
+:root[data-theme="ink"] .pet-action-menu button,
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) button:not(.icon-button):not(.music-person):not(.puzzle-tile):not(.gomoku-cell) {
+  border-color: #555558;
+  background: linear-gradient(180deg, #fdfdfc, #ececea);
+  color: #29292b;
+  text-shadow: none;
+  box-shadow: inset 0 1px 0 #fff, 0 2px 0 #303032, 0 4px 5px #18181a0e;
+}
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) {
+  background: #fafaf8;
+  border-color: #555558;
+  box-shadow: inset 0 0 0 3px #faf8f1, 0 22px 80px #39352c30;
+}
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) .dialog-head,
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) .sticker-card,
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) .diary-entry,
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) .life-event,
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) .moment {
+  background: #faf8f1;
+  border-color: #c7c3b9;
+}
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) input:not([type="checkbox"]):not([type="range"]):not([type="file"]),
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) select,
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) textarea {
+  background: #fffdf8;
+  color: #343330;
+  border-color: #c7c3b9;
+}
+:root[data-theme="ink"] .scene-reader,
+:root[data-theme="ink"] #call-dialog { color-scheme: light; }
+
+/* Keep header edges quiet; film details belong to the paper collage. */
+:root[data-theme="ink"] .topbar {
+  border-top: 0;
+  border-image: none;
+}
+:root[data-theme="ink"] .topbar h1 { font-weight: 600; letter-spacing: .15em; }
+:root[data-theme="ink"] .topbar .eyebrow { color: #767167; letter-spacing: .24em; }
+:root[data-theme="ink"] .chat-presence { border-bottom: 1px solid #c8c3b8; }
+:root[data-theme="ink"] .presence-person img { border: 2px solid #e1ded5; box-shadow: 0 0 0 1px #c5c2b9; }
+:root[data-theme="ink"] .composer { box-shadow: 0 -1px #ffffffaa, 0 -5px 18px #39352c15; }
+:root[data-theme="ink"] .topbar-menu-toggle { border-radius: 6px; letter-spacing: .14em; }
+:root[data-theme="ink"] .topbar-menu .topbar-button,
+:root[data-theme="ink"] .plus-menu button,
+:root[data-theme="ink"] .plus-menu-label { border-radius: 7px; }
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) .music-now {
+  border: 1px solid #171719; color: #fafaf7;
+  background: linear-gradient(145deg, #3b3b3e, #252527);
+  box-shadow: inset 0 0 0 2px #ffffff24, 0 3px 0 #161618;
+}
+:root[data-theme="ink"] #music-time, :root[data-theme="ink"] .music-volume-control { color: #cdcdca; }
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) .music-play {
+  background: linear-gradient(145deg, #f5f4ee, #c8c5bc 55%, #f4f2eb);
+  color: #343330; text-shadow: none;
+}
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) button.primary,
+:root[data-theme="ink"] .composer #send, :root[data-theme="ink"] .topbar-menu-toggle {
+  background: linear-gradient(180deg, #3d3d40, #202022);
+  border-color: #171719; color: #fafaf8; text-shadow: none;
+  box-shadow: inset 0 1px 0 #ffffff45, inset 0 0 0 2px #ffffff12, 0 2px 0 #101012;
+}
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) button:is(.danger, [data-memory-id], [data-diary-delete], [data-gift-delete], [data-group-delete], [data-life-delete], [data-music-delete]) { color: var(--scrap-danger); }
+:root[data-theme="ink"] dialog::backdrop { background: #39352c18; }
+:root[data-theme="ink"] .inline-card { color: #343330; background: #f5f5f1; }
+:root[data-theme="ink"] .inline-card button,
+:root[data-theme="ink"] .scene-reader button.primary { color: #f6f4ed; }
+:root[data-theme="ink"] .topbar-menu .topbar-button:hover,
+:root[data-theme="ink"] .plus-menu button:hover,
+:root[data-theme="ink"] .plus-menu-label:hover,
+:root[data-theme="ink"] .pet-action-menu button:hover { background: #e5e1d6; border-color: #9f998a; }
+
+/* Keep bubble silhouettes clean; collage details remain in the background. */
+:root[data-theme="ink"] .message-row.assistant:nth-child(3n + 1) .message-meta::before {
+  content: none;
+}
+:root[data-theme="ink"] .topbar > div:first-child::before {
+  width: 5px; border-radius: 0; border: 0;
+  background: repeating-linear-gradient(0deg, #68665f 0 4px, #eeece5 4px 8px);
+}
+:root[data-theme="ink"] .composer textarea { background: #fffdf8; box-shadow: inset 0 1px 2px #39352c0c; }
+:root[data-theme="ink"] .topbar-menu,
+:root[data-theme="ink"] .plus-menu,
+:root[data-theme="ink"] .pet-action-menu { box-shadow: inset 0 0 0 2px #fffdf6, 0 8px 24px #39352c20; }
+
+:root[data-theme="ink"] dialog:not(.scene-reader):not(#call-dialog) .dialog-head { background: #fafaf8; }
+:root[data-theme="ink"] .composer textarea { border-color: #929293; background: #fcfcfa; }
+:root[data-theme="ink"] .music-now input[type="range"] { accent-color: #f2f2ef; }
+:root[data-theme="ink"] .music-feedback { background: #f1f1ee; border-color: #b5b5b3; }
+:root[data-theme="ink"] .music-feedback small { color: #626264; }
+:root[data-theme="ink"] .message-row .bubble.tools-visible .message-tools { border-top-color: #b3b3b080; }
+
+/* Visible swatches and an explicit checked state make all three choices clear. */
+.theme-row button[data-theme] { display: inline-flex; align-items: center; gap: 7px; }
+.theme-row button[data-theme]::before {
+  content: ""; width: 17px; height: 17px; flex: 0 0 17px; border-radius: 50%;
+  border: 1px solid #888; background: linear-gradient(135deg, #e8e4da 50%, #54534f 50%);
+}
+.theme-row button[data-theme="warm"]::before { background: linear-gradient(135deg, #fbfdff 50%, #b1c8db 50%); border-color: #8ba6bb; }
+.theme-row button[data-theme="night"]::before { background: linear-gradient(135deg, #293748 50%, #7891ab 50%); border-color: #6e829a; }
+.theme-row button[data-theme][aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Calls keep their own full-screen geometry, with the same charcoal accents as chat. */
+:root[data-theme="ink"] #call-dialog #call-send {
+  background:linear-gradient(180deg,#3d3d40,#202022); color:#fafaf8; border-color:#171719;
+  box-shadow:inset 0 1px 0 #ffffff45,inset 0 0 0 2px #ffffff12,0 2px 0 #101012;
+}
+:root[data-theme="ink"] #call-dialog .call-line:not(.user) {
+  border-color:#171719; box-shadow:inset 0 0 0 1px #ffffff28,0 2px 0 #171719;
+}

@@ -1,0 +1,49 @@
+{
+  "name": "xiaozhang-pwa",
+  "private": true,
+  "version": "0.1.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ashlia53760-07/xiaozhang-pwa.git"
+  },
+  "type": "module",
+  "scripts": {
+    "test:plus-menu": "node scripts/plus-menu.test.mjs",
+    "test:themes": "node scripts/heritage-themes.test.mjs",
+    "test:calendar": "node scripts/calendar.test.mjs",
+    "test:calendar:ui": "node scripts/calendar-ui.test.mjs",
+    "test:calendar:offline": "node scripts/calendar-offline.test.mjs",
+    "test:user-persona": "node scripts/user-persona.test.mjs",
+    "test:chat-limits": "node scripts/chat-limits.test.mjs",
+    "test:group-tools": "node scripts/group-tools.test.mjs",
+    "test:group-identity": "node scripts/group-identity.test.mjs",
+    "test:archives": "node scripts/archives.test.mjs",
+    "test:fieldwork-prompts": "node scripts/fieldwork-prompts.test.mjs",
+    "test:fieldwork-ui": "node scripts/fieldwork-ui.test.mjs",
+    "test:phone": "node scripts/phone-messages.test.mjs",
+    "test:role-actions": "node scripts/role-actions.test.mjs",
+    "test:context": "node scripts/context-summary.test.mjs",
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test:journey:rules": "node scripts/journey-rules.test.mjs",
+    "test:journey:ui": "node scripts/journey-ui.test.mjs",
+    "test:leisure:rules": "node scripts/leisure-rules.test.mjs",
+    "test:leisure:ui": "node scripts/leisure-ui.test.mjs",
+    "test:leisure:polish": "node scripts/leisure-polish.test.mjs",
+    "test:game:duet": "node scripts/game-duet-ui.test.mjs",
+    "test:leisure:offline": "node scripts/leisure-offline.test.mjs",
+    "test:social:automation": "node scripts/social-automation.test.mjs",
+    "test:contacts": "node scripts/contacts.test.mjs",
+    "test:experience": "node scripts/experience-ui.test.mjs",
+    "test:contact-voice": "node scripts/contact-voice.test.mjs",
+    "test:groups": "node scripts/group-activity.test.mjs && node scripts/groups.test.mjs",
+    "test": "npm run build && node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}

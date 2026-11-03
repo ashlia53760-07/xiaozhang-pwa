@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="470" height="720" viewBox="0 0 470 720">
+  <!-- Original vector collage inspired by paper labels and silver keepsakes. -->
+  <defs>
+    <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#797975"/><stop offset=".2" stop-color="#f5f3e9"/>
+      <stop offset=".36" stop-color="#8b8b87"/><stop offset=".55" stop-color="#d1d0c8"/>
+      <stop offset=".7" stop-color="#454543"/><stop offset="1" stop-color="#c5c3ba"/>
+    </linearGradient>
+    <pattern id="checks" width="14" height="14" patternUnits="userSpaceOnUse">
+      <path fill="#c9c7bd" d="M0 0h7v7H0zm7 7h7v7H7z"/><path fill="#292929" d="M7 0h7v7H7zM0 7h7v7H0z"/>
+    </pattern>
+  </defs>
+  <g opacity=".22">
+    <g transform="translate(-19 50) rotate(-12 60 70)">
+      <path fill="#d9d7cb" d="M0 0h137v159H0z"/><path fill="#1c1c1c" d="M10 12h117v112H10z"/>
+      <path d="M27 143h61" stroke="#6d6c67"/>
+      <path fill="#c3c0b4" d="m39-9 60 3-2 21-61-3z"/>
+      <path fill="url(#checks)" d="m73 145 74-5 2 18-75 5z"/>
+    </g>
+    <g transform="translate(370 315) rotate(10 55 60)">
+      <rect width="105" height="144" rx="4" fill="#070707" stroke="#aaa89f"/>
+      <path fill="#aaa89f" d="M5 8h8v11H5zm0 23h8v11H5zm0 23h8v11H5zm0 23h8v11H5zm0 23h8v11H5zm0 23h8v11H5zM92 8h8v11h-8zm0 23h8v11h-8zm0 23h8v11h-8zm0 23h8v11h-8zm0 23h8v11h-8zm0 23h8v11h-8z"/>
+      <path fill="#383837" stroke="#77766f" d="M21 12h63v119H21z"/>
+      <path fill="#c1bfb4" d="m63-10 44 14-5 14L57 4z"/>
+    </g>
+    <g transform="translate(355 40) rotate(17)">
+      <path fill="url(#silver)" stroke="#eeeade" stroke-width="1.5" d="m24 0 6 18 19 1-15 12 5 19-16-11L7 50l5-19L-3 19l19-1z"/>
+      <path fill="none" stroke="#fff9" d="m24 8 3 14 14 1-12 6 4 13-10-10-11 10 6-13-12-6 14-1z"/>
+    </g>
+    <g transform="translate(15 511) rotate(-7)">
+      <path fill="#d0cec2" stroke="#77766f" d="M0 4 7 0l7 3 9-3 7 3 10-3 9 3 10-3 10 3 10-3 10 3 10-3 10 3 8-2v86l-8-3-8 3-10-3-10 3-9-3-9 3-10-3-10 3-9-3-9 3-9-3-8 3-8-3z"/>
+      <path d="M12 26h94M12 43h94M12 60h72" stroke="#858379"/>
+      <path d="M23 15V-4c0-10 15-10 15 0v27c0 16-22 16-22 0V-2" fill="none" stroke="url(#silver)" stroke-width="3"/>
+    </g>
+    <g transform="translate(360 610) rotate(14)">
+      <path fill="none" stroke="url(#silver)" stroke-width="5" d="M24 34C-17 10 10-14 24 5 40-13 65 10 24 34Z"/>
+    </g>
+    <path fill="url(#checks)" d="m194 680 98 4-1 15-98-4z"/>
+    <path d="M190 246h88" stroke="#b8b5aa" stroke-width="2" stroke-dasharray="1 6"/>
+  </g>
+</svg>

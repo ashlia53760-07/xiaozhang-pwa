@@ -1,0 +1,34 @@
+// Cooperative turn flow and opt-in game-only API. Uses an isolated DB and a synthetic endpoint.
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
+const origin=process.env.GAME_DUET_TEST_URL||'http://127.0.0.1:5173',folder=new URL('../.local-review/game-duet-ui/',import.meta.url);await mkdir(folder,{recursive:true});let responseDelay=0;
+const browser=await chromium.launch({channel:'chrome',headless:true}),context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'}),page=await context.newPage(),errors=[],calls=[];
+page.on('pageerror',e=>errors.push(e.message));
+await context.route('https://game-test.invalid/**',async route=>{const req=route.request();calls.push({url:req.url(),body:req.postDataJSON(),authorization:req.headers().authorization});if(responseDelay)await new Promise(resolve=>setTimeout(resolve,responseDelay));responseDelay=0;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({choices:[{message:{content:'他看了眼拼图：边角已经接上了。'}}]})});});
+async function db(store,op,value){return page.evaluate(({store,op,value})=>new Promise((resolve,reject)=>{const r=indexedDB.open('xiaozhang-pwa');r.onerror=()=>reject(r.error);r.onsuccess=()=>{const d=r.result,t=d.transaction(store,op==='put'?'readwrite':'readonly'),s=t.objectStore(store),q=op==='put'?s.put(value):op==='get'?s.get(value):s.getAll();let v;q.onsuccess=()=>v=q.result;t.oncomplete=()=>{d.close();resolve(v)};t.onerror=()=>reject(t.error)}}),{store,op,value});}
+const get=async key=>(await db('kv','get',key))?.value;
+async function ready(){await page.goto(origin);await page.waitForSelector('#play-open',{state:'attached'});await page.waitForTimeout(150);}
+async function openPlay(){if(!await page.locator('#topbar-menu').isVisible())await page.click('#topbar-menu-toggle');await page.click('#play-open');await page.waitForSelector('#play-dialog[open]');}
+async function openGamesMenu(){const d=page.locator('.game-model-setup');if(!await d.evaluate(e=>e.open))await d.locator('summary').click();}
+async function userSwap(){
+ const state=(await get('play-state')).puzzle;assert.equal(state.turn,'user');
+ let pair;
+ for(let a=0;a<state.tiles.length&&!pair;a++)for(let b=a+1;b<state.tiles.length;b++){const copy=[...state.tiles];[copy[a],copy[b]]=[copy[b],copy[a]];if(!copy.every((v,i)=>v===i)){pair=[a,b];break}}
+ assert.ok(pair);await page.click(`[data-action="puzzle-tile"][data-index="${pair[0]}"]`);await page.click(`[data-action="puzzle-tile"][data-index="${pair[1]}"]`);await page.waitForFunction(()=>document.querySelector('.game-caption')?.textContent.includes('轮到张起灵'));
+}
+try{
+ await ready();await openPlay();await page.selectOption('#puzzle-size','4');await page.selectOption('#puzzle-mode','duet');await page.click('[data-action="puzzle-new"]');await page.waitForSelector('.puzzle-board');
+ let s=await get('play-state');assert.equal(s.puzzle.collaborative,true);assert.equal(s.puzzle.turn,'user');assert.equal(s.puzzle.userMoves,0);assert.equal(s.puzzle.characterMoves,0);
+ await userSwap();s=await get('play-state');assert.equal(s.puzzle.userMoves,1);assert.equal(s.puzzle.turn,'character');await page.waitForTimeout(950);s=await get('play-state');assert.equal(s.puzzle.characterMoves,1);assert.equal(s.puzzle.turn,'user');
+ await userSwap();await page.waitForTimeout(950);s=await get('play-state');assert.equal(s.puzzle.userMoves,2);assert.equal(s.puzzle.characterMoves,2);assert.equal(s.puzzle.moves,4);assert.equal(calls.length,0);
+ await page.reload();await page.waitForSelector('#play-open',{state:'attached'});await openPlay();s=await get('play-state');assert.equal(s.puzzle.userMoves,2);assert.equal(s.puzzle.characterMoves,2);assert.equal(await page.locator('.game-turn-card').count(),1);
+ await openGamesMenu();await page.fill('#game-model-base','https://game-test.invalid/v1');await page.fill('#game-model-name','qwen-turbo');await page.fill('#game-model-key','synthetic-game-key');await page.click('[data-action="game-model-save"]');await page.waitForFunction(()=>document.querySelector('#play-dialog .leisure-status')?.textContent.includes('保存在本机'));
+ assert.equal((await get('game-model-profile')).model,'qwen-turbo');assert.equal(calls.length,0,'model should not run automatically');
+ await page.click('[data-action="game-talk"]');await page.waitForFunction(()=>document.querySelector('#play-dialog .game-chat-history')?.textContent.includes('边角已经接上'));
+ assert.equal(calls.length,1);assert.equal(calls[0].url,'https://game-test.invalid/v1/chat/completions');assert.equal(calls[0].body.model,'qwen-turbo');assert.equal(calls[0].body.stream,false);assert.ok(calls[0].body.max_tokens<=120);assert.equal(calls[0].body.messages.length,2);assert.equal(calls[0].body.messages[0].role,'system');assert.equal(calls[0].body.messages[1].role,'user');assert.equal(calls[0].authorization,'Bearer synthetic-game-key');assert.ok(!JSON.stringify(calls[0].body).includes('image_url'));assert.ok(!JSON.stringify(calls[0].body).includes('base64'));
+ assert.equal((await db('messages','all')).length,0,'game side-talk should not pollute chat history');
+ await userSwap();responseDelay=850;await page.click('[data-action="game-talk"]');await page.waitForTimeout(1700);s=await get('play-state');assert.equal(s.puzzle.characterMoves,3,'character local turn should resume after a game-model request overlaps its timer');assert.equal(s.puzzle.turn,'user');
+ await page.click('#play-dialog .dialog-head button');await page.waitForSelector('#play-dialog[open]',{state:'hidden'});await page.click('#topbar-menu-toggle');await page.click('#settings');await page.waitForSelector('#settings-dialog[open]');const downloadEvent=page.waitForEvent('download');await page.click('#export-data');const download=await downloadEvent;const backup=JSON.parse(await readFile(await download.path(),'utf8'));assert.ok(!JSON.stringify(backup).includes('synthetic-game-key'));assert.ok(!JSON.stringify(backup).includes('qwen-turbo'));
+ assert.deepEqual(errors,[]);const result={passed:true,origin,checks:['default cooperative puzzle alternates user and character and persists across reload','no game-model request occurs automatically','separate OpenAI-compatible domestic model endpoint responds only after explicit action','game model receives short text-only context and never chooses game moves','character local turn resumes after an overlapping game-model request','game API key/model are excluded from user backup','game commentary does not pollute chat history'],requests:calls.length,physicalIOS:'not tested',liveProvider:'not tested; synthetic compatible endpoint used'};await writeFile(new URL('results.json',folder),JSON.stringify(result,null,2));console.log(result);
+}finally{await browser.close()}

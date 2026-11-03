@@ -1,0 +1,6 @@
+name = "xiaozhang-pwa-api"
+main = "worker/index.ts"
+compatibility_date = "2026-10-17"
+
+[vars]
+ALLOWED_ORIGIN = "https://YOUR-PAGES-DOMAIN.pages.dev"

@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "default_proactive": false,
+  "click_seconds": 0.8,
+  "event_ttl_seconds": 120,
+  "proactive_seconds": 300,
+  "proactive_idle_seconds": 120,
+  "events": {
+    "click": {
+      "summary": "用户主动点击了桌宠",
+      "category": "click"
+    },
+    "repeat_click": {
+      "summary": "短时间内再次点击；保持轻量，不刷台词或换立绘",
+      "category": "click"
+    },
+    "pet": {
+      "summary": "用户选择了摸头",
+      "category": "familiar"
+    },
+    "double": {
+      "summary": "用户双击桌宠",
+      "category": "click"
+    },
+    "feed": {
+      "summary": "用户选择了投喂，这是桌面交互，并非现实投喂",
+      "category": "daily"
+    },
+    "drag_start": {
+      "summary": "用户开始拖动桌宠窗口",
+      "category": "drag"
+    },
+    "drag_release": {
+      "summary": "用户松开鼠标，桌宠位置改变；不推测现实手势",
+      "category": "drag"
+    },
+    "land": {
+      "summary": "拖拽物理结束，窗口落稳",
+      "category": "drag"
+    },
+    "pose_requested": {
+      "summary": "用户从菜单选择姿态；请求是否成功由当前姿态决定",
+      "category": "pose"
+    },
+    "switch": {
+      "summary": "用户切换了日常或静陪模式",
+      "category": "quiet"
+    },
+    "chat_open": {
+      "summary": "用户主动打开聊天窗口",
+      "category": "chat_open"
+    },
+    "chat_return": {
+      "summary": "用户回到已打开的聊天窗口",
+      "category": "return"
+    },
+    "message_send": {
+      "summary": "用户发送了当前消息；还未收到模型结果",
+      "category": "daily"
+    },
+    "reply_complete": {
+      "summary": "本次模型请求成功返回文本",
+      "category": "daily"
+    },
+    "offline_reply": {
+      "summary": "本地分类语料给出离线示例，不是联网模型结果",
+      "category": "daily"
+    },
+    "api_failure": {
+      "summary": "API失败或返回无效内容，未生成成功回复",
+      "category": "quiet"
+    },
+    "chat_close": {
+      "summary": "用户关闭聊天窗口；不要求其留下",
+      "category": "leaving"
+    },
+    "restore": {
+      "summary": "用户从托盘恢复桌宠窗口",
+      "category": "return"
+    },
+    "hide": {
+      "summary": "用户隐藏桌宠到托盘",
+      "category": "quiet"
+    },
+    "focus_return": {
+      "summary": "桌宠自己的窗口获得焦点；不知道用户之前在做什么",
+      "category": "return"
+    },
+    "proactive_toggle": {
+      "summary": "用户改变主动互动开关",
+      "category": "quiet"
+    },
+    "idle_invitation": {
+      "summary": "没有新的桌宠交互，低频显示一次可忽略的邀请",
+      "category": "proactive"
+    },
+    "window_switch": {
+      "summary": "窗口感知观察到用户切换到了另一个外部窗口；不代表危险或用户正在做什么",
+      "category": "daily"
+    }
+  },
+  "reply_poses": [
+    {
+      "user_keywords": [
+        "看看小鸡",
+        "抱小鸡",
+        "抱着小鸡",
+        "给我看小鸡"
+      ],
+      "reply_keywords": [
+        "小鸡",
+        "抱稳",
+        "它很轻"
+      ],
+      "action": "hold_chick"
+    },
+    {
+      "user_keywords": [
+        "伸个懒腰",
+        "伸懒腰",
+        "伸展一下"
+      ],
+      "reply_keywords": [
+        "伸展",
+        "懒腰",
+        "活动一下"
+      ],
+      "action": "stretch"
+    }
+  ],
+  "window_alert": {
+    "action": "sword_chick",
+    "duration": 5.5,
+    "cooldown": 45,
+    "caption": "换了窗口。我看着这边。"
+  }
+}

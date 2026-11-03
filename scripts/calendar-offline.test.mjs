@@ -1,0 +1,40 @@
+import assert from "node:assert/strict";
+import { chromium } from "playwright";
+import { mkdir, writeFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+const origin = process.env.CALENDAR_PREVIEW_URL || "http://127.0.0.1:4177";
+const folder = new URL("../.local-review/calendar-tests/", import.meta.url); await mkdir(folder, { recursive: true });
+const browser = await chromium.launch({ channel: "chrome", headless: true });
+const context = await browser.newContext({ viewport: { width: 390, height: 844 }, timezoneId: "Asia/Shanghai", serviceWorkers: "allow" });
+await context.addInitScript(() => { for (const key of ["auto-moments", "auto-diary", "proactive-enabled"]) localStorage.setItem(`xiaozhang-${key}`, "false"); });
+const page = await context.newPage(), errors = []; page.on("pageerror", e => errors.push(e.message));
+const ready = () => page.waitForFunction(() => document.documentElement.dataset.appReady === "true");
+try {
+  await page.goto(origin); await ready(); await page.evaluate(() => navigator.serviceWorker.ready); await page.reload(); await ready();
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+  await page.locator("#diary-open").evaluate(b => b.click()); await page.waitForSelector("#calendar-grid button");
+  await page.selectOption("#calendar-mood", "平静"); await page.selectOption("#calendar-period", "flow"); await page.fill("#calendar-note", "断网后也要保留的记录");
+  await page.click("#calendar-record-form button[type=submit]"); await page.waitForFunction(() => document.querySelector("#calendar-status").textContent.includes("已保存"));
+  await context.setOffline(true); await page.reload(); await ready();
+  const assets = await page.evaluate(async () => {
+    const paths = ["bow.png", "quills.webp", "shell.webp", "seal.webp", "ribbon.webp", "paper-grain.png", "PinyonScript.ttf"];
+    return Promise.all(paths.map(async name => { const response = await fetch(`/themes/rococo/${name}`); return { name, ok: response.ok, bytes: (await response.arrayBuffer()).byteLength }; }));
+  });
+  assert(assets.every(asset => asset.ok && asset.bytes > 0), "all new theme decorations and font are available offline before choosing the theme");
+  await page.locator("#diary-open").evaluate(b => b.click()); await page.waitForSelector("#calendar-grid button");
+  assert.equal(await page.locator("#calendar-grid button").count(), 42); assert.equal(await page.inputValue("#calendar-note"), "断网后也要保留的记录"); assert.equal(await page.inputValue("#calendar-period"), "flow");
+  await page.fill("#calendar-month", "2026-02"); await page.locator("#calendar-month").dispatchEvent("change");
+  await page.waitForFunction(() => document.querySelector('[data-calendar-day="2026-02-14"]')?.getAttribute("aria-label").includes("调休上班"));
+  assert.match(await page.locator('[data-calendar-day="2026-02-17"]').getAttribute("aria-label"), /春节/);
+  for (const theme of ["warm", "night", "ink", "rococo", "bronze"]) {
+    await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
+    const style = await page.locator('[aria-pressed="true"][data-calendar-day]').evaluate(el => ({ color: getComputedStyle(el).color, background: getComputedStyle(el).backgroundColor, shadow: getComputedStyle(el).boxShadow }));
+    assert.notEqual(style.background, "rgba(0, 0, 0, 0)"); assert.equal(style.shadow, "none");
+    await page.screenshot({ path: fileURLToPath(new URL(`calendar-${theme}.png`, folder)) });
+  }
+  await page.locator("#calendar-record-form").scrollIntoViewIfNeeded();
+  await page.screenshot({ path: fileURLToPath(new URL("calendar-record-panel.png", folder)) });
+  assert.deepEqual(errors, []);
+  await writeFile(new URL("offline-result.json", folder), JSON.stringify({ passed: true, checks: ["built production app boots offline with active service worker", "calendar records survive offline reload", "bundled lunar holidays and official rest/work days work offline", "selected date remains distinct in all five themes", "all seven Rococo decorations and font are precached before first theme selection"], assets, errors }, null, 2));
+  console.log("PASS production calendar offline reload, persisted records, offline holidays and all five themes");
+} finally { await browser.close(); }

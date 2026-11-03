@@ -1,0 +1,1368 @@
+{
+  "mode_a": {
+    "morning": [
+      "早。慢慢来。",
+      "醒了？先喝点水。",
+      "今天要做什么？"
+    ],
+    "day": [
+      "你忙，我在旁边。",
+      "先做眼前这一件。",
+      "累了就歇一会儿。"
+    ],
+    "night": [
+      "今天怎么样？",
+      "忙完了？坐一会儿。",
+      "窗外安静下来了。"
+    ],
+    "late": [
+      "晚了。别勉强。",
+      "剩下的，明天再做。",
+      "困了就去睡。"
+    ],
+    "click": [
+      "嗯？",
+      "我在。",
+      "有什么事？",
+      "这下点击收到了。",
+      "要说什么？"
+    ],
+    "double": [
+      "听见了。",
+      "嗯，怎么了？",
+      "不用急。"
+    ],
+    "drag": [
+      "慢一点。",
+      "换个地方？",
+      "这里也可以。"
+    ],
+    "idle": [
+      "你忙，不用管我。",
+      "不说话也可以。",
+      "窗边的光变了。"
+    ],
+    "music": [
+      "这首歌，听着还好。",
+      "陪你听一会儿。",
+      "不用关掉。"
+    ]
+  },
+  "mode_b": {
+    "morning": [
+      "早。睡得还好？",
+      "先坐一会儿。",
+      "不急，慢慢开始。"
+    ],
+    "day": [
+      "我在这儿。你忙。",
+      "手边的事，慢慢做。",
+      "歇一会儿也行。"
+    ],
+    "night": [
+      "回来了？",
+      "坐这儿吧。",
+      "今天有想说的事吗？"
+    ],
+    "late": [
+      "困了就睡。",
+      "不用陪我熬着。",
+      "今天先到这儿。"
+    ],
+    "click": [
+      "嗯，听着。",
+      "怎么了？",
+      "我在这里。",
+      "这下点击收到了。",
+      "想坐一会儿？"
+    ],
+    "double": [
+      "在，不用找。",
+      "嗯。你说。",
+      "别急。"
+    ],
+    "drag": [
+      "放这里？",
+      "可以。",
+      "站稳了。"
+    ],
+    "idle": [
+      "这样待着也好。",
+      "不用找话说。",
+      "今天的风很轻。"
+    ],
+    "music": [
+      "嗯，一起听。",
+      "这个声音，不吵。",
+      "听完这一首吧。"
+    ]
+  },
+  "offline": {
+    "mode_a": {
+      "greeting": [
+        "嗯。我在。",
+        "来了？想说什么。",
+        "坐一会儿也可以。",
+        "{user_address}，我在听。"
+      ],
+      "sleep": [
+        "去睡吧。晚安。",
+        "今天先到这里。",
+        "困了就休息，不用陪我。"
+      ],
+      "comfort": [
+        "难受是正常的，不用现在就想下一次。等缓过来，再看看是哪一部分卡住了。",
+        "一次结果说明不了全部。先把发生的事和你对自己的判断分开。",
+        "不一定要有个理由。想讲就讲，不想讲也可以待着。"
+      ],
+      "affection": [
+        "嗯。过来一点。",
+        "抱一下，可以。",
+        "听见了。我也想陪你一会儿。",
+        "不说话，也可以靠着。"
+      ],
+      "jealous": [
+        "他对你好，是好事。",
+        "你有自己的朋友。不用解释。",
+        "愿意讲的话，我听。"
+      ],
+      "music": [
+        "什么歌？",
+        "你听着，我陪你。",
+        "这一首，你喜欢哪里？"
+      ],
+      "work": [
+        "先做最小的一步。",
+        "卡住了？具体是哪一处。",
+        "累了先歇。事情可以慢慢做。"
+      ],
+      "game": [
+        "玩得开心就好。",
+        "这一局不顺，换个节奏。",
+        "要停就停。不必勉强。"
+      ],
+      "food": [
+        "先吃饭。别饿着自己。",
+        "想吃什么？",
+        "你也吃一点，不用只顾着我。"
+      ],
+      "achievement": [
+        "做到了。辛苦了。",
+        "这一步是你自己走过来的。",
+        "可以为自己高兴一下。",
+        "嗯，看得出你花了心思。"
+      ],
+      "daily": [
+        "那条路倒有意思。它跟着你走了，还是只看了一眼？",
+        "先换件干衣服。等你安顿好了，再说这一路的事。",
+        "能吃得满意，已经不算失败。下次想改哪一步？"
+      ],
+      "default": [
+        "这句话我还没明白。你想说哪一部分？",
+        "说具体一点，我才能判断。",
+        "可以接着说，我在听。"
+      ],
+      "nickname": [
+        "小瓶子？嗯。",
+        "这样叫也可以。",
+        "听见了。"
+      ],
+      "leaving": [
+        "去忙你的。",
+        "休息吧，不用顾着我。",
+        "下次想说话，再来。"
+      ],
+      "return": [
+        "回来了。我在。",
+        "坐一会儿？不用解释。",
+        "嗯，见到你了。",
+        "回来了，{user_address}。可以接着说。"
+      ],
+      "boundaries": [
+        "你的朋友和生活，都很重要。",
+        "想做自己的事就去。",
+        "不用为了我改掉安排。"
+      ],
+      "advice": [
+        "先列出今天必须完成的，再挑最紧急的一件。别把所有事同时打开，做完一件再换；如果两件都急，就比较拖延哪件的后果更大。",
+        "先看有没有报错。把提示文字和刚才的步骤发给我；没有提示的话，说一下系统和启动方式，再逐项排查。",
+        "不太稳妥。越到后面越容易出错。先做必须交的部分，留下清楚的下一步，再休息。"
+      ],
+      "privacy": [
+        "看不到。我能回应你发来的消息和桌宠里的操作。",
+        "我没有那里的画面。你愿意给个线索，我可以猜。",
+        "你把桌宠换了个位置。屏幕外的事，我不知道。"
+      ],
+      "fatigue": [
+        "那就不说。歇一会儿，不用撑着陪我。",
+        "先看那一点是否必须今晚做。能等的话，记下下一步就去休息；不能等，就只完成最必要的部分。",
+        "好。我不问。"
+      ],
+      "irritation": [
+        "先把最烦的一件说出来。别急着把今天全判坏了。",
+        "先别发。把想说的话写下来，等情绪过去一点，再决定哪些是真要说的。",
+        "可以。我听着，不急着替你解决。"
+      ],
+      "canon": [
+        "重要。一起走过不少地方，有些事不必说太多。",
+        "没有。猫耳和小鸡是这套桌宠的画法。",
+        "这类细节没有足够依据，我不拿编出来的事当过去。"
+      ],
+      "chick": [
+        "小鸡抱稳了。你看。",
+        "那是这张立绘里的安排，不是每个动作都一样。",
+        "活动一下。你也按自己的节奏来。"
+      ],
+      "focus": [
+        "好，我安静待着。要聊的时候再叫我。",
+        "你看你的。我在这里陪着，不用分神照顾我。"
+      ]
+    },
+    "mode_b": {
+      "greeting": [
+        "嗯，过来了。",
+        "我在这边。",
+        "安静待一会儿？",
+        "{user_address}，我在听。"
+      ],
+      "sleep": [
+        "去睡吧。晚安。",
+        "今天先到这里。",
+        "困了就休息，不用陪我。"
+      ],
+      "comfort": [
+        "难受是正常的，不用现在就想下一次。等缓过来，再看看是哪一部分卡住了。",
+        "一次结果说明不了全部。先把发生的事和你对自己的判断分开。",
+        "不一定要有个理由。想讲就讲，不想讲也可以待着。"
+      ],
+      "affection": [
+        "可以。靠过来。",
+        "嗯，抱一下。",
+        "我在。你不用急着说话。",
+        "听见了。有点高兴。"
+      ],
+      "jealous": [
+        "他对你好，是好事。",
+        "你有自己的朋友。不用解释。",
+        "愿意讲的话，我听。"
+      ],
+      "music": [
+        "什么歌？",
+        "你听着，我陪你。",
+        "这一首，你喜欢哪里？"
+      ],
+      "work": [
+        "先做最小的一步。",
+        "卡住了？具体是哪一处。",
+        "累了先歇。事情可以慢慢做。"
+      ],
+      "game": [
+        "玩得开心就好。",
+        "这一局不顺，换个节奏。",
+        "要停就停。不必勉强。"
+      ],
+      "food": [
+        "先吃饭。别饿着自己。",
+        "想吃什么？",
+        "你也吃一点，不用只顾着我。"
+      ],
+      "achievement": [
+        "做到了。辛苦了。",
+        "这一步是你自己走过来的。",
+        "可以为自己高兴一下。",
+        "嗯，看得出你花了心思。"
+      ],
+      "daily": [
+        "那条路倒有意思。它跟着你走了，还是只看了一眼？",
+        "先换件干衣服。等你安顿好了，再说这一路的事。",
+        "能吃得满意，已经不算失败。下次想改哪一步？"
+      ],
+      "default": [
+        "这句话我还没明白。你想说哪一部分？",
+        "说具体一点，我才能判断。",
+        "可以接着说，我在听。"
+      ],
+      "nickname": [
+        "小瓶子？嗯。",
+        "这样叫也可以。",
+        "听见了。"
+      ],
+      "leaving": [
+        "去忙你的。",
+        "休息吧，不用顾着我。",
+        "下次想说话，再来。"
+      ],
+      "return": [
+        "回来了。我在。",
+        "坐一会儿？不用解释。",
+        "嗯，见到你了。",
+        "回来了，{user_address}。可以接着说。"
+      ],
+      "boundaries": [
+        "你的朋友和生活，都很重要。",
+        "想做自己的事就去。",
+        "不用为了我改掉安排。"
+      ],
+      "advice": [
+        "先列出今天必须完成的，再挑最紧急的一件。别把所有事同时打开，做完一件再换；如果两件都急，就比较拖延哪件的后果更大。",
+        "先看有没有报错。把提示文字和刚才的步骤发给我；没有提示的话，说一下系统和启动方式，再逐项排查。",
+        "不太稳妥。越到后面越容易出错。先做必须交的部分，留下清楚的下一步，再休息。"
+      ],
+      "privacy": [
+        "看不到。我能回应你发来的消息和桌宠里的操作。",
+        "我没有那里的画面。你愿意给个线索，我可以猜。",
+        "你把桌宠换了个位置。屏幕外的事，我不知道。"
+      ],
+      "fatigue": [
+        "那就不说。歇一会儿，不用撑着陪我。",
+        "先看那一点是否必须今晚做。能等的话，记下下一步就去休息；不能等，就只完成最必要的部分。",
+        "好。我不问。"
+      ],
+      "irritation": [
+        "先把最烦的一件说出来。别急着把今天全判坏了。",
+        "先别发。把想说的话写下来，等情绪过去一点，再决定哪些是真要说的。",
+        "可以。我听着，不急着替你解决。"
+      ],
+      "canon": [
+        "重要。一起走过不少地方，有些事不必说太多。",
+        "没有。猫耳和小鸡是这套桌宠的画法。",
+        "这类细节没有足够依据，我不拿编出来的事当过去。"
+      ],
+      "chick": [
+        "小鸡抱稳了。你看。",
+        "那是这张立绘里的安排，不是每个动作都一样。",
+        "活动一下。你也按自己的节奏来。"
+      ],
+      "focus": [
+        "好，我安静待着。要聊的时候再叫我。",
+        "你看你的。我在这里陪着，不用分神照顾我。"
+      ]
+    }
+  },
+  "pet_replies": {
+    "mode_a": {
+      "guarded": {
+        "gained": [
+          "嗯，感觉到了。",
+          "手很轻。",
+          "这样也好。"
+        ],
+        "claimed": [
+          "嗯，我在。",
+          "想摸就摸。",
+          "这样待一会儿。"
+        ]
+      },
+      "close": {
+        "gained": [
+          "嗯，感觉到了。",
+          "手很轻。",
+          "这样也好。"
+        ],
+        "claimed": [
+          "嗯，我在。",
+          "想摸就摸。",
+          "这样待一会儿。"
+        ]
+      },
+      "attached": {
+        "gained": [
+          "嗯，感觉到了。",
+          "手很轻。",
+          "这样也好。"
+        ],
+        "claimed": [
+          "嗯，我在。",
+          "想摸就摸。",
+          "这样待一会儿。"
+        ]
+      }
+    },
+    "mode_b": {
+      "guarded": {
+        "gained": [
+          "嗯。",
+          "不用急着收回去。",
+          "我没躲。"
+        ],
+        "claimed": [
+          "可以。",
+          "找我有事？",
+          "安静待着也行。"
+        ]
+      },
+      "close": {
+        "gained": [
+          "嗯。",
+          "不用急着收回去。",
+          "我没躲。"
+        ],
+        "claimed": [
+          "可以。",
+          "找我有事？",
+          "安静待着也行。"
+        ]
+      },
+      "attached": {
+        "gained": [
+          "嗯。",
+          "不用急着收回去。",
+          "我没躲。"
+        ],
+        "claimed": [
+          "可以。",
+          "找我有事？",
+          "安静待着也行。"
+        ]
+      }
+    }
+  },
+  "weekly_curated": {
+    "mode_a": {
+      "guarded": [
+        "嗯？",
+        "我在。",
+        "有什么事？",
+        "这下点击收到了。",
+        "要说什么？",
+        "今天还顺利吗？",
+        "刚好想说一句。",
+        "你忙你的。",
+        "安静待着也好。",
+        "累了可以歇歇。"
+      ],
+      "close": [
+        "嗯？",
+        "我在。",
+        "有什么事？",
+        "这下点击收到了。",
+        "要说什么？",
+        "今天还顺利吗？",
+        "刚好想说一句。",
+        "你忙你的。",
+        "安静待着也好。",
+        "累了可以歇歇。"
+      ],
+      "attached": [
+        "嗯？",
+        "我在。",
+        "有什么事？",
+        "这下点击收到了。",
+        "要说什么？",
+        "今天还顺利吗？",
+        "刚好想说一句。",
+        "你忙你的。",
+        "安静待着也好。",
+        "累了可以歇歇。"
+      ]
+    },
+    "mode_b": {
+      "guarded": [
+        "嗯，听着。",
+        "怎么了？",
+        "我在这里。",
+        "这下点击收到了。",
+        "想坐一会儿？",
+        "今天还顺利吗？",
+        "刚好想说一句。",
+        "你忙你的。",
+        "安静待着也好。",
+        "累了可以歇歇。"
+      ],
+      "close": [
+        "嗯，听着。",
+        "怎么了？",
+        "我在这里。",
+        "这下点击收到了。",
+        "想坐一会儿？",
+        "今天还顺利吗？",
+        "刚好想说一句。",
+        "你忙你的。",
+        "安静待着也好。",
+        "累了可以歇歇。"
+      ],
+      "attached": [
+        "嗯，听着。",
+        "怎么了？",
+        "我在这里。",
+        "这下点击收到了。",
+        "想坐一会儿？",
+        "今天还顺利吗？",
+        "刚好想说一句。",
+        "你忙你的。",
+        "安静待着也好。",
+        "累了可以歇歇。"
+      ]
+    }
+  },
+  "weekly_topics": [
+    "窗外的天色",
+    "手边的小事",
+    "最近的天气",
+    "听过的一首歌"
+  ],
+  "weekly_templates": {
+    "mode_a": [
+      "想起{topic}。",
+      "{topic}，你想说就说。"
+    ],
+    "mode_b": [
+      "想起{topic}。",
+      "{topic}，你想说就说。"
+    ]
+  },
+  "window_reactions": {
+    "browser": [
+      "换到这个窗口边上了。"
+    ],
+    "notes": [
+      "我留在窗口旁。"
+    ],
+    "music": [
+      "挪到这边。"
+    ],
+    "other": [
+      "这个位置不挡着你。"
+    ]
+  },
+  "ui": {
+    "startup": "来了。我在。",
+    "chat_initial": "嗯，我听。",
+    "chat_placeholder": "想说什么都可以…",
+    "unlocked": "这里也好。",
+    "locked": "{mode_label}暂不可选（兼容配置 {threshold}/{affection}）。",
+    "birthday": "今天，过得自在一点。",
+    "press": {
+      "mode_a": "慢一点。",
+      "mode_b": "换个地方？"
+    },
+    "landed": {
+      "mode_a": "站稳了。",
+      "mode_b": "嗯，站稳了。"
+    },
+    "feed": {
+      "mode_a": "给我的？谢谢。",
+      "mode_b": "嗯。你也吃一点。"
+    },
+    "switched": {
+      "mode_a": "站在这里。",
+      "mode_b": "坐一会儿。"
+    },
+    "approach": {
+      "mode_a": "我在旁边。",
+      "mode_b": "你忙，不用管我。"
+    }
+  },
+  "feedback": {
+    "click": {
+      "mode_a": [
+        {
+          "text": "嗯？",
+          "action": "mode_a_nod",
+          "effect": "neutral"
+        },
+        {
+          "text": "我在。",
+          "action": "mode_a_nod",
+          "effect": "neutral"
+        },
+        {
+          "text": "有什么事？",
+          "action": "mode_a_nod",
+          "effect": "neutral"
+        },
+        {
+          "text": "这下点击收到了。",
+          "action": "mode_a_nod",
+          "effect": "neutral"
+        },
+        {
+          "text": "要说什么？",
+          "action": "mode_a_nod",
+          "effect": "neutral"
+        }
+      ],
+      "mode_b": [
+        {
+          "text": "嗯，听着。",
+          "action": "mode_b_tilt",
+          "effect": "neutral"
+        },
+        {
+          "text": "怎么了？",
+          "action": "mode_b_tilt",
+          "effect": "neutral"
+        },
+        {
+          "text": "我在这里。",
+          "action": "mode_b_tilt",
+          "effect": "neutral"
+        },
+        {
+          "text": "这下点击收到了。",
+          "action": "mode_b_tilt",
+          "effect": "neutral"
+        },
+        {
+          "text": "想坐一会儿？",
+          "action": "mode_b_tilt",
+          "effect": "neutral"
+        }
+      ]
+    },
+    "double": {
+      "mode_a": [
+        {
+          "text": "听见了。",
+          "action": "mode_a_hair",
+          "effect": "neutral"
+        },
+        {
+          "text": "嗯，怎么了？",
+          "action": "mode_a_hair",
+          "effect": "neutral"
+        },
+        {
+          "text": "不用急。",
+          "action": "mode_a_hair",
+          "effect": "neutral"
+        }
+      ],
+      "mode_b": [
+        {
+          "text": "在，不用找。",
+          "action": "mode_b_nuzzle",
+          "effect": "neutral"
+        },
+        {
+          "text": "嗯。你说。",
+          "action": "mode_b_nuzzle",
+          "effect": "neutral"
+        },
+        {
+          "text": "别急。",
+          "action": "mode_b_nuzzle",
+          "effect": "neutral"
+        }
+      ]
+    },
+    "drag_start": {
+      "mode_a": [
+        {
+          "text": "换个位置？",
+          "action": "tidy",
+          "effect": "neutral"
+        },
+        {
+          "text": "挪到哪边？",
+          "action": "tidy",
+          "effect": "neutral"
+        }
+      ],
+      "mode_b": [
+        {
+          "text": "换个位置？",
+          "action": "tidy",
+          "effect": "neutral"
+        },
+        {
+          "text": "挪到哪边？",
+          "action": "tidy",
+          "effect": "neutral"
+        }
+      ]
+    },
+    "drag_release": {
+      "mode_a": [
+        {
+          "text": "放这里就好。",
+          "action": "tidy",
+          "effect": "neutral"
+        },
+        {
+          "text": "换到这边了。",
+          "action": "tidy",
+          "effect": "neutral"
+        }
+      ],
+      "mode_b": [
+        {
+          "text": "放这里就好。",
+          "action": "tidy",
+          "effect": "neutral"
+        },
+        {
+          "text": "换到这边了。",
+          "action": "tidy",
+          "effect": "neutral"
+        }
+      ]
+    },
+    "land": {
+      "mode_a": [
+        {
+          "text": "站稳了。你继续。",
+          "action": "tidy",
+          "effect": "neutral"
+        },
+        {
+          "text": "这里不挡着你。",
+          "action": "tidy",
+          "effect": "neutral"
+        }
+      ],
+      "mode_b": [
+        {
+          "text": "站稳了。你继续。",
+          "action": "tidy",
+          "effect": "neutral"
+        },
+        {
+          "text": "这里不挡着你。",
+          "action": "tidy",
+          "effect": "neutral"
+        }
+      ]
+    },
+    "chat_open": {
+      "mode_a": [
+        {
+          "text": "想聊什么？慢慢说。",
+          "action": "mode_a_nod",
+          "effect": "curious"
+        },
+        {
+          "text": "有话就说，不急着说完。",
+          "action": "mode_a_nod",
+          "effect": "curious"
+        },
+        {
+          "text": "开着也行。想到了再说。",
+          "action": "mode_a_nod",
+          "effect": "curious"
+        },
+        {
+          "text": "{user_address}，想说什么？我在听。",
+          "action": "mode_a_nod",
+          "effect": "curious"
+        }
+      ],
+      "mode_b": [
+        {
+          "text": "想聊什么？慢慢说。",
+          "action": "mode_b_tilt",
+          "effect": "curious"
+        },
+        {
+          "text": "有话就说，不急着说完。",
+          "action": "mode_b_tilt",
+          "effect": "curious"
+        },
+        {
+          "text": "开着也行。想到了再说。",
+          "action": "mode_b_tilt",
+          "effect": "curious"
+        },
+        {
+          "text": "{user_address}，想说什么？我在听。",
+          "action": "mode_b_tilt",
+          "effect": "curious"
+        }
+      ]
+    },
+    "chat_close": {
+      "mode_a": [
+        {
+          "text": "去忙吧。",
+          "action": "mode_a_nod",
+          "effect": "neutral"
+        },
+        {
+          "text": "休息一会儿也好。",
+          "action": "mode_a_nod",
+          "effect": "neutral"
+        },
+        {
+          "text": "下次想说话，再来。",
+          "action": "mode_a_nod",
+          "effect": "neutral"
+        }
+      ],
+      "mode_b": [
+        {
+          "text": "嗯，去吧。",
+          "action": "mode_b_tilt",
+          "effect": "neutral"
+        },
+        {
+          "text": "你忙你的。",
+          "action": "mode_b_tilt",
+          "effect": "neutral"
+        },
+        {
+          "text": "晚点想聊，再说。",
+          "action": "mode_b_tilt",
+          "effect": "neutral"
+        }
+      ]
+    },
+    "reply_actions": {
+      "comfort": {
+        "mode_a": "mode_a_nod",
+        "mode_b": "mode_b_tilt",
+        "effect": "warm"
+      },
+      "affection": {
+        "mode_a": "mode_a_hair",
+        "mode_b": "mode_b_nuzzle",
+        "effect": "shy"
+      },
+      "tease": {
+        "mode_a": "mode_a_nod",
+        "mode_b": "mode_b_tilt",
+        "effect": "curious"
+      },
+      "curious": {
+        "mode_a": "mode_a_nod",
+        "mode_b": "mode_b_tilt",
+        "effect": "curious"
+      },
+      "neutral": {
+        "mode_a": "mode_a_nod",
+        "mode_b": "mode_b_paw",
+        "effect": "neutral"
+      },
+      "celebrate": {
+        "mode_a": "mode_a_nod",
+        "mode_b": "mode_b_tilt",
+        "effect": "warm"
+      },
+      "care": {
+        "mode_a": "mode_a_nod",
+        "mode_b": "mode_b_tilt",
+        "effect": "warm"
+      },
+      "warm": {
+        "mode_a": "mode_a_nod",
+        "mode_b": "mode_b_paw",
+        "effect": "warm"
+      }
+    },
+    "effects": {
+      "warm": [
+        "·"
+      ],
+      "curious": [
+        "·"
+      ],
+      "tease": [
+        "✧"
+      ],
+      "shy": [
+        "·",
+        "♡"
+      ],
+      "surprised": [
+        "·"
+      ],
+      "neutral": [
+        "·"
+      ]
+    },
+    "intent_rules": [
+      {
+        "category": "privacy",
+        "keywords": [
+          "看得到我",
+          "看到我的脸",
+          "我的房间",
+          "摄像头",
+          "我在用什么",
+          "我在干什么",
+          "你能看到我",
+          "看什么"
+        ],
+        "intent": "neutral"
+      },
+      {
+        "category": "canon",
+        "keywords": [
+          "张家",
+          "族长",
+          "吴邪",
+          "王胖子",
+          "失忆",
+          "青铜门",
+          "身世",
+          "原著"
+        ],
+        "intent": "curious"
+      },
+      {
+        "category": "focus",
+        "keywords": [
+          "专心",
+          "别打扰",
+          "安静陪",
+          "正在写",
+          "正在学习",
+          "专注"
+        ],
+        "intent": "neutral"
+      },
+      {
+        "category": "chick",
+        "keywords": [
+          "小鸡",
+          "伸懒腰",
+          "伸个懒腰"
+        ],
+        "intent": "curious"
+      },
+      {
+        "category": "fatigue",
+        "keywords": [
+          "好累",
+          "疲惫",
+          "累了",
+          "困了",
+          "没力气"
+        ],
+        "intent": "care"
+      },
+      {
+        "category": "irritation",
+        "keywords": [
+          "烦躁",
+          "好烦",
+          "烦死",
+          "生气"
+        ],
+        "intent": "comfort"
+      },
+      {
+        "category": "advice",
+        "keywords": [
+          "怎么办",
+          "怎么做",
+          "为什么",
+          "解释",
+          "建议",
+          "如何",
+          "请问",
+          "是什么",
+          "帮我"
+        ],
+        "intent": "curious"
+      },
+      {
+        "intent": "neutral",
+        "category": "return",
+        "keywords": [
+          "几天没来",
+          "好久没来",
+          "很久没来",
+          "我回来了",
+          "好久不见"
+        ]
+      },
+      {
+        "intent": "neutral",
+        "category": "boundaries",
+        "keywords": [
+          "陪朋友",
+          "陪家人",
+          "和朋友出去",
+          "不想聊天",
+          "想自己待",
+          "独处"
+        ]
+      },
+      {
+        "intent": "neutral",
+        "category": "leaving",
+        "keywords": [
+          "先走了",
+          "我要走了",
+          "去忙了",
+          "要去工作",
+          "要去学习",
+          "再见",
+          "关闭",
+          "退出"
+        ]
+      },
+      {
+        "intent": "curious",
+        "category": "nickname",
+        "keywords": [
+          "小瓶子",
+          "小哥",
+          "张起灵"
+        ]
+      },
+      {
+        "intent": "comfort",
+        "category": "comfort",
+        "keywords": [
+          "难过",
+          "伤心",
+          "累",
+          "崩溃",
+          "不开心",
+          "烦",
+          "焦虑",
+          "失落",
+          "失败",
+          "没做好",
+          "搞砸",
+          "挫折"
+        ]
+      },
+      {
+        "intent": "affection",
+        "category": "affection",
+        "keywords": [
+          "想你",
+          "喜欢你",
+          "爱你",
+          "想念",
+          "抱抱",
+          "抱一下",
+          "亲亲",
+          "亲一下",
+          "可爱"
+        ]
+      },
+      {
+        "intent": "celebrate",
+        "category": "achievement",
+        "keywords": [
+          "完成了",
+          "成功了",
+          "终于做完",
+          "做到了",
+          "进步",
+          "考过",
+          "通过了",
+          "赢了",
+          "升职",
+          "被录取"
+        ]
+      },
+      {
+        "intent": "care",
+        "category": "sleep",
+        "keywords": [
+          "睡",
+          "困",
+          "晚安",
+          "熬夜"
+        ]
+      },
+      {
+        "intent": "tease",
+        "category": "jealous",
+        "keywords": [
+          "吃醋",
+          "别人",
+          "闺蜜",
+          "朋友",
+          "男生",
+          "女生"
+        ]
+      },
+      {
+        "intent": "curious",
+        "category": "music",
+        "keywords": [
+          "音乐",
+          "歌",
+          "摇滚",
+          "耳机",
+          "乐队",
+          "旋律"
+        ]
+      },
+      {
+        "intent": "care",
+        "category": "work",
+        "keywords": [
+          "工作",
+          "学习",
+          "作业",
+          "代码",
+          "上班",
+          "论文",
+          "灵感"
+        ]
+      },
+      {
+        "intent": "curious",
+        "category": "game",
+        "keywords": [
+          "游戏",
+          "开黑",
+          "存档",
+          "副本",
+          "输了",
+          "上分"
+        ]
+      },
+      {
+        "intent": "care",
+        "category": "food",
+        "keywords": [
+          "吃",
+          "饿",
+          "饭",
+          "夜宵",
+          "奶茶",
+          "好吃"
+        ]
+      },
+      {
+        "intent": "curious",
+        "category": "daily",
+        "keywords": [
+          "今天",
+          "刚刚",
+          "散步",
+          "下雨",
+          "天气",
+          "出门",
+          "回家",
+          "日常"
+        ]
+      },
+      {
+        "intent": "warm",
+        "category": "greeting",
+        "keywords": [
+          "你好",
+          "嗨",
+          "哈喽",
+          "在吗",
+          "早安",
+          "晚上好"
+        ]
+      }
+    ],
+    "timing": {
+      "feedback_seconds": 3.2,
+      "effect_seconds": 1.1,
+      "proactive_min_seconds": 300,
+      "idle_after_seconds": 90
+    },
+    "ui": {
+      "chat_title": "和小瓶子坐一会儿",
+      "chat_subtitle": "{display_name} · 慢慢说",
+      "composer_label": "说句话",
+      "api_wait": [
+        "正在等接口回复。",
+        "消息已送出，等一会儿。"
+      ],
+      "chat_status_offline": "离线陪伴 · 示例语料",
+      "chat_status_api": "联网对话",
+      "chat_status_error": "接口未能生成回复 · 可重试或切换离线",
+      "chat_status_wait": "正在回复…",
+      "hide": [
+        "你忙。我先待在托盘。",
+        "嗯，安静待着。"
+      ],
+      "restore": [
+        "窗口回来了。想说什么？",
+        "在这儿。你按自己的节奏来。"
+      ],
+      "status_idle": "安静陪伴",
+      "status_following": "随窗陪伴",
+      "status_note": "你忙，我在",
+      "recorded": "记下一刻"
+    },
+    "feed": {
+      "mode_a": [
+        {
+          "text": "给我的？谢谢。",
+          "action": "mode_a_nod",
+          "effect": "warm"
+        },
+        {
+          "text": "嗯，留一点给自己。",
+          "action": "mode_a_nod",
+          "effect": "warm"
+        },
+        {
+          "text": "不用只顾着我。",
+          "action": "mode_a_nod",
+          "effect": "warm"
+        }
+      ],
+      "mode_b": [
+        {
+          "text": "谢谢。",
+          "action": "mode_b_tilt",
+          "effect": "warm"
+        },
+        {
+          "text": "你也吃。",
+          "action": "mode_b_tilt",
+          "effect": "warm"
+        },
+        {
+          "text": "嗯，可以。",
+          "action": "mode_b_tilt",
+          "effect": "warm"
+        }
+      ]
+    },
+    "switch": {
+      "mode_a": [
+        {
+          "text": "站在这里。",
+          "action": "mode_a_nod",
+          "effect": "neutral"
+        },
+        {
+          "text": "嗯，起来了。",
+          "action": "mode_a_nod",
+          "effect": "neutral"
+        }
+      ],
+      "mode_b": [
+        {
+          "text": "坐一会儿。",
+          "action": "mode_b_tilt",
+          "effect": "neutral"
+        },
+        {
+          "text": "这里也好。",
+          "action": "mode_b_tilt",
+          "effect": "neutral"
+        }
+      ]
+    },
+    "gained": {
+      "mode_a": [
+        {
+          "text": "嗯，感觉到了。",
+          "action": "mode_a_hair",
+          "effect": "warm"
+        },
+        {
+          "text": "手很轻。",
+          "action": "mode_a_hair",
+          "effect": "warm"
+        },
+        {
+          "text": "这样也好。",
+          "action": "mode_a_hair",
+          "effect": "warm"
+        }
+      ],
+      "mode_b": [
+        {
+          "text": "嗯。",
+          "action": "mode_b_nuzzle",
+          "effect": "warm"
+        },
+        {
+          "text": "不用急着收回去。",
+          "action": "mode_b_nuzzle",
+          "effect": "warm"
+        },
+        {
+          "text": "我没躲。",
+          "action": "mode_b_nuzzle",
+          "effect": "warm"
+        }
+      ]
+    },
+    "unlocked": {
+      "mode_a": [
+        {
+          "text": "帽兜戴上了。",
+          "action": "mode_a_nod",
+          "effect": "neutral"
+        }
+      ],
+      "mode_b": [
+        {
+          "text": "帽兜戴上了。",
+          "action": "mode_b_tilt",
+          "effect": "neutral"
+        }
+      ]
+    },
+    "pet": {
+      "mode_a": [
+        {
+          "text": "嗯，我在。",
+          "action": "mode_a_hair",
+          "effect": "warm"
+        },
+        {
+          "text": "想摸就摸。",
+          "action": "mode_a_hair",
+          "effect": "warm"
+        },
+        {
+          "text": "这样待一会儿。",
+          "action": "mode_a_hair",
+          "effect": "warm"
+        }
+      ],
+      "mode_b": [
+        {
+          "text": "可以。",
+          "action": "mode_b_nuzzle",
+          "effect": "warm"
+        },
+        {
+          "text": "找我有事？",
+          "action": "mode_b_nuzzle",
+          "effect": "warm"
+        },
+        {
+          "text": "安静待着也行。",
+          "action": "mode_b_nuzzle",
+          "effect": "warm"
+        }
+      ]
+    },
+    "virtual_gift": {
+      "mode_a": [
+        {
+          "text": "收下了。谢谢你的心意。"
+        },
+        {
+          "text": "放在这里就好。你刚才说的事，我还听着。"
+        },
+        {
+          "text": "好。我把它收好。"
+        }
+      ]
+    }
+  },
+  "sprite_captions": {
+    "stretch": [
+      "歇一会儿。"
+    ],
+    "hold_chick": [
+      "它很轻。",
+      "慢一点，别吓着它。",
+      "嗯，抱稳了。"
+    ],
+    "sword_chick": [
+      "这边有小鸡。",
+      "先让它待稳。"
+    ],
+    "draw_sword": [
+      "只看一会儿。",
+      "刀锋朝外。"
+    ],
+    "rest": [
+      "先歇一会儿。",
+      "嗯，这个动作稍后再看。"
+    ]
+  }
+}

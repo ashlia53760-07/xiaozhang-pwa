@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="510" height="680" viewBox="0 0 510 680">
+  <!-- Original lightweight paper collage; no artwork copied from the reference sheets. -->
+  <g opacity=".34" stroke="#8eafc9" stroke-width="1">
+    <g transform="translate(-18 35) rotate(-9)">
+      <path fill="#e3eef6" d="M0 0h153v159l-8-3-6 5-7-4-8 4-7-3-8 4-8-5-7 5-8-4-8 4-7-3-8 3-7-3-8 4-8-5-8 4-8-3-9 4-8-3-8 2z"/>
+      <path fill="#fff" d="M12 13h129v116H12z"/><path d="M24 144h70"/>
+      <path fill="#bcd5e8" fill-opacity=".65" stroke="none" d="m51-9 48-3 3 23-49 3z"/>
+    </g>
+    <g transform="translate(398 421) rotate(12)">
+      <path fill="#e3edf6" d="M0 0h130v157H0z"/><path fill="#fff" d="M10 10h110v111H10z"/>
+      <path d="M20 137h53"/><path fill="#bfd7e8" fill-opacity=".7" stroke="none" d="m39-8 47 2-1 22-49-1z"/>
+    </g>
+    <path d="M462 56v31c0 14-17 14-17 1V51c0-19 26-19 26 0v43c0 24-35 24-35 0V58" fill="none" stroke-width="2"/>
+    <path d="M56 519h42v8h8v20h-8v8H56v-8h-8v-20h8z" fill="#e7f2fb"/>
+    <path d="M63 531h8v7h7v-7h8v15h-8v7h-7v-7h-8z" fill="#aacbe1" stroke="none"/>
+    <path d="M385 221h13v-8h17v8h12v9h8v13h-59v-13h9z" fill="#fff"/>
+    <path d="m72 322 3 7 7 3-7 3-3 7-3-7-7-3 7-3zM425 598l3 6 6 3-6 3-3 6-3-6-6-3 6-3z" fill="#b6d0e4" stroke="none"/>
+    <path d="M214 654h81" stroke-dasharray="2 5"/><path d="M227 660h55" stroke-dasharray="2 5"/>
+  </g>
+</svg>

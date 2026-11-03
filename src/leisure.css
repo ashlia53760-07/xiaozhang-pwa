@@ -1,0 +1,287 @@
+/* Travel and games inherit the current phone theme. No global layout replacement. */
+:root.is-travelling #pet, :root.is-travelling #pet-action-menu, :root.is-travelling #pet-feedback { display:none !important; }
+.travel-banner { flex:0 0 auto; width:calc(100% - 24px); margin:8px 12px 0; padding:10px 14px; border:1px solid var(--scrap-edge); border-radius:10px; background:var(--scrap-surface); color:var(--scrap-ink); font-size:12px; text-align:left; cursor:pointer; }
+.travel-banner[hidden] { display:none; }
+.leisure-dialog { width:min(720px,calc(100vw - 20px)); max-height:calc(100dvh - 20px); }
+.leisure-dialog > form { display:flex; flex-direction:column; min-height:0; padding:16px; max-height:calc(100dvh - 22px); overflow:auto; gap:14px; }
+.leisure-dialog .dialog-head { flex-shrink:0; margin:0; padding:0 0 12px; position:static; }
+.leisure-dialog .dialog-head h2 { margin-top:5px; }
+.leisure-kicker { font-size:10px; letter-spacing:.12em; color:var(--scrap-muted); }
+.leisure-content { display:grid; gap:16px; min-width:0; }
+.leisure-content h3 { margin:0; font-size:16px; line-height:1.6; }
+.leisure-content p { line-height:1.75; font-size:14px; overflow-wrap:anywhere; }
+.leisure-content small { font-size:11px; line-height:1.65; overflow-wrap:anywhere; }
+.leisure-content label { display:grid; gap:7px; font-size:13px; }
+.leisure-content input:not([type="checkbox"]), .leisure-content select, .leisure-content textarea { max-width:100%; width:100%; min-width:0; font-size:16px; padding:10px; border:1px solid var(--scrap-edge); border-radius:10px; background:var(--scrap-surface); color:var(--text); }
+.leisure-content input[type="checkbox"] { width:18px; height:18px; accent-color:var(--accent); }
+.leisure-status { flex-shrink:0; padding:10px; border:1px solid var(--scrap-edge); border-radius:10px; background:var(--scrap-tint); color:var(--text); font-size:13px; line-height:1.6; overflow-wrap:anywhere; }
+.leisure-status[hidden] { display:none; }
+.leisure-hero { padding:22px; border:1px solid var(--scrap-edge); border-radius:16px; background:var(--scrap-paper) center/510px 680px,var(--scrap-surface); box-shadow:inset 0 0 0 3px var(--scrap-white),0 3px 0 var(--scrap-shadow); display:grid; gap:10px; }
+.leisure-hero h3 { font-size:23px; color:var(--text); }
+.leisure-hero small { color:var(--scrap-muted); }
+.leisure-card { display:grid; gap:10px; min-width:0; padding:15px; background:var(--scrap-surface); border:1px solid var(--scrap-edge); border-radius:13px; }
+.leisure-card > small { color:var(--scrap-muted); }
+.leisure-prose { white-space:pre-wrap; }
+.leisure-toolbar { display:flex; flex-wrap:wrap; gap:10px; }
+.leisure-dialog button:not(.puzzle-tile):not(.gomoku-cell):not(.icon-button) { min-height:44px; padding:9px 12px; font-size:13px; overflow-wrap:anywhere; }
+.leisure-dialog button:disabled { opacity:.55; cursor:default; }
+.leisure-dialog button:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+.leisure-settings, .game-setup, .game-rules, .game-completions, .puzzle-reference { padding:12px; border:1px dashed var(--scrap-edge); border-radius:12px; }
+.leisure-settings[open], .game-setup[open] { display:grid; gap:12px; }
+.leisure-dialog summary { min-height:30px; cursor:pointer; font-size:13px; color:var(--scrap-ink); }
+.leisure-fields { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.trip-list { display:grid; gap:8px; }
+.trip-list button { display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:left; }
+.trip-list small { white-space:nowrap; }
+.travel-photos { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.travel-photos img { width:100%; max-height:220px; object-fit:contain; border-radius:8px; }
+.keepsake-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr)); gap:12px; }
+.game-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.game-tabs button[aria-pressed="true"] { outline:2px solid var(--accent); outline-offset:1px; }
+.game-caption { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:14px; }
+.game-caption span { color:var(--scrap-muted); font-size:12px; }
+.game-feedback { padding:10px 12px; border-left:3px solid var(--accent); background:var(--scrap-surface); color:var(--text); }
+.puzzle-board { display:grid; grid-template-columns:repeat(var(--puzzle-size),minmax(0,1fr)); width:min(100%,500px); aspect-ratio:1; gap:2px; padding:3px; justify-self:center; border:1px solid var(--scrap-edge); background:var(--scrap-tint); border-radius:10px; touch-action:none; user-select:none; }
+.leisure-dialog .puzzle-tile { padding:0; min-width:0; min-height:0; border:0; border-radius:2px; background-image:var(--puzzle-image); background-size:calc(var(--puzzle-size)*100%) calc(var(--puzzle-size)*100%); box-shadow:inset 0 0 0 1px #ffffff70; cursor:grab; touch-action:none; -webkit-user-drag:none; }
+.leisure-dialog .puzzle-tile:active { transform:none; }
+.leisure-dialog .puzzle-tile.snapped { box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent); }
+.leisure-dialog .puzzle-tile.dragging { position:relative; z-index:2; cursor:grabbing; box-shadow:0 10px 25px #0006; pointer-events:none; }
+.leisure-dialog .puzzle-tile.selected, .leisure-dialog .puzzle-tile.drop-target, .leisure-dialog .puzzle-tile.hinted { outline:3px solid var(--accent); outline-offset:-3px; }
+.leisure-dialog .puzzle-tile:disabled { opacity:1; }
+.puzzle-original { display:block; width:100%; max-height:320px; object-fit:contain; margin-top:10px; }
+.gomoku-board { display:grid; grid-template-columns:repeat(15,minmax(0,1fr)); width:min(100%,540px); aspect-ratio:1; padding:5px; justify-self:center; border:2px solid var(--scrap-edge); border-radius:9px; background:var(--scrap-tint); user-select:none; touch-action:manipulation; }
+.leisure-dialog .gomoku-cell { position:relative; padding:0; border:0; min-width:0; min-height:0; border-radius:0; background:linear-gradient(90deg,transparent calc(50% - .5px),var(--scrap-edge) calc(50% - .5px),var(--scrap-edge) calc(50% + .5px),transparent calc(50% + .5px)),linear-gradient(0deg,transparent calc(50% - .5px),var(--scrap-edge) calc(50% - .5px),var(--scrap-edge) calc(50% + .5px),transparent calc(50% + .5px)); box-shadow:none; }
+.leisure-dialog .gomoku-cell:disabled { opacity:1; }
+.gomoku-cell.black::after, .gomoku-cell.white::after { content:""; position:absolute; inset:8%; border:1px solid #242426; border-radius:50%; box-shadow:0 1px 2px #0004; background:radial-gradient(circle at 30% 25%,#545459,#17171a 80%); }
+.gomoku-cell.white::after { background:radial-gradient(circle at 30% 25%,#fff,#ddd 80%); border-color:#aaa; }
+.flight-board { display:grid; grid-template:repeat(14,minmax(0,1fr))/repeat(14,minmax(0,1fr)); width:100%; aspect-ratio:1; gap:1px; border:1px solid var(--scrap-edge); border-radius:14px; padding:7px; background:var(--scrap-surface); }
+.flight-track { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; position:relative; min-width:0; min-height:0; border:1px solid var(--scrap-edge); border-radius:3px; background:var(--scrap-tint); }
+.flight-track small { font-size:8px; opacity:.7; }
+.flight-track.safe { border:2px solid var(--accent); }
+.flight-token { position:absolute; display:grid; place-items:center; border-radius:50%; width:100%; min-height:16px; font-size:8px; background:#d7e6f6; color:#223c58; border:1px solid #50749a; z-index:1; }
+.flight-token.side-1 { background:#303033; color:#fff; border-color:#141414; }
+.flight-token:nth-of-type(n+2) { transform:translate(2px,4px); z-index:2; }
+.flight-center { grid-row:3/13; grid-column:3/13; display:flex; flex-direction:column; gap:10px; justify-content:center; align-items:center; text-align:center; }
+.flight-center .flight-die { font-size:58px; font-weight:400; line-height:1.1; color:var(--accent); }
+.flight-center small { font-size:10px; }
+.flight-hangars { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.flight-hangars section { display:grid; gap:7px; padding:10px; background:var(--scrap-surface); border-radius:10px; border:1px solid var(--scrap-edge); }
+.flight-hangars strong { font-size:12px; }
+.flight-hangars button:not(:disabled) { outline:2px solid var(--accent); }
+.flight-event { display:grid; gap:10px; padding:14px; border:1px solid var(--scrap-edge); background:var(--scrap-tint); border-radius:14px; }
+.game-completions .leisure-card { margin-top:10px; }
+@media (max-width:420px) { .leisure-dialog > form { padding:12px; } .leisure-hero { padding:16px; } .game-tabs { gap:6px; } .leisure-dialog .game-tabs button { padding:8px 4px; font-size:12px; } }
+@media (prefers-reduced-motion:no-preference) { .puzzle-tile:not(.dragging) { transition:box-shadow .15s,outline .15s; } }
+.game-model-setup { display:grid; gap:10px; padding:12px; border:1px dashed var(--scrap-edge); border-radius:12px; background:color-mix(in srgb,var(--scrap-tint) 45%,transparent); }
+.game-model-setup[open] { display:grid; }
+.game-model-setup > p { margin:0; }
+.game-model-setup > summary { grid-column:1/-1; }
+.game-model-setup .leisure-toolbar { align-items:center; justify-content:space-between; }
+.game-model-setup .leisure-toolbar small { color:var(--scrap-muted); }
+.game-turn-card { display:flex; align-items:center; justify-content:center; gap:16px; padding:10px; border:1px solid var(--scrap-edge); border-radius:12px; background:var(--scrap-tint); }
+.game-turn-card > div { display:grid; gap:2px; min-width:100px; text-align:center; }
+.game-turn-card > small { color:var(--scrap-muted); font-size:11px; }
+.game-turn-avatar { display:grid; place-items:center; width:38px; height:38px; border:1px solid var(--scrap-edge); border-radius:50%; background:var(--scrap-surface); color:var(--scrap-ink); font-size:14px; }
+.game-turn-avatar.user { border-radius:12px 12px 12px 3px; }
+.game-turn-avatar.character { border-radius:12px 12px 3px 12px; }
+.game-turn-card > div small { color:var(--scrap-muted); }
+.game-feedback { white-space:pre-wrap; }
+
+/* Fullscreen tabletop. Repeated IDs keep these overrides above the legacy dialog theme selectors without changing other pages. */
+:root #play-dialog#play-dialog.leisure-dialog, :root #travel-dialog#travel-dialog.leisure-dialog {
+  --leisure-dark:#292b2c; --leisure-light:#f5f2e9;
+  position:fixed; inset:0; width:100%; max-width:none; height:100dvh; max-height:100dvh;
+  margin:0; padding:0; border:0; border-radius:0; box-sizing:border-box; box-shadow:none;
+  background:radial-gradient(ellipse at 50% 0%,var(--scrap-surface),transparent 70%),repeating-linear-gradient(0deg,#80808002 0 1px,transparent 1px 3px),var(--paper);
+  color:var(--text); overflow:hidden;
+}
+:root #play-dialog#play-dialog.leisure-dialog > form, :root #travel-dialog#travel-dialog.leisure-dialog > form {
+  width:min(100%,880px); height:100%; max-height:none; min-width:0; margin:auto; box-sizing:border-box;
+  padding:calc(20px + env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));
+  overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; gap:20px;
+}
+:root #play-dialog#play-dialog .dialog-head, :root #travel-dialog#travel-dialog .dialog-head {
+  display:flex; justify-content:space-between; align-items:center; border:0; padding:0 0 15px; margin:0;
+  border-bottom:1px solid var(--scrap-edge); background:transparent;
+}
+:root #play-dialog#play-dialog .dialog-head h2, :root #travel-dialog#travel-dialog .dialog-head h2 { font-size:27px; font-family:Georgia,"Songti SC","Noto Serif SC",serif; letter-spacing:.14em; margin:6px 0 0; }
+:root #play-dialog#play-dialog .dialog-head .icon-button, :root #travel-dialog#travel-dialog .dialog-head .icon-button { width:44px; height:44px; flex:none; border-radius:50%; font-size:26px; background:var(--scrap-surface); }
+:root #play-dialog#play-dialog .leisure-content { gap:18px; }
+:root #play-dialog#play-dialog button:where(:not(.puzzle-tile):not(.gomoku-cell):not(.icon-button)), :root #travel-dialog#travel-dialog button:where(:not(.journey-node):not(.icon-button)) {
+  border:1px solid var(--scrap-edge); border-radius:9px; background:var(--scrap-surface); color:var(--scrap-ink);
+  box-shadow:0 2px 0 var(--scrap-shadow); min-height:44px; padding:10px 14px; line-height:1.45; -webkit-tap-highlight-color:transparent;
+}
+:root #play-dialog#play-dialog button:not(.puzzle-tile):not(.gomoku-cell):active, :root #travel-dialog#travel-dialog button:active { transform:translateY(1px); }
+:root #play-dialog#play-dialog button:disabled { cursor:default; }
+.game-presence { padding:2px 10px 5px; }
+.game-players { display:grid; grid-template-columns:1fr minmax(110px,1.3fr) 1fr; align-items:center; gap:12px; max-width:580px; margin:auto; }
+.game-player { display:grid; justify-items:center; gap:7px; text-align:center; }
+.game-player strong { font-size:14px; letter-spacing:.1em; }
+.game-player > small { color:var(--scrap-muted); }
+.game-portrait { width:76px; height:76px; border:4px solid var(--scrap-surface); border-radius:50%; box-shadow:0 0 0 1px var(--scrap-edge),0 5px 16px var(--scrap-shadow); background:var(--scrap-tint); overflow:hidden; display:grid; place-items:center; }
+.game-portrait img { display:block; width:100%; height:100%; object-fit:cover; }
+.game-portrait span { font-family:serif; font-size:29px; color:var(--scrap-ink); }
+.game-player.is-turn .game-portrait { box-shadow:0 0 0 2px var(--scrap-ink),0 0 0 6px color-mix(in srgb,var(--scrap-ink) 9%,transparent),0 6px 18px var(--scrap-shadow); }
+.game-player.is-turn > small::before { content:""; display:inline-block; width:5px; height:5px; background:var(--scrap-ink); border-radius:50%; margin:0 5px 2px 0; }
+.game-link { display:grid; justify-items:center; gap:9px; text-align:center; color:var(--scrap-muted); }
+.game-link > span { display:grid; place-items:center; height:36px; width:100%; font:25px Georgia,serif; color:var(--scrap-ink); position:relative; }
+.game-link > span::before,.game-link > span::after { content:""; height:1px; background:var(--scrap-edge); width:22%; position:absolute; top:50%; left:0; }
+.game-link > span::after { left:auto; right:0; }
+.game-link > small { letter-spacing:.08em; }
+.game-link i { font-style:normal; font-size:10px; }
+:root #play-dialog#play-dialog .game-tabs { border:1px solid var(--scrap-edge); border-radius:12px; padding:5px; gap:5px; background:var(--scrap-tint); }
+:root #play-dialog#play-dialog .game-tabs button { display:flex; justify-content:center; align-items:center; gap:8px; background:transparent; border-color:transparent; box-shadow:none; }
+:root #play-dialog#play-dialog .game-tabs button span { font-size:19px; }
+:root #play-dialog#play-dialog .game-tabs button[aria-pressed="true"] { background:var(--leisure-dark); color:var(--leisure-light); border-color:var(--leisure-dark); outline:0; box-shadow:0 3px 8px #0002; }
+:root #play-dialog#play-dialog .game-principle { margin:-6px 0 0; text-align:center; font-size:11px; letter-spacing:.08em; }
+:root #play-dialog#play-dialog :is(.game-setup,.game-model-setup,.game-completions,.game-rules,.puzzle-reference) { border:1px solid var(--scrap-edge); background:color-mix(in srgb,var(--scrap-surface) 65%,transparent); border-radius:10px; padding:13px 16px; }
+:root #play-dialog#play-dialog details:not([open]) > :not(summary) { display:none; }
+:root #play-dialog#play-dialog .game-model-setup { display:block; }
+:root #play-dialog#play-dialog .game-model-setup[open] { display:grid; gap:12px; }
+:root #play-dialog#play-dialog summary { line-height:1.6; min-height:24px; letter-spacing:.03em; }
+:root #play-dialog#play-dialog .game-caption { border-bottom:1px solid var(--scrap-edge); padding-bottom:12px; flex-wrap:wrap; }
+:root #play-dialog#play-dialog .game-turn-card { gap:8px; justify-content:space-between; border:0; background:transparent; padding:0 3px; margin-top:-11px; }
+:root #play-dialog#play-dialog .game-turn-card .game-turn-avatar { display:none; }
+:root #play-dialog#play-dialog .game-turn-card > div { display:flex; width:100%; justify-content:space-between; font-size:11px; color:var(--scrap-muted); }
+:root #play-dialog#play-dialog .game-turn-card > small { width:100%; text-align:center; }
+:root #play-dialog#play-dialog .puzzle-board { padding:10px; gap:3px; border:1px solid #8b8171; border-radius:4px; background:repeating-linear-gradient(92deg,#bcb09b 0px,#cbbfa9 2px,#c3b79f 5px); box-shadow:inset 0 0 0 3px #e9dfc8,0 6px 0 #8f8571,0 12px 24px #29251c25; margin:0 0 8px; }
+:root #play-dialog#play-dialog .puzzle-tile { border-radius:1px; box-shadow:inset 0 0 0 1px #fff8,1px 2px 3px #17191250; }
+:root #play-dialog#play-dialog .puzzle-tile.snapped { box-shadow:inset 0 0 0 1px #e6efd7bb; }
+:root #play-dialog#play-dialog .gomoku-board { background:repeating-linear-gradient(94deg,#d6b88b 0px,#ddc398 2px,#d9bb91 6px,#e3caa1 9px); padding:12px; border:1px solid #a48963; border-radius:5px; box-shadow:inset 0 0 0 4px #d0ae7c,inset 0 0 0 5px #ae8959,0 6px 0 #9c794f,0 14px 25px #30291b28; margin-bottom:8px; }
+:root #play-dialog#play-dialog .gomoku-cell { --scrap-edge:#775e3c99; }
+:root #play-dialog#play-dialog .gomoku-cell.star::before { content:""; position:absolute; width:5px; height:5px; top:50%; left:50%; transform:translate(-50%,-50%); background:#63492d; border-radius:50%; }
+:root #play-dialog#play-dialog .gomoku-cell.black::after, :root #play-dialog#play-dialog .gomoku-cell.white::after { inset:5%; box-shadow:1px 2px 3px #34291480,inset 0 1px 1px #ffffff55; }
+:root #play-dialog#play-dialog .gomoku-cell.black::after { background:radial-gradient(circle at 32% 25%,#606264,#252729 48%,#121415 90%); border-color:#151617; }
+:root #play-dialog#play-dialog .gomoku-cell.white::after { background:radial-gradient(circle at 32% 25%,#fff,#eeeae0 60%,#c3bdad); border-color:#a9a28f; }
+:root #play-dialog#play-dialog .game-feedback { margin:0; padding:8px 12px; font-size:12px; color:var(--scrap-muted); background:transparent; border-left:1px solid var(--scrap-edge); }
+:root #play-dialog#play-dialog .flight-board { max-width:540px; justify-self:center; padding:10px; gap:2px; border-radius:7px; border:1px solid #858b82; background:#e7e8dd; box-shadow:inset 0 0 0 4px #faf9ef,0 5px 0 #898f83,0 12px 23px #26302525; }
+.flight-track.tone-0 { background:#d1dedc; }
+.flight-track.tone-1 { background:#f0dbba; }
+.flight-track.tone-2 { background:#e2ccc7; }
+.flight-track.tone-3 { background:#ced7be; }
+:root #play-dialog#play-dialog .flight-track { border-color:#a1a699; border-radius:2px; color:#38433e; }
+:root #play-dialog#play-dialog .flight-track.safe { border-color:#344e56; background:#a9c1c5; }
+:root #play-dialog#play-dialog .flight-track:nth-child(27) { background:#59615b; color:#fff; border-color:#303d38; }
+.flight-center { border:1px dashed #aeb6a6; border-radius:50%; color:#3c4944; background:radial-gradient(circle,#fbfaf1 10%,#e4e6d9 72%); margin:10px; }
+:root #play-dialog#play-dialog .flight-center .leisure-kicker, :root #play-dialog#play-dialog .flight-center small { color:#53635a; }
+:root #play-dialog#play-dialog .flight-center .flight-die { display:grid; grid-template:repeat(3,1fr)/repeat(3,1fr); place-items:center; padding:13px; width:74px; height:74px; background:#fffef7; border:1px solid #b8b7a8; border-radius:13px; box-shadow:inset 0 -4px #dedcd0,0 5px 9px #3336; color:#343d38; transform:rotate(-5deg); }
+.flight-die i { width:9px; height:9px; border-radius:50%; }
+.flight-die i.pip { background:#34433c; box-shadow:inset 0 1px 2px #0006,0 1px #fff; }
+:root #play-dialog#play-dialog .flight-center button { background:#34453e; color:#f8f7ef; border-color:#34453e; border-radius:20px; box-shadow:0 3px 0 #24322b; }
+.flight-token { aspect-ratio:1; min-height:0; width:100%; border-radius:50%; background:radial-gradient(circle at 35% 25%,#b6d7e4,#4e7b89); color:#152f3b; box-shadow:0 2px 3px #0006,inset 0 1px #fff; }
+.flight-token.side-1 { background:radial-gradient(circle at 35% 25%,#707978,#20292b); }
+.flight-token b { font-size:14px; }
+.flight-token em { position:absolute; right:0; bottom:-1px; font-size:7px; font-style:normal; background:inherit; border-radius:50%; }
+.flight-runways { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.flight-runways > div { display:grid; gap:6px; }
+.flight-runways small { color:var(--scrap-muted); }
+.flight-runways ol { display:grid; grid-template-columns:repeat(6,1fr); padding:0; margin:0; list-style:none; }
+.flight-runways li { display:grid; place-items:center; aspect-ratio:1; border:1px solid var(--scrap-edge); background:var(--scrap-tint); font-size:10px; position:relative; }
+.flight-runways li.occupied { background:var(--leisure-dark); color:var(--leisure-light); }
+.flight-runways li b { position:absolute; bottom:0; font-size:8px; }
+:root #play-dialog#play-dialog .flight-hangars { gap:12px; }
+:root #play-dialog#play-dialog .flight-hangars section { border-radius:5px; background:var(--scrap-surface); }
+:root #play-dialog#play-dialog .flight-hangars button { border-radius:6px; font-size:11px; padding:8px 5px; }
+:root #play-dialog#play-dialog .flight-hangars button:not(:disabled) { outline:0; border-color:var(--leisure-dark); background:var(--leisure-dark); color:var(--leisure-light); }
+.game-conversation { position:sticky; bottom:0; z-index:12; border:1px solid var(--scrap-edge); border-radius:15px; padding:14px; box-shadow:0 -3px 20px var(--scrap-shadow),0 5px 12px var(--scrap-shadow); background:var(--scrap-surface); }
+.game-dialogue-label { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.game-dialogue-label small { font-weight:600; letter-spacing:.1em; }
+.game-dialogue-label > span { color:var(--scrap-muted); font-size:10px; }
+:root #play-dialog#play-dialog #game-dialogue-text { margin:5px 0 10px; font-size:14px; line-height:1.7; }
+.game-chat-history { display:grid; gap:10px; overflow-y:auto; max-height:135px; padding:10px 0; border-top:1px solid var(--scrap-edge); margin-bottom:8px; overscroll-behavior:contain; }
+.game-chat-row { display:grid; justify-items:start; gap:3px; }
+.game-chat-row small { color:var(--scrap-muted); }
+.game-chat-row.user { justify-items:end; }
+:root #play-dialog#play-dialog .game-chat-row p { margin:0; max-width:92%; padding:8px 12px; border-radius:3px 11px 11px; background:var(--leisure-dark); color:var(--leisure-light); font-size:13px; line-height:1.7; white-space:pre-wrap; }
+:root #play-dialog#play-dialog .game-chat-row.user p { background:var(--scrap-tint); color:var(--text); border-radius:11px 3px 11px 11px; }
+.game-chat-composer { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:7px; }
+:root #play-dialog#play-dialog .game-chat-composer input { border-radius:8px; background:var(--scrap-tint); font-size:16px; min-height:44px; }
+:root #play-dialog#play-dialog .game-chat-composer button { padding:8px 11px; font-size:12px; }
+:root #play-dialog#play-dialog .game-chat-composer [data-action="game-send"] { background:var(--leisure-dark); color:var(--leisure-light); border-color:var(--leisure-dark); }
+.game-chat-note { display:block; padding-top:7px; color:var(--scrap-muted); font-size:10px; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.keepsake-item { position:relative; border-radius:4px; background:var(--scrap-surface); box-shadow:0 4px 12px var(--scrap-shadow); }
+.keepsake-item.is-displayed::before { content:"陈列中"; position:absolute; z-index:1; top:18px; right:12px; border:1px solid var(--scrap-ink); padding:3px 7px; transform:rotate(7deg); font-size:10px; color:var(--scrap-ink); background:var(--scrap-surface); }
+.keepsake-object { display:grid; place-items:center; background:radial-gradient(ellipse at 50% 72%,#9b846128,transparent 55%),linear-gradient(135deg,#f4eddd,#e6dfd0); border:1px solid #d3c8b2; padding:12px; border-radius:3px; }
+.keepsake-object svg { width:180px; height:125px; overflow:visible; filter:drop-shadow(0 6px 4px #4c3e312c); }
+.keepsake-object > span { color:#7c6f59; font-size:10px; letter-spacing:.2em; }
+.gift-wrap { fill:#b7a589; stroke:#88775e; }
+.gift-lid { fill:#d9c9aa; stroke:#8e7d61; }
+.gift-ribbon { fill:#48564e; }
+.gift-bow { fill:none; stroke:#48564e; stroke-width:6; stroke-linejoin:round; }
+.clue-paper { fill:#e8d6ab; stroke:#9d875d; stroke-width:2; }
+.clue-line { stroke:#8d7550; fill:none; stroke-width:1.5; stroke-dasharray:3 3; }
+.keepsake-object circle { stroke:#665943; fill:none; }
+.relic-case { fill:#49504a; stroke:#9b9477; stroke-width:4; }
+.relic-mark { fill:#b6a67a; stroke:#6c664f; stroke-width:2; }
+@media (min-width:960px) { :root #play-dialog#play-dialog > form { width:min(100%,860px); } :root #play-dialog#play-dialog .leisure-content { padding-inline:44px; } }
+@media (max-width:480px) {
+  :root #play-dialog#play-dialog.leisure-dialog > form, :root #travel-dialog#travel-dialog.leisure-dialog > form { padding:calc(14px + env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left)); gap:16px; }
+  :root #play-dialog#play-dialog .dialog-head h2, :root #travel-dialog#travel-dialog .dialog-head h2 { font-size:24px; }
+  .game-presence { padding-inline:0; }
+  .game-players { gap:8px; grid-template-columns:1fr minmax(100px,1.25fr) 1fr; }
+  .game-portrait { width:62px; height:62px; }
+  .game-link i { font-size:9px; }
+  :root #play-dialog#play-dialog .game-tabs button { padding:8px 4px; gap:5px; font-size:12px; }
+  :root #play-dialog#play-dialog .game-caption strong { font-size:13px; }
+  .game-conversation { padding:11px; border-radius:12px; }
+  .game-chat-composer { gap:5px; }
+  :root #play-dialog#play-dialog .game-chat-composer button { padding:8px; }
+  .game-dialogue-label > span { font-size:9px; }
+  :root #play-dialog#play-dialog .flight-center .flight-die { width:58px; height:58px; padding:10px; }
+  .flight-die i { width:7px; height:7px; }
+}
+@media (prefers-reduced-motion:no-preference) {
+  .game-portrait { transition:box-shadow .2s; }
+  .game-chat-row { animation:game-line-in .2s ease-out; }
+  @keyframes game-line-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+}
+/* Fixed partners and conversation; only the tabletop/settings region scrolls. */
+:root #play-dialog#play-dialog.leisure-dialog > form { overflow:hidden; }
+:root #play-dialog#play-dialog .leisure-content { flex:1; min-height:0; display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; gap:14px; }
+.game-table-scroll { display:grid; align-content:start; min-height:0; gap:16px; overflow:auto; overscroll-behavior:contain; padding:4px 8px 20px; scrollbar-width:thin; scrollbar-gutter:stable; }
+.game-conversation { position:relative; bottom:auto; }
+.game-chat-history { max-height:100px; }
+@media (min-width:960px) {
+  :root #play-dialog#play-dialog > form { width:min(100%,1100px); }
+  :root #play-dialog#play-dialog .leisure-content { padding:0; grid-template-columns:minmax(0,1fr) 300px; grid-template-rows:auto auto minmax(0,1fr); gap:18px 28px; }
+  .game-presence { grid-column:1/-1; grid-row:1; }
+  :root #play-dialog#play-dialog .game-tabs { grid-column:1/-1; grid-row:2; }
+  .game-table-scroll { grid-column:1; grid-row:3; }
+  .game-conversation { grid-column:2; grid-row:3; align-self:end; }
+  .game-chat-history { max-height:220px; }
+}
+@media (max-height:650px) {
+  .game-portrait { width:42px; height:42px; border-width:2px; }
+  .game-players { gap:4px; }
+  .game-player { gap:3px; }
+  .game-link i,.game-chat-note { display:none; }
+  :root #play-dialog#play-dialog.leisure-dialog > form { gap:9px; padding-top:max(8px,env(safe-area-inset-top)); padding-bottom:max(8px,env(safe-area-inset-bottom)); }
+  :root #play-dialog#play-dialog .dialog-head { padding-bottom:8px; }
+  :root #play-dialog#play-dialog .dialog-head h2 { font-size:20px; }
+  :root #play-dialog#play-dialog .dialog-head .leisure-kicker { display:none; }
+  :root #play-dialog#play-dialog .leisure-content { gap:8px; }
+  .game-conversation { padding:8px; }
+  .game-chat-history { max-height:60px; }
+}
+
+/* Keep the actual board first; round status already lives with the two partners. */
+.game-table-scroll:has(.puzzle-board, .gomoku-board, .flight-board) > :is(.game-principle,.game-turn-card,.game-caption) { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.game-table-scroll:has(.puzzle-board, .gomoku-board, .flight-board) > .game-setup { order:5; }
+.game-table-scroll > :is(.game-model-setup,.game-completions) { order:6; }
+:root #play-dialog#play-dialog .game-tabs button { white-space:nowrap; }
+@media (max-width:480px) {
+  :root #play-dialog#play-dialog .game-tabs button span { font-size:16px; }
+}
+@media (max-height:650px) {
+  :root #play-dialog#play-dialog .leisure-status { box-sizing:border-box; max-height:44px; overflow:auto; padding:5px 8px; margin:0; font-size:12px; line-height:1.4; }
+  .game-player { grid-template-columns:42px auto; grid-template-rows:auto auto; justify-items:start; align-items:center; gap:0 7px; }
+  .game-player .game-portrait { grid-column:1; grid-row:1/3; }
+  .game-player strong { font-size:12px; white-space:nowrap; }
+  .game-player > small { font-size:9px; line-height:1.4; white-space:nowrap; }
+  .game-link { gap:4px; }
+  .game-link > span { height:22px; font-size:20px; }
+  .game-link > small { font-size:10px; }
+  .game-chat-history { max-height:42px; padding:6px 0; }
+  :root #play-dialog#play-dialog #game-dialogue-text { margin:4px 0 6px; font-size:13px; }
+}

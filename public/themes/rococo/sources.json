@@ -1,0 +1,49 @@
+{
+  "project": "https://github.com/qimingjiu/Trianon",
+  "commit": "29c5f677742414922de77ab3c6d18bae875c8d75",
+  "assets": [
+    {
+      "file": "bow.png",
+      "source": "src/icons/w_bow.png",
+      "bytes": 27257,
+      "license": "CC0 1.0"
+    },
+    {
+      "file": "quills.webp",
+      "source": "src/s3v/gen/w_quills.webp",
+      "bytes": 32678,
+      "license": "CC0 1.0"
+    },
+    {
+      "file": "shell.webp",
+      "source": "src/s3v/gen/w_shell.webp",
+      "bytes": 8420,
+      "license": "CC0 1.0"
+    },
+    {
+      "file": "seal.webp",
+      "source": "src/rpv2/w_rd_seal.webp",
+      "bytes": 9644,
+      "license": "CC0 1.0"
+    },
+    {
+      "file": "ribbon.webp",
+      "source": "src/rpv2/w_rd_bow.webp",
+      "bytes": 20680,
+      "license": "CC0 1.0"
+    },
+    {
+      "file": "paper-grain.png",
+      "source": "src/s2v/grain.png",
+      "bytes": 47437,
+      "license": "CC0 1.0"
+    },
+    {
+      "file": "PinyonScript.ttf",
+      "source": "src/fonts/PinyonScript.ttf",
+      "bytes": 151412,
+      "license": "SIL OFL 1.1",
+      "notice": "OFL-PinyonScript.txt"
+    }
+  ]
+}

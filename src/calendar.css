@@ -1,0 +1,62 @@
+.calendar-module { --cal-accent: var(--accent, #685747); margin: 0 0 24px; }
+.calendar-module button,.calendar-module input,.calendar-module select,.calendar-module textarea { font: inherit; }
+.calendar-module button { cursor: pointer; }
+.calendar-heading,.calendar-nav,.calendar-actions,.calendar-tools,.calendar-diary-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.calendar-heading h3 { font-size: 23px; margin: 4px 0 18px; font-weight: 500; }
+.calendar-eyebrow { font-size: 12px; letter-spacing: 2px; opacity: .65; margin: 0; }
+.calendar-nav { justify-content: center; margin: 8px 0 18px; }
+.calendar-nav button { width: 42px; min-height: 40px; font-size: 24px; }
+.calendar-nav input { width: 170px; background: transparent; color: inherit; border: 0; text-align: center; }
+.calendar-weekdays,.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 5px; }
+.calendar-weekdays { text-align: center; margin-bottom: 9px; opacity: .6; font-size: 12px; }
+.calendar-module .calendar-cell { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 2px 5px; min-width: 0; height: 86px; border: 1px solid transparent; border-radius: 12px; background: transparent; color: inherit; line-height: 1.2; }
+.calendar-module .calendar-cell:hover { background: color-mix(in srgb, currentColor 6%, transparent); }
+.calendar-module .calendar-cell[aria-pressed=true] { border-color: var(--cal-accent); background: color-mix(in srgb, var(--cal-accent) 10%, transparent); }
+.calendar-cell.outside { opacity: .35; }
+.calendar-cell.today .calendar-day-number { text-decoration: underline; text-underline-offset: 4px; font-weight: 700; }
+.calendar-day-number { font-size: 22px; }
+.calendar-cell-label { max-width: 100%; font-size: 11px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.calendar-cell-label.festival,.calendar-dots { color: #a95161; }
+.calendar-dots { min-height: 11px; font-size: 10px; letter-spacing: 1px; }
+.calendar-off { position: absolute; right: 2px; top: 2px; color: #a54450; font-size: 10px; }
+.calendar-off.work { color: #6c7857; }
+.calendar-legend { font-size: 11px; opacity: .65; margin: 12px 0; }
+.calendar-season { font-size: 14px; line-height: 1.8; color: var(--cal-accent); }
+.calendar-tools { flex-wrap: wrap; justify-content: flex-start; margin-top: 12px; }
+.calendar-tools button,.calendar-file { padding: 8px 12px; border: 1px solid color-mix(in srgb,currentColor 20%,transparent); border-radius: 8px; background: transparent; color: inherit; font-size: 12px; cursor: pointer; }
+.calendar-file input { display: block; max-width: 210px; font-size: 11px; margin-top: 4px; }
+.calendar-day-panel { padding: 20px; margin: 20px 0 16px; border: 1px solid color-mix(in srgb,currentColor 16%,transparent); border-radius: 16px; }
+.calendar-day-panel h3 { margin: 0 0 10px; font-size: 17px; }
+.calendar-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.calendar-module label { min-width: 0; }
+.calendar-day-panel label { display: flex; flex-direction: column; gap: 8px; font-size: 13px; margin: 12px 0; }
+.calendar-module select,.calendar-module textarea,.calendar-birthday-controls input { box-sizing: border-box; min-width: 0; width: 100%; padding: 10px; border-radius: 8px; color: inherit; background: transparent; border: 1px solid color-mix(in srgb,currentColor 20%,transparent); }
+.calendar-module textarea { resize: vertical; }
+.calendar-actions { justify-content: flex-start; flex-wrap: wrap; }
+.calendar-share { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; line-height: 1.7; }
+.calendar-share input { flex-shrink: 0; margin-top: 6px; }
+#calendar-birthdays { margin-top: 22px; border-top: 1px solid color-mix(in srgb,currentColor 16%,transparent); padding-top: 18px; }
+#calendar-birthdays summary { cursor: pointer; font-size: 16px; }
+.calendar-birthday-row { padding: 15px 0; border-bottom: 1px dashed color-mix(in srgb,currentColor 18%,transparent); }
+.calendar-birthday-row>div:first-child { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.calendar-birthday-row span,.calendar-birthday-row p { font-size: 12px; line-height: 1.8; opacity: .8; }
+.calendar-birthday-row p { margin: 7px 0; }
+.calendar-birthday-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+.calendar-birthday-controls label { font-size: 12px; display: flex; flex-direction: column; gap: 5px; max-width: 160px; }
+.calendar-birthday-controls button { font-size: 12px; padding: 8px 10px; }
+.calendar-imported-event { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; margin: 8px 0; overflow-wrap: anywhere; }
+.calendar-diary-heading { margin-top: 26px; flex-wrap: wrap; }
+.calendar-diary-heading h3 { font-size: 17px; margin: 0; }
+.calendar-diary-heading label { font-size: 12px; display: flex; align-items: center; gap: 6px; }
+.calendar-diary-heading input { width: auto; margin: 0; }
+.calendar-module a { color: inherit; text-underline-offset: 3px; }
+.calendar-module button:focus-visible { outline: 2px solid var(--cal-accent); outline-offset: 2px; }
+.calendar-module .birthday-settings-section { border: 0; padding: 16px 0 0; }
+.calendar-module .hint { line-height: 1.8; overflow-wrap: anywhere; }
+/* The calendar uses flat date cells inside the application's enamel control theme. */
+#diary-dialog #calendar-grid button.calendar-cell { border: 1px solid transparent; background: transparent; color: var(--text); box-shadow: none; text-shadow: none; font-weight: 400; }
+#diary-dialog #calendar-grid button.calendar-cell:hover { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+#diary-dialog #calendar-grid button.calendar-cell[aria-pressed=true] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+#diary-dialog #calendar-grid button.calendar-cell:active { transform: none; }
+.calendar-period-mark { color: #ad4865; }
+@media(max-width:480px) { .calendar-module .calendar-cell { height: 72px; border-radius: 9px; } .calendar-day-number { font-size: 20px; } .calendar-weekdays,.calendar-grid { gap: 2px; } .calendar-day-panel { padding: 15px 12px; } .calendar-fields { gap: 10px; } .calendar-heading h3 { font-size: 21px; } }

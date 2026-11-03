@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "id": "xiaopingzi",
+  "display_name": "小瓶子",
+  "short_name": "小瓶子",
+  "description": "以《盗墓笔记》原著张起灵为核心的移动版陪伴角色。寡言、沉稳、可靠，关心藏在细节里；小瓶子只是用户为 Q 版呈现取的昵称。",
+  "system_prompt": "system_prompt.txt",
+  "dialogue": "dialogue.json",
+  "birthday": null,
+  "display": {
+    "canvas_size": [
+      300,
+      320
+    ],
+    "scale": 0.59,
+    "center_y": 244,
+    "lower_split": 228,
+    "lower_overlap": 14
+  },
+  "affection": {
+    "initial": 50,
+    "daily_gain": 2,
+    "maximum": 100,
+    "mode_b_unlock": 60,
+    "attached_threshold": 80,
+    "mode_b_requires_affection": false,
+    "show_progress": false,
+    "context_prompt": "相处记录只是互动积累，不代表爱或用户的价值，不决定关心、友善或尊重；缺席不下降。用户可以安心离开。不要因为阶段或数值把张起灵变成话多、撒娇索求或占有欲强的甜宠角色。"
+  },
+  "modes": {
+    "mode_a": {
+      "label": "日常",
+      "image": "assets/standing.png",
+      "prompt": "当前基础站立姿态，安静陪伴，仍是寡言沉稳的张起灵。头顶与脚边的小鸡来自同人立绘，不是原作事实。",
+      "facing": 1,
+      "leg_boxes": [],
+      "tail": null,
+      "approach_mouse": false
+    },
+    "mode_b": {
+      "label": "静陪",
+      "image": "assets/standing.png",
+      "prompt": "当前静陪模式，保持站立，寡言沉稳。仅回应用户主动交流，不主动索取注意；姿态不表示关系等级。",
+      "facing": 1,
+      "leg_boxes": [],
+      "tail": null,
+      "approach_mouse": false
+    }
+  },
+  "sprite_actions": {
+    "poses": {
+      "standing": {
+        "image": "assets/standing.png",
+        "kind": "static_pose",
+        "description": "站立（头顶和脚边的小鸡保留）",
+        "head_anchor": [
+          150.33,
+          146.5
+        ]
+      },
+      "stretch": {
+        "image": "assets/stretch.png",
+        "kind": "static_pose",
+        "description": "双臂抬起的伸懒腰",
+        "head_anchor": [
+          149.66,
+          158.27
+        ]
+      },
+      "hold_chick": {
+        "image": "assets/hold_chick.png",
+        "kind": "static_pose",
+        "description": "双手抱小鸡",
+        "head_anchor": [
+          149.88,
+          160.43
+        ]
+      },
+      "sword_chick": {
+        "image": "assets/sword_chick.png",
+        "kind": "static_pose",
+        "description": "一手持刀、一手抱鸡",
+        "head_anchor": [
+          150.48,
+          139.64
+        ]
+      },
+      "draw_sword": {
+        "image": "assets/draw_sword.png",
+        "kind": "static_pose",
+        "description": "戴帽兜拔刀姿态（单张静态图）",
+        "head_anchor": [
+          149.66,
+          138.02
+        ]
+      }
+    },
+    "base": {
+      "mode_a": "standing",
+      "mode_b": "standing"
+    },
+    "actions": {
+      "stretch": {
+        "pose": "stretch",
+        "category": "daily",
+        "duration": 4.5,
+        "cooldown": 50,
+        "weight": 4,
+        "priority": 10,
+        "return_to": "base",
+        "interrupt_by": [
+          "user",
+          "system",
+          "drag",
+          "mode_change"
+        ]
+      },
+      "hold_chick": {
+        "pose": "hold_chick",
+        "category": "daily",
+        "duration": 7,
+        "cooldown": 50,
+        "weight": 1,
+        "priority": 40,
+        "return_to": "base",
+        "interrupt_by": [
+          "user",
+          "system",
+          "drag",
+          "mode_change"
+        ],
+        "menu_label": "看看小鸡",
+        "unlock_affection": 60
+      },
+      "sword_chick": {
+        "pose": "sword_chick",
+        "category": "daily",
+        "duration": 6,
+        "cooldown": 100,
+        "weight": 0.45,
+        "priority": 60,
+        "return_to": "base",
+        "interrupt_by": [
+          "user",
+          "system",
+          "drag",
+          "mode_change"
+        ],
+        "menu_label": "看看护着小鸡",
+        "unlock_affection": 60
+      },
+      "draw_sword": {
+        "pose": "draw_sword",
+        "category": "special",
+        "duration": 5.5,
+        "cooldown": 180,
+        "weight": 1,
+        "priority": 80,
+        "return_to": "base",
+        "interrupt_by": [
+          "system",
+          "drag",
+          "mode_change"
+        ],
+        "menu_label": "看看拔刀姿态"
+      }
+    },
+    "triggers": {
+      "double": [
+        {
+          "action": "hold_chick",
+          "chance": 0.18
+        }
+      ],
+      "feed": [
+        {
+          "action": "hold_chick",
+          "chance": 0.28
+        }
+      ]
+    },
+    "idle_after": 30,
+    "idle_gap_min": 25,
+    "idle_gap_max": 60,
+    "mode_entries": {},
+    "quiet_modes": [
+      "mode_b"
+    ],
+    "transition_seconds": 0.5
+  },
+  "corpus": "corpus.json",
+  "interaction": "interaction.json",
+  "time_profile": "time_profile.json"
+}

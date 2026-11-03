@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import ts from 'typescript';
+import { readFile } from 'node:fs/promises';
+
+const source = await readFile(new URL('../src/fieldwork.ts', import.meta.url), 'utf8');
+const js = ts.transpile(source, { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 });
+const moduleUrl = `data:text/javascript;base64,${Buffer.from(js).toString('base64')}`;
+const prompts = await import(moduleUrl);
+const rules = prompts.FIELDWORK_CANON_RULES;
+assert.match(rules, /《盗墓笔记》是本产品的核心人物与叙事世界观/u);
+assert.match(rules, /《鬼吹灯》可作为民俗、地理、风水观念、探险经验和墓葬氛围的背景补充/u);
+assert.match(rules, /不得把《鬼吹灯》的专属人物、专属器物或独有剧情冒称为《盗墓笔记》原作事实/u);
+assert.match(prompts.fieldworkPrompt.forumRequest, /插科打诨，一条跑题废话，最多一条夸张危言耸听/u);
+assert.match(prompts.fieldworkPrompt.browserSystem, /不具备网页检索或浏览能力/u);
+assert.match(prompts.fieldworkPrompt.analysisSystem, /不得把模型推断写成原作事实/u);
+const adventure = prompts.adventureWorldPrompt('秦岭旧道', '论坛传闻：石门后有水声');
+assert.match(adventure, /民俗、地理、风水观念和探险逻辑可以作为自然的背景知识/u);
+assert.match(adventure, /现场地点：秦岭旧道/u);
+assert.match(adventure, /论坛传闻：石门后有水声/u);
+console.log('fieldwork prompt contracts: 8 checks passed');
