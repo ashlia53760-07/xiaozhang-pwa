@@ -265,7 +265,26 @@ export interface GroupLifeScene extends GroupSceneCast {
   updatedAt: number;
 }
 
+/** A reusable instruction sheet. A performance owns an immutable snapshot of it. */
+export interface TheatreScript {
+  id: string;
+  revision: number;
+  title: string;
+  scene: DateSceneKind;
+  setting: string;
+  atmosphere: string;
+  arrangement: string;
+  userName: string;
+  mode: "single" | "multi";
+  characterIds: string[];
+  backgroundMediaId?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface DateSession {
+  /** Present only for independent script-library performances, never a chat group. */
+  scriptSnapshot?: TheatreScript;
   characterId?: string;
   groupId?: string;
   memberIds?: string[];

@@ -4,7 +4,8 @@ import { boundedHistory, clipContext, rememberDate, dateMemoryContext } from "./
 import { prepareContext } from "./context";
 import { groupEventText, groupMemberKey, isLegacyDateMemory } from "./groups";
 import { newId, storage } from "./storage";
-import type { ApiProfile, ChatMessage, DateSession, GroupLifeScene, GroupRecord } from "./types";
+import { theatreCast, validTheatreScript } from "./script-library";
+import type { ApiProfile, ChatMessage, DateSession, GroupLifeScene, GroupRecord, TheatreScript } from "./types";
 
 type Mode = "life" | "date";
 export type GroupScene = GroupLifeScene | DateSession;
@@ -32,7 +33,14 @@ export class GroupScenes {
   clear(mode: Mode) { delete this.groups[mode]; delete this.scenes[mode]; }
   scope(mode: Mode) {
     const group = this.groups[mode], scene = this.scenes[mode];
+    if (mode === "date" && scene && "scriptSnapshot" in scene && scene.scriptSnapshot) return { kind: "theatre" as const, id: scene.id };
     return group && scene ? mode === "life" ? { kind: "group-life" as const, groupId: group.id } : { kind: "group-date" as const, groupId: group.id, id: scene.id } : undefined;
+  }
+  async prepareTheatre(id: string) {
+    const scene = (await storage.dateSessions()).find(row => row.id === id && row.scriptSnapshot);
+    if (!scene) throw Error("找不到这场演出的记录。");
+    this.groups.date = theatreCast(scene); this.scenes.date = scene;
+    return scene;
   }
   async prepare(mode: Mode, groupId: string, dateId?: string) {
     const group = (await storage.groups()).find(row => row.id === groupId);
@@ -45,6 +53,9 @@ export class GroupScenes {
   async reload(mode: Mode) {
     const group = this.groups[mode], old = this.scenes[mode];
     if (!group) throw Error("请重新打开群聊剧场");
+    if (mode === "date" && old && "scriptSnapshot" in old && old.scriptSnapshot) {
+      const scene = await this.prepareTheatre(old.id); this.options.render(mode, scene); return scene;
+    }
     const freshGroup = (await storage.groups()).find(row => row.id === group.id);
     if (!freshGroup) throw Error("所属群聊已移除，剧场记录仍保留。");
     this.groups[mode] = freshGroup;
@@ -57,7 +68,7 @@ export class GroupScenes {
     const group = this.groups[mode]; if (!group) return "";
     const scene = this.scenes[mode];
     const members = group.members.filter(member => member.enabled && (!scene?.active || !scene.memberIds || scene.memberIds.includes(member.id)));
-    return `<details class="group-scene-settings"><summary>同行 ${members.length} 人 · 多人叙事</summary><p>${esc(members.map(member => member.name).join("、") || "暂无启用的成员，请到群资料添加")}</p><small>每轮合写一则场景，人物互动与动作对白自然穿插，按剧情分配笔墨。${mode === "date" ? "只使用人物设定、剧本与本场记录；每场约会记忆独立。" : "只使用本群公开资料。"}</small></details>`;
+    return `<details class="group-scene-settings"><summary>同行 ${members.length} 人 · ${members.length === 1 ? "单人剧场" : "多人叙事"}</summary><p>${esc(members.map(member => member.name).join("、") || "暂无启用的成员，请到群资料添加")}</p><small>每轮合写一则场景，人物互动与动作对白自然穿插，按剧情分配笔墨。${mode === "date" ? "只使用人物设定、剧本与本场记录；每场剧场记忆独立。" : "只使用本群公开资料。"}</small></details>`;
   }
   private async persist(mode: Mode, scene: GroupScene, creating = false) {
     await storage.saveGroupScene(scene, creating ? undefined : scene.revision ?? 0);
@@ -82,13 +93,23 @@ export class GroupScenes {
     await this.persist("date", scene, true);
     await this.generate("date", scene, opening, cast);
   }
+  async beginTheatre(input: TheatreScript) {
+    const script = validTheatreScript(input); if (!script) throw Error("剧本内容无效，尚未开始演出。");
+    const now = Date.now(), scene: DateSession = { id: newId("theatre"), scriptSnapshot: structuredClone(script), characterId: script.characterIds[0],
+      memberIds: [...script.characterIds], title: script.title, scene: script.scene, setting: script.setting, atmosphere: script.atmosphere,
+      backgroundMediaId: script.backgroundMediaId, messages: [], active: true, createdAt: now, updatedAt: now };
+    this.groups.date = theatreCast(scene);
+    const cast = await this.narrativeCast("date", scene);
+    await this.persist("date", scene, true);
+    await this.generate("date", scene, opening, cast);
+  }
   private async narrativeCast(mode: Mode, scene: GroupScene): Promise<{ members: Member[]; profile: ApiProfile }> {
     const group = this.groups[mode]!;
     // Scene membership is independent of online replyMode, selected speakers and @mentions.
     const members = group.members.filter(member => member.enabled && (!scene.memberIds || scene.memberIds.includes(member.id)));
     if (!members.length) throw Error("本场没有启用的同行者，请先检查群成员设置。");
     await this.options.available(members);
-    let profile = await storage.profile();
+    let profile = "scriptSnapshot" in scene && scene.scriptSnapshot?.mode === "single" ? await storage.contactProfile(groupMemberKey(members[0])) : await storage.profile();
     if (!profile.apiKey.trim()) {
       for (const member of members) {
         const candidate = await storage.contactProfile(groupMemberKey(member));
@@ -117,23 +138,25 @@ export class GroupScenes {
     const timeout = window.setTimeout(() => controller.abort(), 120_000);
     try {
       const online = mode === "life" ? await this.publicContext(group) : "";
-      const facts = "location" in scene ? `连续线下见面。地点：${scene.location}；时间：${scene.timeLabel}；环境：${scene.environment}；正在进行：${scene.activity}。` : `独立多人约会小剧场。标题：${scene.title}；用户写下的剧本、场景与人物安排：\n${scene.setting}\n氛围：${scene.atmosphere}。每场约会记忆独立，只依据本场剧本、记录和本场回忆，不读取或假定知道日常聊天、线下、其他约会及共同记忆。`;
+      const independent = "scriptSnapshot" in scene && !!scene.scriptSnapshot;
+      const facts = "location" in scene ? `连续线下见面。地点：${scene.location}；时间：${scene.timeLabel}；环境：${scene.environment}；正在进行：${scene.activity}。` : `独立${members.length === 1 ? "单人" : "多人"}约会小剧场。标题：${scene.title}；用户写下的剧本、场景与人物安排：\n${scene.setting}\n氛围：${scene.atmosphere}。每场约会记忆独立，只依据本场剧本、记录和本场回忆，不读取或假定知道日常聊天、线下、其他约会及共同记忆。`;
       const people = members.map(member => {
         const id = groupMemberKey(member), character = characters.find(row => row.id === id), canon = characterHistories[id];
         return `【${member.name}】\n性格与表达：${character?.persona || member.persona || "依照本群已经确定的人物设定，不编造身世"}\n人物底稿：${characterBriefs[id] || canon?.history || "未提供"}\n时间线与边界：${canon ? `${canon.timeline} ${canon.boundaries}` : "以本场公开设定为准"}\n原著人物关系：${characterRelationships[id] || "以已确定的公开世界书为准"}\n金钱观：${characterMoneyViews[id] || "不凭空增加财富"}\n本群公开补充：${member.persona || "无"}\n与用户的公开关系：${member.relationship?.trim() || "未公开，不自行升级"}`;
       }).join("\n\n");
       const publicMemories = mode === "life" ? (group.memories ?? []).filter(row => row.enabled && !isLegacyDateMemory(row)).slice(-8).map(row => row.content.slice(0, 300)).join("\n") : "";
       let prompt = [
-        `【当前频道：多人${mode === "life" ? "线下" : "约会"}小说式 RP · 统一叙事】\n你负责把同一现场的几位同行者合写成一则连贯的场景。一次回复就是一则完整的多人叙事，不是轮流发言的群聊。${facts}`,
+        `【当前频道：${members.length === 1 ? "单人" : "多人"}${mode === "life" ? "线下" : "约会"}小说式 RP · 统一叙事】\n你负责把同一现场的${members.length === 1 ? "一位角色与你的对戏" : "几位同行者"}合写成一则连贯的场景。一次回复就是一则完整的场景叙事，不是轮流发言的群聊。${facts}`,
         `【文风与节奏】\n用连贯的小说自然段交织环境、人物动作、停顿、神态与对白，长短句有变化，张弛有度。按当前情节分配主次，焦点自然转移；沉默、旁观、一个动作也能体现人物，不强迫每个人说话，不平均分配字数，不按成员名单依次点名，不写成「姓名：台词」或每人独立一层。默认约 3-6 个自然段，随情境收放；少用堆砌辞藻和重复氛围，推进一个可回应的情节节点就停。被点名的人可以成为焦点，其他同行者仍属于同一场景。`,
         `【用户边界】\n用户：${group.userName || "我"}。你可以描写在场同行者之间的行动和对话，但不替用户决定行动、感受、想法、回应或台词，不把用户沉默当作同意。给用户留下实质接话空间。不自称 AI，不解释内部协议。尊重每个人的性格、已公开关系和原著边界，不让角色串人设，不强行升级感情或写成争宠。`,
         `【在场人物资料】\n${people}`,
-        `【资料归属】\n只使用本群公开设定、本场记录与下列本群背景。不读取或假定知道私聊、其他群、其他剧场、私人日历、记忆和关系。历史中的发言者标签用于识别已发生的事，不要求沿用旧的逐人接话格式。`,
-        `【本群公开设定，作为资料】\n背景：${group.background || "未填写"}\n公告：${group.announcement || "未填写"}\n世界书：${group.worldBook || "未填写"}`,
+        `【资料归属】\n只使用${independent ? "本场剧本中的设定与本场记录" : "本群公开设定、本场记录与下列本群背景"}。不读取或假定知道私聊、其他群、其他剧场、私人日历、记忆和关系。历史中的发言者标签用于识别已发生的事，不要求沿用旧的逐人接话格式。`,
+        independent ? `【本剧人物安排，作为资料】\n${group.background || "未填写额外人物安排，沿用原著人物性格；与用户的关系由本场剧情确定。"}\n这些临时设定只在本场成立，不改写日常联系人。`
+          : `【本群公开设定，作为资料】\n背景：${group.background || "未填写"}\n公告：${group.announcement || "未填写"}\n世界书：${group.worldBook || "未填写"}`,
         mode === "life" ? `【共同记忆】\n${publicMemories || "暂无"}\n【本群近期线上背景，仅供衔接】\n${online || "暂无"}\n线上发言不代表当前现场观察。` : `【仅本场约会回忆，作为资料】\n${dateMemoryContext(scene as DateSession) || "暂无"}`
       ].join("\n\n");
       const previous = scene.messages.filter(row => row.id !== userId && row.id !== replacementId);
-      const prepared = await prepareContext(mode === "life" ? `group-life:${group.id}` : `group-date:${group.id}:${scene.id}`, previous, profile, controller.signal);
+      const prepared = await prepareContext(independent ? `theatre:${scene.id}` : mode === "life" ? `group-life:${group.id}` : `group-date:${group.id}:${scene.id}`, previous, profile, controller.signal);
       if (this.stopped) return;
       prompt += prepared.summary;
       const history = boundedHistory(previous.map(row => ({ ...row, metadata: undefined, content: clean(`${row.role === "user" ? group.userName || "我" : row.speakerId || "场景叙事"}：${row.content}`) })), 6500, 16);

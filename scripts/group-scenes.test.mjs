@@ -44,7 +44,7 @@ async function db(store, value, target = page) {
 async function feature(id) { if (!await page.locator("#topbar-menu").isVisible()) await page.click("#topbar-menu-toggle"); await page.click(id); const dialog = { "#meet-open": "#meet-dialog", "#date-open": "#date-dialog", "#settings": "#settings-dialog" }[id]; if (dialog) await page.waitForSelector(`${dialog}[open]`); }
 async function switchGroup(id) { await db("kv", { key: "active-session", value: id }); await page.reload(); await ready(); }
 const parent = mode => mode === "life" ? "#meet-dialog" : "#date-dialog";
-const scene = async mode => mode === "life" ? data("groupLife", "scene-group-a") : (await data("dateSessions")).find(row => row.groupId === "scene-group-a" && row.active);
+const scene = async mode => mode === "life" ? data("groupLife", "scene-group-a") : (await data("dateSessions")).find(row => row.scriptSnapshot?.mode === "multi" && row.active);
 async function send(mode, text) { await page.fill(`#${mode}-draft`, text); await page.click(`#${mode}-send`); await idle(); }
 async function action(mode, value) { const root = parent(mode); await page.click(`${root} .scene-action-menu summary`); await page.click(`${root} [data-scene-action="${value}"]`); await idle(); }
 async function floor(mode, index) { const id = (await scene(mode)).messages[index].id; const paper = page.locator(`#${mode}-messages [data-message-id="${id}"] .scene-entry-paper`); await paper.scrollIntoViewIfNeeded(); await paper.dispatchEvent("contextmenu"); await page.waitForSelector("#scene-floor-dialog[open]"); }
@@ -171,7 +171,7 @@ try {
   assert((await scene("date")).localMemories.some(row => row.content.includes("修正后的信件")));
   for (const marker of ["GROUP_PUBLIC_MEMORY", "GROUP_ONLINE_CONTINUITY", "GROUP_LIFE_CURRENT", "EDITED_NARRATIVE"]) assert(!JSON.stringify(calls.at(-1).body).includes(marker), marker);
   assert(!(await data("allMemories")).some(row => row.content.includes("约会剧场回忆")));
-  const dateId = date.id; await close("date"); await page.reload(); await ready(); await feature("#date-open"); assert.equal((await scene("date")).id, dateId);
+  const dateId = date.id; await close("date"); await page.reload(); await ready(); await feature("#date-open"); await page.click("#script-tab-runs"); await page.click(`[data-run-resume="${dateId}"]`); assert.equal((await scene("date")).id, dateId);
   for (const theme of ["ink", "warm", "night", "rococo", "bronze"]) for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 1280, height: 900 }]) await scrolling("date", viewport.width, viewport.height, theme);
   await scrolling("date", 390, 844, "rococo");
   await page.screenshot({ path: new URL("date-latest.png", folder).pathname.replace(/^\/([A-Za-z]:)/, "$1") });
@@ -185,7 +185,7 @@ try {
   await db("groups", { ...group, id: "scene-sixteen", title: "十六人小剧场", replyMode: "all", members: cast });
   await switchGroup("scene-sixteen"); await feature("#date-open"); await page.fill("#date-custom-setting", "十六人在雨村准备晚宴，叙事中有主有次，所有人都可以自然互动。");
   before = calls.length; await page.click("#date-start"); await idle();
-  const sixteen = (await data("dateSessions")).find(row => row.groupId === "scene-sixteen" && row.active);
+  const sixteen = (await data("dateSessions")).find(row => row.scriptSnapshot?.characterIds.length === 16 && row.active);
   assert.equal(sixteen.messages.length, 1); assert.equal(calls.length, before + 1); assert.equal(sixteen.messages[0].metadata.sceneMemberIds.length, 16); narrativeCall(calls.at(-1), cast.map(row => row.name));
   before = calls.length; await send("date", "@吴邪 先看看这封信。"); assert.equal(calls.length, before + 1);
   assert.equal((await data("dateSessions")).find(row => row.id === sixteen.id).messages.length, 3);
@@ -225,6 +225,8 @@ try {
     await restored.locator("#settings-dialog").evaluate(el => el.close());
     if (!await restored.locator("#topbar-menu").isVisible()) await restored.click("#topbar-menu-toggle");
     await restored.click("#date-open"); await restored.waitForSelector("#date-dialog[open]");
+    await restored.click("#script-tab-runs"); await restored.click(`[data-run-resume="${dateId}"]`);
+    await restored.waitForSelector("#date-stage:not([hidden])");
     assert.equal(await restored.locator("#date-messages .scene-narrative").count(), 2);
     assert(await restored.locator("#date-messages > #date-state-card").count() === 1);
   } finally { await fresh.close(); }

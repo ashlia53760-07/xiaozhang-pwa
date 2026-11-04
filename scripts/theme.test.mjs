@@ -23,7 +23,7 @@ try {
   await page.goto(origin); await page.waitForSelector('#draft');
   if (origin.startsWith('https:')) {
     await page.evaluate(() => navigator.serviceWorker.ready);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('xiaozhang-pwa-shell-v43'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('xiaozhang-pwa-shell-v44'));
     checks.push('production service worker v38 installed');
   }
   const records = [

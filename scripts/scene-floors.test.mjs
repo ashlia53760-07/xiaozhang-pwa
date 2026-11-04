@@ -72,6 +72,7 @@ try {
     const scope = mode === "life" ? { kind: "life", characterId: "zhang-qiling" } : { kind: "date", characterId: "zhang-qiling", id: "floor-date" };
     const parent = mode === "life" ? "#meet-dialog" : "#date-dialog";
     await feature(mode === "life" ? "#meet-open" : "#date-open"); await page.waitForSelector(`${parent}[open]`);
+    if (mode === "date") { await page.click("#script-tab-runs"); await page.click('[data-run-resume="floor-date"]'); }
     const contextScope = mode === "life" ? "life" : "date:zhang-qiling:floor-date";
     await data("saveContextCache",`context-summary:${contextScope}`,{text:"已过时的场景摘要"});
     await data("saveContextCache","context-summary:private-control",{text:"不相关的摘要保留"});
@@ -162,9 +163,10 @@ try {
       }
     }
     await page.setViewportSize({ width:390,height:844 }); await page.screenshot({ path:fileURLToPath(new URL(`${mode}-editor.png`,folder)) }); await closeFloor();
-    await page.click(`${parent} .scene-back`); await page.reload(); await ready(); await feature(mode === "life" ? "#meet-open" : "#date-open");
+    await page.locator(parent).evaluate(el => el.close()); await page.reload(); await ready(); await feature(mode === "life" ? "#meet-open" : "#date-open");
+    if (mode === "date") { await page.click("#script-tab-runs"); await page.click('[data-run-resume="floor-date"]'); }
     await page.waitForSelector(`${parent} .scene-message`); assert.match(await floor(mode,3).textContent(), /纠正后的关键句/); assert.equal((await data("sceneFloors",scope)).length,5);
-    await page.click(`${parent} .scene-back`);
+    await page.locator(parent).evaluate(el => el.close());
     pass(`${mode}: scroll gestures and multiselect do not open menu; editor fits five themes at 320/390/1280; edits and branch persist after reload`);
   }
   const rows = await db("messages"); assert.deepEqual(rows.find(row => row.id === privateRow.id),privateRow); assert.deepEqual(rows.find(row => row.id === otherLife.id),otherLife);

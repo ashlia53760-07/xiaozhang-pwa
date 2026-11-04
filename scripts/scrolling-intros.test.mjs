@@ -69,7 +69,7 @@ try {
       await page.locator("#messages").evaluate(el => el.scrollTop = el.scrollHeight);
       await page.screenshot({ path: fileURLToPath(new URL(`${theme}-chat-latest-${viewport.width}.png`, folder)) });
       assert(await page.locator("#draft").isVisible());
-      await feature("#date-open"); await page.waitForSelector("#date-messages .scene-message");
+      await feature("#date-open"); await page.click("#script-tab-runs"); await page.click('[data-run-resume="intro-date"]'); await page.waitForSelector("#date-messages .scene-message");
       await scrollingHeader("#date-messages", "#date-state-card");
       await page.screenshot({ path: fileURLToPath(new URL(`${theme}-date-top-${viewport.width}.png`, folder)) });
       await page.locator("#date-messages").evaluate(el => el.scrollTop = el.scrollHeight);
@@ -82,7 +82,7 @@ try {
       await scrollingHeader("#date-messages", "#date-state-card");
       assert.equal(await page.locator("#date-messages .scene-message").count(), 14);
       await page.click("#date-stage [data-scene-select-cancel]");
-      await page.click("#date-dialog .scene-back");
+      await page.locator("#date-dialog").evaluate(el => el.close());
       checks.push(`${theme} ${viewport.width}: intro and date setting scroll away and return at top; rerender keeps one header; input remains visible`);
     }
   }

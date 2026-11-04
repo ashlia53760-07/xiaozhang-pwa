@@ -36,7 +36,7 @@ async function db(store, value) {
 }
 async function feature(id) { if (!await page.locator("#topbar-menu").isVisible()) await page.click("#topbar-menu-toggle"); await page.click(id); }
 async function modelAction(action) { const response = page.waitForResponse(r => r.url().startsWith("https://date-isolation.invalid/")); await action(); await response; await idle(); }
-async function dateStart(setting) { await page.fill("#date-custom-setting", setting); await modelAction(() => page.click("#date-start")); }
+async function dateStart(setting) { await page.fill("#script-title", "独立记忆验证"); await page.fill("#date-custom-setting", setting); await modelAction(() => page.click("#date-start")); }
 async function dateSend(text) { await page.fill("#date-draft", text); await modelAction(() => page.click("#date-send")); }
 async function closeDate() { await page.locator("#date-dialog").evaluate(el => el.close()); }
 async function saveRecall() { await page.click("#date-dialog .scene-options summary"); await page.click("#date-save-memory"); await page.waitForFunction(() => document.querySelector("#date-dialog .scene-status")?.textContent.includes("已保存到本场回忆")); }
@@ -52,7 +52,7 @@ try {
   await db("messages", { id: "daily-private", role: "user", kind: "text", content: "DAILY_PRIVATE_CHAT_ONLY", sessionId: "private", createdAt: now });
   await db("messages", { id: "daily-life", role: "user", kind: "text", content: "DAILY_LIFE_ONLY", sessionId: "life", createdAt: now });
   await page.reload(); await ready(); await feature("#date-open"); await dateStart("PRIVATE_DATE_A_SETTING");
-  assert(JSON.stringify(calls.at(-1)).includes("STATIC_PRIVATE_WORLD"));
+  absent(["STATIC_PRIVATE_WORLD"]);
   absent(["DAILY_PRIVATE_MEMORY_ONLY", "DAILY_PRIVATE_CHAT_ONLY", "DAILY_CALENDAR_ONLY", "DAILY_LIFE_ONLY", "LEGACY_PRIVATE_DATE_ONLY"]);
   await dateSend("PRIVATE_DATE_A_EVENT"); await saveRecall();
   let a = (await data("dateSessions")).find(row => row.active && !row.groupId);
@@ -73,10 +73,10 @@ try {
   await db("messages", { id: "daily-group", sessionId: group.id, role: "user", kind: "text", content: "DAILY_GROUP_CHAT_ONLY", createdAt: now });
   await db("kv", { key: `group-life:${group.id}`, value: { id: "group-life-isolation", groupId: group.id, memberIds: group.members.map(row => row.id), active: true, location: "门廊", timeLabel: "傍晚", environment: "雨", activity: "GROUP_LIFE_ONLY", messages: [{ id: "group-life-event", role: "user", content: "GROUP_LIFE_ONLY", kind: "text", createdAt: now }], updatedAt: now } });
   await data("saveActiveSession", group.id); await page.reload(); await ready(); await feature("#date-open"); await dateStart("GROUP_DATE_A_SETTING");
-  assert(JSON.stringify(calls.at(-1)).includes("STATIC_GROUP_WORLD"));
+  absent(["STATIC_GROUP_WORLD", "STATIC_GROUP_CANON"]);
   absent(["DAILY_GROUP_MEMORY_ONLY", "DAILY_GROUP_CHAT_ONLY", "GROUP_LIFE_ONLY", "LEGACY_GROUP_DATE_ONLY", "PRIVATE_DATE_A_EVENT", "PRIVATE_DATE_B_EVENT", "DAILY_PRIVATE_MEMORY_ONLY"]);
   await dateSend("GROUP_DATE_A_EVENT"); await saveRecall();
-  const ga = (await data("dateSessions")).find(row => row.active && row.groupId === group.id);
+  const ga = (await data("dateSessions")).find(row => row.active && row.scriptSnapshot?.mode === "multi");
   assert.equal(ga.openingContext, undefined); assert(ga.localMemories[0].content.includes("GROUP_DATE_A_EVENT"));
   assert.deepEqual((await data("groups")).find(row => row.id === group.id).memories, group.memories);
   // Verify legacy captured opening history is ignored even when retained in a restored save.

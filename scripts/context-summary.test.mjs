@@ -8,7 +8,7 @@ const origin = process.env.CONTEXT_TEST_URL || 'http://127.0.0.1:4175';
 const artifacts = new URL('../.local-review/context-built-in-20261025/', import.meta.url);
 await mkdir(artifacts, { recursive: true });
 const modules = {};
-for (const name of ['context', 'context-budget', 'api', 'storage', 'characters', 'checkup', 'phone-messages', 'groups', 'calendar', 'calendar-data']) {
+for (const name of ['context', 'context-budget', 'api', 'storage', 'characters', 'checkup', 'phone-messages', 'groups', 'calendar', 'calendar-data', 'script-library']) {
   modules[name] = ts.transpileModule(await readFile(new URL(`../src/${name}.ts`, import.meta.url), 'utf8'), {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext }
   }).outputText.replace(/from "\.\/([^".]+)"/g, 'from "./$1.js"');
@@ -210,6 +210,7 @@ try {
   check('built offline scene uses cached continuity without importing date theatre');
   await page.click('#topbar-menu-toggle'); await page.click('#date-open');
   await page.waitForSelector('#date-dialog[open]');
+  await page.click('#script-tab-runs'); await page.click('[data-run-resume="ui-date"]'); await page.waitForSelector('#date-stage:not([hidden])');
   assert.match(await page.locator('#date-dialog').innerText(), /DATE_ONLY_MARKER/);
   const beforeDate = calls.length;
   const dateResponse = page.waitForResponse(response => response.url().startsWith('https://summary-test.invalid') && !response.request().postDataJSON().messages?.[0]?.content.includes('你是对话记录整理器'));

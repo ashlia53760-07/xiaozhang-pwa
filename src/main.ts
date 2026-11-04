@@ -11,6 +11,9 @@ import "./scene-floors.css";
 import { SceneFloors } from "./scene-floors";
 import { GroupScenes, type GroupScene } from "./group-scenes";
 import "./group-scenes.css";
+import "./script-library.css";
+import { ScriptLibraryUI } from "./script-library-ui";
+import { validTheatreScript } from "./script-library";
 import { themes, selectedTheme } from "./themes";
 import { CalendarUI } from "./calendar-ui";
 import { calendarContext, contactBirthday, diaryDay, mergeCalendar, moodLabel, validBirthday, validCalendar, validDay, type CalendarData } from "./calendar";
@@ -144,9 +147,9 @@ root.insertAdjacentHTML("beforeend", `
   <div id="life-writing" class="scene-writing"><div class="scene-writing-head"><label for="life-draft">Draft <span>· 在此落笔</span></label><button id="life-random" type="button" class="scene-text-action">发生一件小事</button></div><div class="scene-composer"><details class="scene-action-menu"><summary aria-label="场景消息操作" title="场景消息操作"><span aria-hidden="true">☰</span></summary><div class="scene-action-menu-panel"><button type="button" data-scene-action="regenerate">重新生成</button><button type="button" data-scene-action="continue">续写</button><button type="button" data-scene-action="select">选择消息删除</button></div></details><textarea id="life-draft" rows="2" maxlength="2000" placeholder="说一句话，或写下你的动作…"></textarea><button id="life-send" type="button" class="scene-send" aria-label="发送线下消息">发送</button></div><div class="scene-selection-toolbar" data-scene-selection-toolbar hidden><span data-scene-selection-count>已选 0 条</span><button type="button" data-scene-select-all>全选</button><button type="button" data-scene-select-delete disabled>删除选中</button><button type="button" data-scene-select-cancel>取消</button></div></div>
 </form></dialog>
 <dialog id="date-dialog" class="scene-reader"><form method="dialog" id="date-form">
-  <header class="dialog-head scene-reader-head"><button value="cancel" class="scene-back" aria-label="返回聊天，保留约会进度">‹</button><div><span class="scene-kicker">只属于这一页</span><h2>心动约会</h2></div><button id="date-end" type="button" class="scene-end" hidden>结束</button></header>
+  <header class="dialog-head scene-reader-head"><button id="date-library-back" type="button" class="scene-back" aria-label="返回剧本夹，保留演出进度">‹</button><div><span class="scene-kicker">只属于这一页</span><h2>剧本夹</h2></div><button id="date-end" type="button" class="scene-end" hidden>结束</button></header>
   <section id="date-picker">
-    <div class="date-intro"><span class="scene-kicker">CHOOSE A MOMENT</span><h3>把时间，留给彼此。</h3><p>选择一个场景，或写一段属于你们的开场。<br>独立剧场的经历，只有你选择保存后才会成为长期回忆。</p></div>
+    <div class="date-intro"><span class="scene-kicker">CHOOSE A MOMENT</span><h3>把时间，留给彼此。</h3><p>选择一个场景，或写一段属于你们的开场。<br>每场演出独立存档，本场回忆不进入日常。</p></div>
     <div id="date-scene-grid" class="date-scene-grid"></div>
     <label class="date-custom-label">自定义剧场<textarea id="date-custom-setting" rows="5" maxlength="6000" placeholder="地点、天气、人物安排、故事开场，或粘贴你写的小剧场（最多 6000 字）…"></textarea></label>
     <div class="date-background-editor"><img id="date-background-preview" alt="约会背景预览" hidden><div><strong>这一场的背景</strong><p class="hint" data-date-background-label>素白书页，也可以换成你的照片。</p><div class="scene-actions"><button type="button" data-date-background-choose>上传背景</button><button type="button" data-date-background-remove hidden>恢复素白</button></div></div></div>
@@ -155,7 +158,7 @@ root.insertAdjacentHTML("beforeend", `
   <section id="date-stage" hidden>
     <div id="date-state-card" class="scene-state-card"></div>
     <div id="date-messages" class="scene-messages" aria-label="约会剧场记录"></div>
-    <div class="scene-writing"><div class="scene-writing-head"><label for="date-draft">Draft <span>· 续写</span></label><details class="scene-options"><summary aria-label="约会选项">＋</summary><div class="scene-options-menu"><button id="date-restart" type="button">重新选场景</button><button id="date-save-memory" type="button">保存到本场回忆</button><button type="button" data-date-background-choose>更换背景</button><button type="button" data-date-background-remove hidden>恢复素白</button></div></details></div><div class="scene-composer"><details class="scene-action-menu"><summary aria-label="场景消息操作" title="场景消息操作"><span aria-hidden="true">☰</span></summary><div class="scene-action-menu-panel"><button type="button" data-scene-action="regenerate">重新生成</button><button type="button" data-scene-action="continue">续写</button><button type="button" data-scene-action="select">选择消息删除</button></div></details><textarea id="date-draft" rows="2" maxlength="2000" placeholder="在这页空白处续写…"></textarea><button id="date-send" type="button" class="scene-send" aria-label="发送约会消息">发送</button></div><div class="scene-selection-toolbar" data-scene-selection-toolbar hidden><span data-scene-selection-count>已选 0 条</span><button type="button" data-scene-select-all>全选</button><button type="button" data-scene-select-delete disabled>删除选中</button><button type="button" data-scene-select-cancel>取消</button></div></div>
+    <div class="scene-writing"><div class="scene-writing-head"><label for="date-draft">Draft <span>· 续写</span></label><details class="scene-options"><summary aria-label="约会选项">＋</summary><div class="scene-options-menu"><button id="date-restart" type="button">返回剧本夹 / 另开一场</button><button id="date-save-memory" type="button">保存到本场回忆</button><button type="button" data-date-background-choose>更换背景</button><button type="button" data-date-background-remove hidden>恢复素白</button></div></details></div><div class="scene-composer"><details class="scene-action-menu"><summary aria-label="场景消息操作" title="场景消息操作"><span aria-hidden="true">☰</span></summary><div class="scene-action-menu-panel"><button type="button" data-scene-action="regenerate">重新生成</button><button type="button" data-scene-action="continue">续写</button><button type="button" data-scene-action="select">选择消息删除</button></div></details><textarea id="date-draft" rows="2" maxlength="2000" placeholder="在这页空白处续写…"></textarea><button id="date-send" type="button" class="scene-send" aria-label="发送约会消息">发送</button></div><div class="scene-selection-toolbar" data-scene-selection-toolbar hidden><span data-scene-selection-count>已选 0 条</span><button type="button" data-scene-select-all>全选</button><button type="button" data-scene-select-delete disabled>删除选中</button><button type="button" data-scene-select-cancel>取消</button></div></div>
   </section>
   <p class="scene-status" role="status" hidden></p>
   <input id="date-background-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
@@ -195,7 +198,7 @@ root.insertAdjacentHTML("beforeend", `<dialog id="call-dialog" aria-labelledby="
   </div></footer><input id="call-background-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
 </form></dialog>`);
 const featureMenu = document.querySelector<HTMLDivElement>("#topbar-menu")!;
-featureMenu.insertAdjacentHTML("afterbegin", `<button id="meet-open" class="topbar-button" type="button">线下</button><button id="date-open" class="topbar-button" type="button">心动约会</button><button id="forum-open" class="topbar-button" type="button">线索论坛</button><button id="browser-open" class="topbar-button" type="button">内置浏览器</button><button id="reference-open" class="topbar-button" type="button">资料索引</button><button id="fieldwork-open" class="topbar-button" type="button">线索整理</button>`);
+featureMenu.insertAdjacentHTML("afterbegin", `<button id="meet-open" class="topbar-button" type="button">线下</button><button id="date-open" class="topbar-button" type="button">剧本夹</button><button id="forum-open" class="topbar-button" type="button">线索论坛</button><button id="browser-open" class="topbar-button" type="button">内置浏览器</button><button id="reference-open" class="topbar-button" type="button">资料索引</button><button id="fieldwork-open" class="topbar-button" type="button">线索整理</button>`);
 const messageBox = document.querySelector<HTMLDivElement>("#messages")!;
 const themeKeepsake = document.querySelector<HTMLDivElement>(".theme-keepsake")!;
 themeKeepsake.remove();
@@ -319,15 +322,6 @@ let pendingDateBackgroundId: string | undefined;
 let dateBackgroundUrl: string | undefined;
 let dateBackgroundRevision = 0;
 let selectedDateScene: import("./types").DateSceneKind = "walk";
-let dateSetupOwner = "";
-const dateSetupDrafts = new Map<string, { text: string; backgroundId?: string; scene: import("./types").DateSceneKind }>();
-function selectDateSetup(owner: string) {
-  if (owner === dateSetupOwner) return;
-  if (dateSetupOwner) dateSetupDrafts.set(dateSetupOwner, { text: dateCustomSetting.value, backgroundId: pendingDateBackgroundId, scene: selectedDateScene });
-  dateSetupOwner = owner;
-  const saved = dateSetupDrafts.get(owner);
-  dateCustomSetting.value = saved?.text ?? ""; pendingDateBackgroundId = saved?.backgroundId; selectedDateScene = saved?.scene ?? "walk";
-}
 const plusMenu = document.querySelector<HTMLDivElement>("#plus-menu")!;
 const stickerSuggest = document.querySelector<HTMLDivElement>("#sticker-suggest")!;
 const roleInteractionButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-role-interaction]"));
@@ -796,7 +790,7 @@ for (const [id, page] of [["forum-open", "forum"], ["browser-open", "browser"], 
   document.querySelector<HTMLButtonElement>(`#${id}`)!.addEventListener("click", () => { closePlusMenu(); void fieldworkUI.open(page); });
 }
 
-function archiveBusy(): boolean { return streaming || !!recording || !!callMode || musicAnalysisBusy || momentGenerationInFlight || diaryGenerationInFlight || importingBackup || messageMutation; }
+function archiveBusy(): boolean { return streaming || !!recording || !!callMode || musicAnalysisBusy || momentGenerationInFlight || diaryGenerationInFlight || importingBackup || messageMutation || scriptLibrary.isBusy(); }
 const archivesUI = new ArchivesUI(archiveBusy);
 const transactionUI = new TransactionUI({
   session: () => activeSession, busy: archiveBusy,
@@ -1077,6 +1071,8 @@ function setSending(value: boolean) {
   document.querySelectorAll<HTMLButtonElement>("#life-send, #date-send, #life-end, #date-end, #date-restart, [data-scene-action]").forEach((button) => { button.disabled = value; });
   for (const id of ["life-send", "date-send"]) document.getElementById(id)!.textContent = value ? "回应中…" : "发送";
   document.querySelectorAll<HTMLInputElement | HTMLSelectElement>("[data-group-scene-mode], [data-group-scene-member]").forEach(input => { input.disabled = value; });
+  datePicker.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement>("input, textarea, button").forEach(input => { input.disabled = value; });
+  document.querySelector<HTMLButtonElement>("#date-library-back")!.disabled = value;
 }
 function renderThemeKeepsake() {
   if (["rococo", "bronze"].includes(document.documentElement.dataset.theme ?? "")) messageBox.prepend(themeKeepsake);
@@ -1418,6 +1414,15 @@ const groupScenes = new GroupScenes({
     if (members.some(member => groupMemberKey(member) === PRIMARY_CHARACTER) && await leisure.away()) throw Error("张起灵还在旅途中，现场进度已保留，回来再继续。");
   }
 });
+const scriptLibrary = new ScriptLibraryUI(datePicker, {
+  busy: () => streaming || messageMutation || importingBackup,
+  status: text => showSceneStatus(dateDialog, text),
+  preset: () => dateSceneCatalog.find(row => row.id === selectedDateScene) ?? dateSceneCatalog[0],
+  selectPreset: id => { selectedDateScene = id; renderDateScenes(); },
+  background: () => pendingDateBackgroundId,
+  setBackground: async id => { pendingDateBackgroundId = id; await applyDateBackground(); },
+  openRun: openSavedDate
+});
 for (const mode of ["life", "date"] as const) {
   const dialog = mode === "life" ? meetDialog : dateDialog;
   const host = document.createElement("div"); host.dataset.groupSceneSetup = mode;
@@ -1445,8 +1450,10 @@ function renderGroupScene(mode: "life" | "date", scene: GroupScene) {
     renderSceneState(lifeStateCard, scene); renderSceneMessages(lifeMessages, scene.messages);
   } else if (mode === "date" && "title" in scene) {
     activeDate = scene; datePicker.hidden = true; dateStage.hidden = false;
+    dateDialog.querySelector<HTMLElement>(".scene-writing")!.hidden = !scene.active;
+    dateDialog.querySelector("h2")!.textContent = scene.title;
     document.querySelector<HTMLButtonElement>("#date-end")!.hidden = !scene.active;
-    dateStateCard.innerHTML = `<div class="scene-state-title"><strong>${escapeHtml(scene.title)}</strong><span>${scene.active ? "多人剧场 · 进行中" : "多人剧场 · 已结束"}</span></div><p>${escapeHtml(scene.setting)}</p><small>${escapeHtml(scene.atmosphere)}</small>`;
+    dateStateCard.innerHTML = `<div class="scene-state-title"><strong>${escapeHtml(scene.title)}</strong><span>${scene.scriptSnapshot?.mode === "single" ? "单人" : "多人"}剧场 · ${scene.active ? "进行中" : "已结束"}</span></div><p>${escapeHtml(scene.setting)}</p><small>${escapeHtml(scene.atmosphere)}</small>${scene.scriptSnapshot?.arrangement ? `<p>${escapeHtml(scene.scriptSnapshot.arrangement)}</p>` : ""}`;
     renderSceneMessages(dateMessages, scene.messages);
   }
   renderGroupSceneSettings(mode);
@@ -1482,7 +1489,6 @@ async function openGroupScene(mode: "life" | "date", groupId: string, dateId?: s
       if (scene && "location" in scene) { lifeLocation.value = scene.location; lifeTime.value = scene.timeLabel; lifeEnvironment.value = scene.environment; }
       else { lifeLocation.value = "附近安静的街巷"; lifeTime.value = "傍晚"; lifeEnvironment.value = "风不大，路灯刚亮"; }
     } else {
-      selectDateSetup(`group:${group.id}`);
       activeDate = scene && "title" in scene ? scene : undefined;
       dialog.querySelector("h2")!.textContent = `心动约会 · ${group.title}`;
       datePicker.querySelector("h3")!.textContent = "和大家，翻开同一页故事。";
@@ -1503,9 +1509,9 @@ const sceneFloors = new SceneFloors({
   lock: value => { messageMutation = value; },
   status: (mode, text) => showSceneStatus(mode === "life" ? meetDialog : dateDialog, text),
   changed: async (scope, id, change) => {
-    const mode = scope.kind === "date" || scope.kind === "group-date" ? "date" : "life";
+    const mode = scope.kind === "date" || scope.kind === "group-date" || scope.kind === "theatre" ? "date" : "life";
     leaveSceneSelection();
-    if (scope.kind === "group-life" || scope.kind === "group-date") await groupScenes.reload(mode);
+    if (scope.kind === "group-life" || scope.kind === "group-date" || scope.kind === "theatre") await groupScenes.reload(mode);
     else if (scope.kind === "life") {
       continuousLife = await storage.continuousLife(scope.characterId);
       if (continuousLife) renderSceneState(lifeStateCard, continuousLife);
@@ -1639,7 +1645,7 @@ async function changeDateBackground(file?: File) {
     }
     if (session) {
       const next = { ...session, backgroundMediaId: id, updatedAt: Date.now() };
-      if (session.groupId) { if (streaming) throw Error("请等本轮接话完成再更换背景"); await storage.saveGroupScene(next, session.revision ?? 0); activeDate = next; await groupScenes.reload("date"); }
+      if (session.groupId || session.scriptSnapshot) { if (streaming) throw Error("请等本轮接话完成再更换背景"); await storage.saveGroupScene(next, session.revision ?? 0); activeDate = next; await groupScenes.reload("date"); }
       else { await storage.saveDateSession(next); activeDate = next; }
     }
     else pendingDateBackgroundId = id;
@@ -2015,51 +2021,15 @@ async function endMeet() {
 
 function renderDateScenes() {
   dateSceneGrid.innerHTML = dateSceneCatalog.map((scene) => `<button type="button" class="date-scene ${scene.id === selectedDateScene ? "selected" : ""}" data-date-scene="${scene.id}"><strong>${escapeHtml(scene.title)}</strong><small>${escapeHtml(scene.setting)}</small></button>`).join("");
-  dateSceneGrid.querySelectorAll<HTMLButtonElement>("[data-date-scene]").forEach((button) => button.addEventListener("click", () => { selectedDateScene = button.dataset.dateScene as import("./types").DateSceneKind; renderDateScenes(); }));
+  dateSceneGrid.querySelectorAll<HTMLButtonElement>("[data-date-scene]").forEach((button) => button.addEventListener("click", () => { selectedDateScene = button.dataset.dateScene as import("./types").DateSceneKind; const preset = dateSceneCatalog.find(row => row.id === selectedDateScene); if (preset) scriptLibrary.choosePreset(preset); renderDateScenes(); }));
 }
 
 async function startDate() {
-  if (groupScenes.group("date")) {
-    const base = dateSceneCatalog.find(scene => scene.id === selectedDateScene), custom = dateCustomSetting.value.trim();
-    if (!base && !custom) return;
-    await runGroupScene("date", async () => {
-      await groupScenes.beginDate({ scene: custom ? "custom" : selectedDateScene, title: custom ? "自定义多人剧场" : base!.title, setting: custom || base!.setting, atmosphere: custom ? "按用户提供的剧本与人物安排展开" : base!.atmosphere, backgroundMediaId: pendingDateBackgroundId });
-      pendingDateBackgroundId = undefined; await applyDateBackground();
-    }); return;
-  }
-  if (sceneCharacterId === PRIMARY_CHARACTER && await leisure.away()) { showSceneStatus(dateDialog, "他还在旅途中，约会进度保留，回来再继续。"); return; }
-  const base = dateSceneCatalog.find((scene) => scene.id === selectedDateScene);
-  const custom = dateCustomSetting.value.trim();
-  if ((!base && !custom) || streaming) return;
-  setSending(true);
-  const startButton = document.querySelector<HTMLButtonElement>("#date-start");
-  if (startButton) startButton.disabled = true;
-  try {
-    const now = Date.now();
-    activeDate = { id: newId("date"), characterId: sceneCharacterId, scene: custom ? "custom" : selectedDateScene, backgroundMediaId: pendingDateBackgroundId, title: custom ? "自定义剧场" : base!.title, setting: custom || base!.setting, atmosphere: custom ? "按用户提供的设定展开" : base!.atmosphere, messages: [], active: true, createdAt: now, updatedAt: now };
-    await storage.saveDateSession(activeDate);
-    pendingDateBackgroundId = undefined;
-    datePicker.hidden = true;
-    dateStage.hidden = false;
-    document.querySelector<HTMLButtonElement>("#date-end")!.hidden = false;
-    showSceneStatus(dateDialog, "正在展开这一页…");
-    renderSceneMessages(dateMessages, []);
-    await applyDateBackground();
-    dateStateCard.innerHTML = `<div class="scene-state-title"><strong>${escapeHtml(activeDate.title)}</strong><span>独立剧场</span></div><p>${escapeHtml(activeDate.setting)}</p><small>${escapeHtml(activeDate.atmosphere)}</small>`;
-    const opening = await sceneReply("date", `请从这个场景自然开始，写一段完整的小说式开场：交代可确认的环境感官与空间，让${characterById(sceneCharacterId).name}做一个符合性格的主动动作并自然说出一句话，但不要替用户决定任何行为、情绪或台词。`);
-    if (opening.trim()) {
-      const message: ChatMessage = { id: newId("msg"), role: "assistant", content: opening.trim(), kind: "text", createdAt: Date.now() };
-      activeDate.messages.push(message);
-      await storage.saveDateSession(activeDate);
-      renderSceneMessages(dateMessages, activeDate.messages);
-    }
-    showSceneStatus(dateDialog, (await storage.contactProfile(sceneCharacterId)).apiKey.trim() ? "" : "当前为本地预设回应；配置聊天 API 后可自由演绎。");
-  } catch (error) {
-    showSceneStatus(dateDialog, error instanceof Error ? `约会开场失败：${error.message}` : "约会开场失败，请检查模型配置");
-  } finally {
-    setSending(false);
-    if (startButton) startButton.disabled = false;
-  }
+  if (scriptLibrary.isBusy()) return;
+  await runGroupScene("date", async () => {
+    const script = await scriptLibrary.save();
+    await groupScenes.beginTheatre(script); await applyDateBackground();
+  });
 }
 
 async function sendDateText(text: string) {
@@ -2279,28 +2249,46 @@ async function sceneAction(mode: "life" | "date", action: SceneAction) {
 }
 
 async function openDate() {
-  if (streaming) { showError("请等当前回复完成再进入约会"); return; }
-  if (!sessionCharacter(activeSession)) { await openGroupScene("date", activeSession); return; }
-  groupScenes.clear("date"); renderGroupSceneSettings("date"); datePicker.querySelector("h3")!.textContent = "把时间，留给彼此。";
-  sceneCharacterId = currentCharacter().id;
-  selectDateSetup(privateSession(sceneCharacterId));
-  if (sceneCharacterId === PRIMARY_CHARACTER && await leisure.away()) { showError("他还在旅途中。约会进度保留，回来再继续；其他独立功能照常。"); return; }
-  const sessions = await storage.dateSessions();
-  activeDate = sessions.find((session) => session.active && ownsCharacter(session, sceneCharacterId));
-  dateDialog.querySelector("h2")!.textContent = `心动约会 · ${characterById(sceneCharacterId).name}`;
-  datePicker.hidden = Boolean(activeDate);
-  dateStage.hidden = !activeDate;
-  document.querySelector<HTMLButtonElement>("#date-end")!.hidden = !activeDate;
-  showSceneStatus(dateDialog, "");
-  await applyDateBackground();
-  if (activeDate) { dateStateCard.innerHTML = `<div class="scene-state-title"><strong>${escapeHtml(activeDate.title)}</strong><span>未结束</span></div><p>${escapeHtml(activeDate.setting)}</p><small>${escapeHtml(activeDate.atmosphere)}</small>`; renderSceneMessages(dateMessages, activeDate.messages); }
-  else renderDateScenes();
-  dateDialog.showModal();
+  if (streaming || messageMutation) { showError("请等当前操作完成再打开剧本夹"); return; }
+  try {
+    leaveSceneSelection(); activeDate = undefined; groupScenes.clear("date"); renderGroupSceneSettings("date");
+    dateDialog.querySelector("h2")!.textContent = "剧本夹"; datePicker.querySelector("h3")!.textContent = "一个剧本，可以有很多次相逢。"; datePicker.hidden = false; dateStage.hidden = true;
+    document.querySelector<HTMLButtonElement>("#date-end")!.hidden = true; dateDraft.value = "";
+    showSceneStatus(dateDialog, "");
+    const character = sessionCharacter(activeSession), group = character ? undefined : (await storage.groups()).find(row => row.id === activeSession);
+    const defaults = character ? [character.id] : (group?.members.filter(row => row.enabled).map(groupMemberKey).filter(id => characters.some(row => row.id === id)) ?? [PRIMARY_CHARACTER]);
+    await scriptLibrary.open(defaults); await applyDateBackground();
+    if (!dateDialog.open) dateDialog.showModal(); datePicker.scrollTop = 0;
+  } catch (error) { showError(error instanceof Error ? error.message : "剧本夹暂时无法打开，原记录保留。"); }
+}
+
+async function openSavedDate(id: string, resume = false) {
+  if (streaming || messageMutation) return;
+  let scene = (await storage.dateSessions()).find(row => row.id === id);
+  if (!scene) throw Error("找不到这场演出，其他记录仍保留。");
+  if (resume && !scene.active) {
+    scene = { ...scene, active: true, updatedAt: Date.now() };
+    if (scene.scriptSnapshot || scene.groupId) await storage.saveGroupScene(scene, scene.revision ?? 0); else await storage.saveDateSession(scene);
+  }
+  leaveSceneSelection(); groupScenes.clear("date");
+  if (scene.scriptSnapshot) { scene = await groupScenes.prepareTheatre(id); sceneCharacterId = scene.scriptSnapshot!.characterIds[0]; renderGroupScene("date", scene); }
+  else if (scene.groupId) { await openGroupScene("date", scene.groupId, id); return; }
+  else {
+    sceneCharacterId = scene.characterId ?? PRIMARY_CHARACTER; activeDate = scene;
+    renderGroupSceneSettings("date"); dateDialog.querySelector("h2")!.textContent = scene.title;
+    datePicker.hidden = true; dateStage.hidden = false; dateDialog.querySelector<HTMLElement>(".scene-writing")!.hidden = !scene.active;
+    document.querySelector<HTMLButtonElement>("#date-end")!.hidden = !scene.active;
+    dateStateCard.innerHTML = `<div class="scene-state-title"><strong>${escapeHtml(scene.title)}</strong><span>${scene.active ? "进行中" : "已结束"} · 原有剧场</span></div><p>${escapeHtml(scene.setting)}</p><small>${escapeHtml(scene.atmosphere)}</small>`;
+    renderSceneMessages(dateMessages, scene.messages);
+  }
+  dateDraft.value = ""; showSceneStatus(dateDialog, ""); await applyDateBackground(); if (!dateDialog.open) dateDialog.showModal();
 }
 
 async function endDate() {
-  if (groupScenes.group("date")) { await runGroupScene("date", async () => { await groupScenes.end("date"); activeDate = undefined; dateStage.hidden = true; datePicker.hidden = false; pendingDateBackgroundId = undefined; document.querySelector<HTMLButtonElement>("#date-end")!.hidden = true; await applyDateBackground(); renderDateScenes(); }); return; }
-  if (!activeDate || streaming) return; activeDate.active = false; activeDate.updatedAt = Date.now(); await storage.saveDateSession(activeDate); activeDate = undefined; dateStage.hidden = true; datePicker.hidden = false; pendingDateBackgroundId = undefined; document.querySelector<HTMLButtonElement>("#date-end")!.hidden = true; await applyDateBackground(); showSceneStatus(dateDialog, ""); renderDateScenes();
+  if (!activeDate || streaming) return;
+  if (groupScenes.group("date")) await runGroupScene("date", () => groupScenes.end("date"));
+  else { activeDate.active = false; activeDate.updatedAt = Date.now(); await storage.saveDateSession(activeDate); }
+  if (!activeDate?.active) await openDate();
 }
 
 async function saveDateMemory() {
@@ -2313,25 +2301,7 @@ async function saveDateMemory() {
 }
 
 async function restartDate() {
-  if (groupScenes.group("date")) {
-    await endDate(); if (streaming) return;
-    dateCustomSetting.value = ""; renderGroupSceneSettings("date"); return;
-  }
-  if (streaming) return;
-  if (activeDate) {
-    activeDate.active = false;
-    activeDate.updatedAt = Date.now();
-    await storage.saveDateSession(activeDate);
-  }
-  activeDate = undefined;
-  dateStage.hidden = true;
-  datePicker.hidden = false;
-  dateCustomSetting.value = "";
-  pendingDateBackgroundId = undefined;
-  document.querySelector<HTMLButtonElement>("#date-end")!.hidden = true;
-  await applyDateBackground();
-  showSceneStatus(dateDialog, "");
-  renderDateScenes();
+  await openDate();
 }
 
 document.querySelector("#meet-open")?.addEventListener("click", () => { void openMeet(); });
@@ -2377,6 +2347,10 @@ document.querySelectorAll<HTMLButtonElement>("[data-scene-select-cancel]").forEa
 document.querySelector("#life-random")?.addEventListener("click", () => { void maybeLifeEvent(true); });
 document.querySelector("#life-end")?.addEventListener("click", () => { void endMeet(); });
 document.querySelector("#date-open")?.addEventListener("click", () => { void openDate(); });
+document.querySelector("#date-library-back")!.addEventListener("click", () => {
+  if (streaming || scriptLibrary.isBusy() || messageMutation) return;
+  if (!dateStage.hidden) void openDate(); else dateDialog.close();
+});
 document.querySelector("#date-start")?.addEventListener("click", () => { void startDate(); });
 document.querySelector<HTMLButtonElement>("#date-send")?.addEventListener("click", () => { void sendDateText(dateDraft.value); });
 dateDraft.addEventListener("keydown", (event) => {
@@ -2878,6 +2852,7 @@ type BackupPayload = {
   continuousLife?: import("./types").LifeSceneState;
   groupLifeScenes?: import("./types").GroupLifeScene[];
   dateSessions?: import("./types").DateSession[];
+  theatreScripts?: import("./types").TheatreScript[];
   videoCallBackgroundId?: string;
   travel?: TravelState;
   play?: PlayState;
@@ -2901,6 +2876,8 @@ async function exportData() {
     storage.messages(), storage.stickers(), storage.allMemories(), storage.moments(), storage.diaries(), storage.background(), storage.affection(), storage.interactions(), storage.lifeEvents(), storage.customGifts(), storage.characterSettings(), storage.groups(), storage.activeSession(), storage.ttsProfile(), storage.audioAnalysisProfile(), storage.userAvatar(), storage.characterAvatar(), storage.npcAvatars(), storage.musicTracks(), storage.activeMusicTrack(), storage.continuousLife(), storage.dateSessions(), storage.videoCallBackground(), storage.momentCover(), storage.fieldwork<FieldworkData>(), storage.birthdaySettings(), storage.calendar()
   ]);
   const ids = new Set<string>();
+  const theatreScripts = await storage.theatreScripts();
+  theatreScripts.forEach(script => { if (script.backgroundMediaId) ids.add(script.backgroundMediaId); });
   const savedTravel = await storage.leisure<TravelState>("travel-state");
   const savedPlay = await storage.leisure<PlayState>("play-state");
   savedTravel?.trips.forEach(trip => trip.photoIds.forEach(id => ids.add(id)));
@@ -2917,7 +2894,7 @@ async function exportData() {
   Object.values(savedNpcAvatarIds).forEach((id) => ids.add(id));
   if (savedVideoCallBackground) ids.add(savedVideoCallBackground.id);
   if (savedMomentCover) ids.add(savedMomentCover.id);
-  savedDateSessions.forEach((session) => { if (session.backgroundMediaId) ids.add(session.backgroundMediaId); });
+  savedDateSessions.forEach((session) => { if (session.backgroundMediaId) ids.add(session.backgroundMediaId); if (session.scriptSnapshot?.backgroundMediaId) ids.add(session.scriptSnapshot.backgroundMediaId); });
   savedMusicTracks.forEach((track) => { if (track.mediaId) ids.add(track.mediaId); if (track.coverMediaId) ids.add(track.coverMediaId); });
   const media = await Promise.all((await storage.mediaRecords([...ids])).map(async (record) => ({
     id: record.id, mime: record.mime, origin: record.origin, createdAt: record.createdAt, data: await blobData(record.blob)
@@ -2928,6 +2905,7 @@ async function exportData() {
     format: "xiaozhang-pwa-backup", version: 4, savedAt: Date.now(), travel: savedTravel, play: savedPlay,
     contactData: await storage.contactBackup(),
     groupLifeScenes: await storage.groupLifeScenes(),
+    theatreScripts,
     profile: { baseUrl: savedProfile.baseUrl, model: savedProfile.model, temperature: savedProfile.temperature, protocol: savedProfile.protocol ?? "openai" },
     imageProfile: { baseUrl: savedImageProfile.baseUrl, model: savedImageProfile.model },
     ttsProfile: { provider: savedTtsProfile.provider, baseUrl: savedTtsProfile.baseUrl, model: savedTtsProfile.model, voiceId: savedTtsProfile.voiceId, groupId: savedTtsProfile.groupId },
@@ -2980,6 +2958,9 @@ async function importData(file: File) {
   if (payload.play !== undefined && !validPlay(payload.play)) throw Error("游戏备份结构无效，尚未导入任何记录");
   if (payload.fieldwork !== undefined && (!payload.fieldwork || typeof payload.fieldwork !== "object")) throw Error("资料与探索备份结构无效，尚未导入任何记录");
   if (payload.calendar !== undefined && !validCalendar(payload.calendar)) throw Error("日历备份结构无效，尚未导入任何记录");
+  if (payload.theatreScripts !== undefined && (!Array.isArray(payload.theatreScripts) || payload.theatreScripts.length > 2000 || payload.theatreScripts.some(row => !validTheatreScript(row)))) throw Error("剧本夹备份结构无效，尚未导入任何记录");
+  if (Array.isArray(payload.dateSessions) && payload.dateSessions.some(row => row.scriptSnapshot && !validTheatreScript(row.scriptSnapshot))) throw Error("演出剧本快照格式无效，尚未导入任何记录");
+  if (payload.theatreScripts) await storage.importTheatreScripts(payload.theatreScripts);
   if (payload.calendar) await storage.updateCalendar(local => mergeCalendar(local, payload.calendar!));
   if (payload.birthdaySettings && typeof payload.birthdaySettings === "object") {
     const localBirthday = await storage.birthdaySettings();
@@ -3081,7 +3062,7 @@ async function importData(file: File) {
   }
   if (Array.isArray(payload.dateSessions)) {
     const localDates = await storage.dateSessions();
-    for (const session of payload.dateSessions) if (session?.id && session.title && Array.isArray(session.messages) && !localDates.some(local => local.id === session.id)) await storage.saveDateSession(session);
+    for (const session of payload.dateSessions) if (session?.id && session.title && Array.isArray(session.messages) && !localDates.some(local => local.id === session.id)) await storage.saveDateSession({ ...session, ...(session.scriptSnapshot ? { scriptSnapshot: validTheatreScript(session.scriptSnapshot) } : {}) });
   }
   if (!await storage.hasSetting("api-profile") && payload.profile?.baseUrl && payload.profile.model) {
     profile = { ...payload.profile, apiKey: profile.apiKey, protocol: payload.profile.protocol ?? profile.protocol ?? "openai" };
@@ -4759,7 +4740,7 @@ const leisure = new Leisure({
   changed: async () => { await refreshSessionMessages(activeSession); },
   hasMeeting: async () => {
     const dates = await storage.dateSessions(), groups = await storage.groups();
-    const hasPrimary = (scene: GroupScene) => scene.active && groups.find(group => group.id === scene.groupId)?.members.some(member => scene.memberIds?.includes(member.id) && groupMemberKey(member) === PRIMARY_CHARACTER);
+    const hasPrimary = (scene: GroupScene) => scene.active && ("scriptSnapshot" in scene && scene.scriptSnapshot ? scene.scriptSnapshot.characterIds.includes(PRIMARY_CHARACTER) : groups.find(group => group.id === scene.groupId)?.members.some(member => scene.memberIds?.includes(member.id) && groupMemberKey(member) === PRIMARY_CHARACTER));
     return !!(await storage.continuousLife())?.active || dates.some(s => s.active && ownsCharacter(s, PRIMARY_CHARACTER)) || (await storage.groupLifeScenes()).some(hasPrimary) || dates.some(hasPrimary);
   },
   pauseMeetings: async () => {
@@ -4788,19 +4769,9 @@ const experienceTimeline = new ExperienceTimeline(async (entry: TimelineEntry) =
   } else if (entry.kind === "date" && entry.session) {
     const date = (await storage.dateSessions()).find(value => value.id === entry.session);
     if (!date) { showError("这场约会记录已不存在"); return; }
-    if (date.groupId) {
-      await switchSession(date.groupId); await openGroupScene("date", date.groupId, date.id);
-      const messageId = entry.id.slice(`date:${date.id}:`.length);
-      requestAnimationFrame(() => dateMessages.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(messageId)}"]`)?.scrollIntoView({ block: "center" })); return;
-    }
-    groupScenes.clear("date"); renderGroupSceneSettings("date");
-    sceneCharacterId = date.characterId ?? PRIMARY_CHARACTER; selectDateSetup(privateSession(sceneCharacterId)); activeDate = date;
-    dateDialog.querySelector("h2")!.textContent = `心动约会 · ${characterById(sceneCharacterId).name}`;
-    datePicker.hidden = true; dateStage.hidden = false;
-    document.querySelector<HTMLButtonElement>("#date-end")!.hidden = date.active;
-    dateStateCard.innerHTML = `<div class="scene-state-title"><strong>${escapeHtml(date.title)}</strong><span>${date.active ? "进行中" : "已结束 · 独立剧场"}</span></div><p>${escapeHtml(date.setting)}</p><small>${escapeHtml(date.atmosphere)}</small>`;
-    renderSceneMessages(dateMessages, date.messages); await applyDateBackground(); dateDialog.showModal();
-    requestAnimationFrame(() => dateMessages.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(entry.messageId ?? "")}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" }));
+    await openSavedDate(date.id);
+    const messageId = entry.id.slice(`date:${date.id}:`.length);
+    requestAnimationFrame(() => dateMessages.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(messageId)}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" }));
   } else if (entry.kind === "diary") {
     diaryQuery.value = "";
     const linkedDiary = (await storage.diaries()).find(value => value.id === entry.id.slice("diary:".length));

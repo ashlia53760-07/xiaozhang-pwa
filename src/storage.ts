@@ -5,8 +5,10 @@ import type { ContactPreferences, SharedCharacterSettings } from "./types";
 import { normalizeLegacyGroup, isLegacyDateMemory } from "./groups";
 import { emptyCalendar, validCalendar, type CalendarData } from "./calendar";
 import type { GroupLifeScene } from "./types";
+import type { TheatreScript } from "./types";
+import { validTheatreScript } from "./script-library";
 export interface LeisureEffects { messages?: ChatMessage[]; diary?: DiaryRecord[]; lifeEvents?: LifeEventRecord[]; memories?: MemoryRecord[]; moments?: MomentRecord[] }
-export type SceneFloorScope = { kind: "life"; characterId: string } | { kind: "date"; characterId: string; id: string } | { kind: "adventure"; id: string } | { kind: "group-life"; groupId: string } | { kind: "group-date"; groupId: string; id: string };
+export type SceneFloorScope = { kind: "life"; characterId: string } | { kind: "date"; characterId: string; id: string } | { kind: "theatre"; id: string } | { kind: "adventure"; id: string } | { kind: "group-life"; groupId: string } | { kind: "group-date"; groupId: string; id: string };
 export type SceneFloorRow = Pick<ChatMessage, "id" | "role" | "content" | "createdAt" | "speakerId" | "metadata">;
 export type SceneFloorChange = { type: "edit"; content: string } | { type: "rewind" };
 function floorSignature(rows: SceneFloorRow[]): string {
@@ -152,7 +154,7 @@ export interface RelationshipArchiveFile {
 }
 function cleanArchiveKv(rows: ArchiveRows["kv"]): ArchiveRows["kv"] {
   return rows.filter(row => typeof row.key === "string" && !sharedKey(row.key)
-    && /^(?:shopping-workspace|calendar-data|character-settings|birthday-settings|birthday-claims|affection-state|music-tracks|music-active|continuous-life(?::[^\s]+)?|group-life:[^\s]+|date-sessions|fieldwork-data|active-session|travel-state|play-state|social-automation-state|starter-moments-seeded|contact:[^\s]+|draft:[^\s]+|read:[^\s]+|conversation-revision:[^\s]+)$/.test(row.key)).map(row => {
+    && /^(?:script-library|shopping-workspace|calendar-data|character-settings|birthday-settings|birthday-claims|affection-state|music-tracks|music-active|continuous-life(?::[^\s]+)?|group-life:[^\s]+|date-sessions|fieldwork-data|active-session|travel-state|play-state|social-automation-state|starter-moments-seeded|contact:[^\s]+|draft:[^\s]+|read:[^\s]+|conversation-revision:[^\s]+)$/.test(row.key)).map(row => {
       if (!String(row.key).startsWith("contact:")) return row;
       const prefs = row.value as ContactPreferences;
       return { key: row.key, value: { settings: prefs.settings, affection: prefs.affection, updatedAt: prefs.updatedAt } };
@@ -964,6 +966,49 @@ export const storage = {
   async clearVideoCallBackground(): Promise<void> {
     await writeKv(VIDEO_CALL_BACKGROUND_KEY, "");
   },
+  async theatreScripts(): Promise<TheatreScript[]> {
+    const rows = await readKv<unknown>("script-library");
+    return (Array.isArray(rows) ? rows : []).map(validTheatreScript).filter((row): row is TheatreScript => !!row).sort((a, b) => b.updatedAt - a.updatedAt);
+  },
+  /** Compare one sheet inside the transaction; concurrent edits cannot overwrite each other. */
+  async saveTheatreScript(value: TheatreScript, expectedRevision?: number): Promise<TheatreScript> {
+    const next = validTheatreScript(value);
+    if (!next) throw Error("请填写有效的剧本，并选择单人或至少两位多人角色。");
+    const tx = (await db()).transaction("kv", "readwrite"), done = transactionDone(tx), kv = tx.objectStore("kv"), get = kv.get("script-library");
+    let failure: Error | undefined;
+    get.onsuccess = () => {
+      const rows = (get.result?.value ?? []) as TheatreScript[], old = rows.find(row => row.id === next.id);
+      if (old?.revision !== expectedRevision) { failure = Error("剧本已在其他页面修改或删除。你的文字仍保留，可另存一份。"); tx.abort(); return; }
+      const content = (row: TheatreScript) => { const { id: _id, revision: _revision, createdAt: _created, updatedAt: _updated, ...body } = validTheatreScript(row)!; return JSON.stringify(body); };
+      if (old && content(old) === content(next)) { Object.assign(next, { revision: old.revision, createdAt: old.createdAt, updatedAt: old.updatedAt }); return; }
+      next.revision = (expectedRevision ?? 0) + 1; next.updatedAt = Date.now(); next.createdAt = old?.createdAt ?? next.createdAt;
+      kv.put({ key: "script-library", value: [...rows.filter(row => row.id !== next.id), next] });
+    };
+    try { await done; } catch (error) { throw failure ?? error; } return next;
+  },
+  async deleteTheatreScript(id: string, expectedRevision: number): Promise<void> {
+    const tx = (await db()).transaction("kv", "readwrite"), done = transactionDone(tx), kv = tx.objectStore("kv"), get = kv.get("script-library");
+    let failure: Error | undefined;
+    get.onsuccess = () => {
+      const rows = (get.result?.value ?? []) as TheatreScript[];
+      if (rows.find(row => row.id === id)?.revision !== expectedRevision) { failure = Error("剧本已在其他页面变化，请刷新列表后再删除。"); tx.abort(); return; }
+      kv.put({ key: "script-library", value: rows.filter(row => row.id !== id) });
+    };
+    try { await done; } catch (error) { throw failure ?? error; }
+  },
+  async importTheatreScripts(input: unknown): Promise<number> {
+    if (!Array.isArray(input) || input.length > 2000) throw Error("剧本文件格式无效或数量过多。");
+    const rows = input.map(validTheatreScript);
+    if (rows.some(row => !row)) throw Error("剧本文件包含无效内容，尚未导入。");
+    const tx = (await db()).transaction("kv", "readwrite"), done = transactionDone(tx), kv = tx.objectStore("kv"), get = kv.get("script-library");
+    let imported = 0;
+    get.onsuccess = () => {
+      const existing = (get.result?.value ?? []) as TheatreScript[], known = new Set(existing.map(row => row.id));
+      for (const row of rows) if (row && !known.has(row.id)) { existing.push(row); known.add(row.id); imported++; }
+      kv.put({ key: "script-library", value: existing });
+    };
+    await done; return imported;
+  },
   async dateSessions(): Promise<DateSession[]> {
     return (await readKv<DateSession[]>(DATE_SESSIONS_KEY) ?? []).sort((a, b) => b.updatedAt - a.updatedAt);
   },
@@ -974,7 +1019,7 @@ export const storage = {
   },
   /** Group scenes compare their revision inside the write transaction, including each generated floor. */
   async saveGroupScene(value: GroupLifeScene | DateSession, expectedRevision?: number): Promise<void> {
-    if (!value.groupId) throw Error("缺少剧场所属群聊");
+    if (!value.groupId && !("scriptSnapshot" in value && validTheatreScript(value.scriptSnapshot))) throw Error("缺少剧场所属群聊或有效的独立剧本");
     const isLife = "location" in value, key = isLife ? `group-life:${value.groupId}` : DATE_SESSIONS_KEY;
     const tx = (await db()).transaction("kv", "readwrite"), done = transactionDone(tx), kv = tx.objectStore("kv");
     let failure: Error | undefined;
@@ -986,13 +1031,18 @@ export const storage = {
       if ((original ? original.revision ?? 0 : undefined) !== expectedRevision) { failure = Error("剧场已在其他页面修改，请重新打开；已有记录仍保留。"); tx.abort(); return; }
       const next = { ...value, revision: (expectedRevision ?? 0) + 1, updatedAt: Date.now() };
       if (isLife) kv.put({ key, value: next });
-      else kv.put({ key, value: [...dates.filter(row => row.id !== value.id).map(row => row.groupId === value.groupId && value.active && row.active ? { ...row, active: false, revision: (row.revision ?? 0) + 1 } : row), next] });
+      else kv.put({ key, value: [...dates.filter(row => row.id !== value.id).map(row => value.groupId && row.groupId === value.groupId && value.active && row.active ? { ...row, active: false, revision: (row.revision ?? 0) + 1 } : row), next] });
     };
     try { await done; } catch (error) { throw failure ?? error; }
     value.revision = (expectedRevision ?? 0) + 1;
     value.updatedAt = Date.now();
   },
   async sceneFloors(scope: SceneFloorScope): Promise<SceneFloorRow[]> {
+    if (scope.kind === "theatre") {
+      const scene = (await this.dateSessions()).find(row => row.id === scope.id && row.scriptSnapshot);
+      if (!scene) throw Error("这场演出已调整，请重新打开。");
+      return scene.messages;
+    }
     if (scope.kind === "group-life" || scope.kind === "group-date") {
       const scene = scope.kind === "group-life" ? await this.groupLife(scope.groupId) : (await this.dateSessions()).find(value => value.id === scope.id && value.groupId === scope.groupId);
       if (!scene) throw Error("这场多人剧场已调整，请重新打开");
@@ -1020,11 +1070,11 @@ export const storage = {
     if (floorSignature(await this.sceneFloors(scope)) !== signature) throw Error("记录已在其他页面变化，请重新打开这一层；你的编辑内容仍保留");
     if (change.type === "edit" && change.content === expected[index].content) return { removed: 0 };
     if (change.type === "rewind" && index === expected.length - 1) throw Error("这里已经是最后一层，可以直接继续");
-    const checkpoint = change.type === "rewind" ? await this.makeArchive(`${scope.kind === "date" || scope.kind === "group-date" ? "约会" : "线下"}回退前 · ${new Date().toLocaleString()}`, "checkpoint") : undefined;
+    const checkpoint = change.type === "rewind" ? await this.makeArchive(`${scope.kind === "theatre" ? "剧场" : scope.kind === "date" || scope.kind === "group-date" ? "约会" : "线下"}回退前 · ${new Date().toLocaleString()}`, "checkpoint") : undefined;
     const database = await db(), tx = database.transaction(["messages", "kv", "memories", "groups"], "readwrite"), done = transactionDone(tx);
     const kv = tx.objectStore("kv"), at = Date.now();
     let failure: Error | undefined;
-    const contextScope = scope.kind === "group-life" ? `group-life:${scope.groupId}` : scope.kind === "group-date" ? `group-date:${scope.groupId}:${scope.id}` : scope.kind === "life" ? lifeSession(scope.characterId) : scope.kind === "date" ? `date:${scope.characterId}:${scope.id}` : `fieldwork:${scope.id}`;
+    const contextScope = scope.kind === "theatre" ? `theatre:${scope.id}` : scope.kind === "group-life" ? `group-life:${scope.groupId}` : scope.kind === "group-date" ? `group-date:${scope.groupId}:${scope.id}` : scope.kind === "life" ? lifeSession(scope.characterId) : scope.kind === "date" ? `date:${scope.characterId}:${scope.id}` : `fieldwork:${scope.id}`;
     const apply = <T extends SceneFloorRow>(rows: T[]): T[] => {
       if (floorSignature(rows) !== signature) throw Error("记录已在其他页面变化，请重新打开这一层；你的编辑内容仍保留");
       if (change.type === "rewind") return rows.slice(0, index + 1);
@@ -1062,15 +1112,15 @@ export const storage = {
         });
       });
     } else {
-      const key = scope.kind === "date" ? DATE_SESSIONS_KEY : "fieldwork-data", get = kv.get(key);
+      const key = scope.kind === "date" || scope.kind === "theatre" ? DATE_SESSIONS_KEY : "fieldwork-data", get = kv.get(key);
       get.onsuccess = () => run(() => {
-        if (scope.kind === "date") {
+        if (scope.kind === "date" || scope.kind === "theatre") {
           const sessions = (get.result?.value ?? []) as DateSession[];
-          const scene = sessions.find(value => value.id === scope.id && ownsCharacter(value, scope.characterId));
+          const scene = sessions.find(value => value.id === scope.id && (scope.kind === "theatre" ? !!value.scriptSnapshot : ownsCharacter(value, scope.characterId)));
           if (!scene) throw Error("这场约会已变化，未修改记录");
-          scene.messages = apply(scene.messages); scene.updatedAt = at;
+          scene.messages = apply(scene.messages); scene.updatedAt = at; scene.revision = (scene.revision ?? 0) + 1; scene.continuationState = undefined;
           if (change.type === "rewind") {
-            for (const other of sessions) if (other.id !== scene.id && ownsCharacter(other, scope.characterId)) other.active = false;
+            if (scope.kind === "date") for (const other of sessions) if (other.id !== scene.id && ownsCharacter(other, scope.characterId)) other.active = false;
             scene.active = true;
           }
           kv.put({ key, value: sessions });
