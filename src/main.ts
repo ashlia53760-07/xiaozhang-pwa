@@ -12,9 +12,8 @@ import { SceneFloors } from "./scene-floors";
 import { GroupScenes, type GroupScene } from "./group-scenes";
 import "./group-scenes.css";
 import "./shopping.css";
-import { prepareShopping, queryProducts } from "./shopping-client";
-import { renderShopping, bindShopping, expireProductCards } from "./shopping-ui";
-import { MAX_PRODUCT_LINKS, productErrors, validShopping } from "./shopping";
+import { ShoppingModule } from "./shopping-module";
+import { validShoppingWorkspace } from "./shopping";
 import { themes, selectedTheme } from "./themes";
 import { CalendarUI } from "./calendar-ui";
 import { calendarContext, contactBirthday, diaryDay, mergeCalendar, moodLabel, validBirthday, validCalendar, validDay, type CalendarData } from "./calendar";
@@ -91,7 +90,7 @@ let audioAnalysisProfile: AudioAnalysisProfile = { provider: "gemini", baseUrl: 
 
 root.innerHTML = `
   <main class="app-shell">
-    <header class="topbar"><div><span class="eyebrow">陪伴桌宠</span><h1>小张起灵</h1></div><button id="topbar-menu-toggle" class="topbar-menu-toggle" type="button" aria-expanded="false" aria-controls="topbar-menu">功能</button><div id="topbar-menu" class="topbar-menu" hidden><button id="session-open" class="topbar-button" type="button">会话</button><button id="moments-open" class="topbar-button" type="button">朋友圈</button><button id="album-open" class="topbar-button" type="button">相册</button><button id="checkup-open" class="topbar-button" type="button">查岗</button><button id="diary-open" class="topbar-button" type="button">日历</button><button id="music-open" class="topbar-button" type="button">一起听</button><button id="life-open" class="topbar-button" type="button">生活</button><button id="role-open" class="topbar-button" type="button">关系与回忆</button><button id="pose-open" class="topbar-button" type="button">切换姿态</button><button id="settings" class="topbar-button" type="button">设置</button></div></header>
+    <header class="topbar"><div><span class="eyebrow">陪伴桌宠</span><h1>小张起灵</h1></div><button id="topbar-menu-toggle" class="topbar-menu-toggle" type="button" aria-expanded="false" aria-controls="topbar-menu">功能</button><div id="topbar-menu" class="topbar-menu" hidden><button id="session-open" class="topbar-button" type="button">会话</button><button id="moments-open" class="topbar-button" type="button">朋友圈</button><button id="album-open" class="topbar-button" type="button">相册</button><button id="checkup-open" class="topbar-button" type="button">查岗</button><button id="diary-open" class="topbar-button" type="button">日历</button><button id="music-open" class="topbar-button" type="button">一起听</button><button id="life-open" class="topbar-button" type="button">生活</button><button id="role-open" class="topbar-button" type="button">关系与回忆</button><button id="pose-open" class="topbar-button" type="button">切换姿态</button><button id="shopping-open" class="topbar-button" type="button">选品辅助 · 附赠</button><button id="settings" class="topbar-button" type="button">设置</button></div></header>
     <img id="pet" class="floating-pet" src="./character/images/standing.png" alt="张起灵" draggable="false" title="拖动我"><div id="pet-feedback" class="pet-feedback" role="status" aria-live="polite" hidden></div><div id="pet-action-menu" class="pet-action-menu" aria-label="桌宠互动" hidden><button type="button" data-pet-action="touch">摸摸头</button><button type="button" data-pet-action="feed">投喂</button><button type="button" data-pet-action="hug">抱抱</button><button type="button" data-pet-action="pose">换个姿态</button><button type="button" data-pet-action="close">收起</button></div>
     <section class="chat-panel"><div class="chat-presence"><div class="presence-person"><img src="./character/images/standing.png" alt="张起灵"><span>张起灵</span></div><input id="user-avatar-input" type="file" accept="image/png,image/jpeg,image/webp" hidden></div><div class="theme-keepsake" aria-hidden="true"><span class="theme-keepsake-rococo"><i>Pour toi</i><b>把日子写成给你的信</b><small>LES LETTRES DE NOS JOURS</small></span><span class="theme-keepsake-bronze"><small>山川有迹 · 故纸藏声</small><b>灯未熄，等你归。</b><i>长白 / 雨村 / 人间</i></span></div><div id="messages" class="messages" aria-live="polite"></div><p id="error" class="error" hidden></p><div id="plus-menu" class="plus-menu" hidden><button id="voice-record" type="button">语音录制</button><button id="voice-call-open" type="button">语音通话</button><button id="video-call-open" type="button">视频通话</button><label class="plus-menu-label">导入表情<input id="sticker-file" type="file" accept="image/png,image/jpeg,image/webp" hidden></label><button id="sticker-choose" type="button">表情包库</button><button id="plus-image" type="button">发送图片</button><button id="plus-generate" type="button">生成图片</button><button id="plus-gift" type="button">送礼</button><button id="plus-transfer" type="button">转账</button><button id="plus-group-collection" type="button">群收款</button><button id="plus-group-roll" type="button">群接龙</button></div><div id="sticker-suggest" class="sticker-suggest" hidden></div><form id="composer" class="composer"><textarea id="draft" rows="1" maxlength="4000" placeholder="说点什么…"></textarea><button id="send" type="submit">发送</button><button id="plus-open" class="composer-plus" type="button" aria-label="更多功能" aria-expanded="false"><span aria-hidden="true"></span></button></form></section>
   </main>
@@ -800,7 +799,9 @@ for (const [id, page] of [["forum-open", "forum"], ["browser-open", "browser"], 
   document.querySelector<HTMLButtonElement>(`#${id}`)!.addEventListener("click", () => { closePlusMenu(); void fieldworkUI.open(page); });
 }
 
-function archiveBusy() { return streaming || !!recording || !!callMode || musicAnalysisBusy || momentGenerationInFlight || diaryGenerationInFlight || importingBackup || messageMutation; }
+const shoppingModule: ShoppingModule = new ShoppingModule({ profile: () => { const character = sessionCharacter(activeSession); return character ? storage.contactProfile(character.id) : storage.profile(); }, busy: () => archiveBusy() });
+document.querySelector("#shopping-open")!.addEventListener("click", () => { void shoppingModule.open().catch(error => showError(error instanceof Error ? error.message : "选品辅助暂时无法打开")); });
+function archiveBusy(): boolean { return streaming || !!recording || !!callMode || musicAnalysisBusy || momentGenerationInFlight || diaryGenerationInFlight || importingBackup || messageMutation || shoppingModule.isBusy(); }
 const archivesUI = new ArchivesUI(archiveBusy);
 const transactionUI = new TransactionUI({
   session: () => activeSession, busy: archiveBusy,
@@ -933,7 +934,7 @@ function renderMessages() {
     const localNote = message.metadata?.source === "offline" ? `<div class="contact-local-note">本地预设回应</div>` : "";
     const lifeCardId = typeof message.metadata?.lifeEventId === "string" ? message.metadata.lifeEventId : undefined;
     const contentHtml = lifeCardId ? `<button type="button" data-tool-card="${escapeHtml(lifeCardId)}">${escapeHtml(displayContent)}</button>` : escapeHtml(displayContent);
-    return `<article class="message-row ${message.role}"${renderedIds.has(message.id) ? ' style="animation:none"' : ""} data-event="${escapeHtml(eventName)}" data-message-id="${escapeHtml(message.id)}">${avatar}<div class="bubble ${message.role}" tabindex="0"><div class="message-meta"><small class="message-speaker">${message.role === "assistant" ? escapeHtml(name) : "我"}</small><small class="message-time">${new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small></div>${quoteHtml}${contentHtml}${cardHtml}${renderShopping(message)}${media}${localNote}${tools}</div></article>`;
+    return `<article class="message-row ${message.role}"${renderedIds.has(message.id) ? ' style="animation:none"' : ""} data-event="${escapeHtml(eventName)}" data-message-id="${escapeHtml(message.id)}">${avatar}<div class="bubble ${message.role}" tabindex="0"><div class="message-meta"><small class="message-speaker">${message.role === "assistant" ? escapeHtml(name) : "我"}</small><small class="message-time">${new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small></div>${quoteHtml}${contentHtml}${cardHtml}${media}${localNote}${tools}</div></article>`;
   }).join("");
   if (phoneTyping?.session === activeSession && phoneTyping.revision === sessionRevision) {
     messageBox.insertAdjacentHTML("beforeend", `<div class="contact-local-note" role="status" data-phone-typing>${escapeHtml(phoneTyping.name)}正在输入…</div>`);
@@ -942,7 +943,6 @@ function renderMessages() {
   void hydrateMedia();
   void hydrateMessageAvatars();
   void transactionUI.hydrateCards(messageBox);
-  bindShopping(messageBox, refreshShoppingMessage);
   messageBox.querySelectorAll<HTMLButtonElement>("[data-tool-detail]").forEach(button => button.addEventListener("click", () => { void transactionUI.detail(button.dataset.toolDetail!); }));
   bindMessagePressActions();
   for (const action of ["quote", "favorite"] as const) {
@@ -2889,6 +2889,7 @@ type BackupPayload = {
   fieldwork?: FieldworkData;
   birthdaySettings?: BirthdaySettings;
   calendar?: CalendarData;
+  shoppingWorkspace?: import("./shopping").ShoppingWorkspace;
   media: Array<{ id: string; mime: string; origin: string; createdAt: number; data: string }>;
 };
 
@@ -2934,6 +2935,7 @@ async function exportData() {
     format: "xiaozhang-pwa-backup", version: 4, savedAt: Date.now(), travel: savedTravel, play: savedPlay,
     contactData: await storage.contactBackup(),
     groupLifeScenes: await storage.groupLifeScenes(),
+    shoppingWorkspace: validShoppingWorkspace(await storage.shoppingWorkspace()),
     profile: { baseUrl: savedProfile.baseUrl, model: savedProfile.model, temperature: savedProfile.temperature, protocol: savedProfile.protocol ?? "openai" },
     imageProfile: { baseUrl: savedImageProfile.baseUrl, model: savedImageProfile.model },
     ttsProfile: { provider: savedTtsProfile.provider, baseUrl: savedTtsProfile.baseUrl, model: savedTtsProfile.model, voiceId: savedTtsProfile.voiceId, groupId: savedTtsProfile.groupId },
@@ -2987,6 +2989,8 @@ async function importData(file: File) {
   if (payload.fieldwork !== undefined && (!payload.fieldwork || typeof payload.fieldwork !== "object")) throw Error("资料与探索备份结构无效，尚未导入任何记录");
   if (payload.calendar !== undefined && !validCalendar(payload.calendar)) throw Error("日历备份结构无效，尚未导入任何记录");
   if (payload.calendar) await storage.updateCalendar(local => mergeCalendar(local, payload.calendar!));
+  const shoppingWorkspace = validShoppingWorkspace(payload.shoppingWorkspace);
+  if (shoppingWorkspace && !await storage.shoppingWorkspace()) await storage.saveShoppingWorkspace(shoppingWorkspace, 0);
   if (payload.birthdaySettings && typeof payload.birthdaySettings === "object") {
     const localBirthday = await storage.birthdaySettings();
     const incoming = payload.birthdaySettings;
@@ -3995,9 +3999,6 @@ async function requestReply(user: ChatMessage, replyMetadata: Record<string, unk
     }
     const conversationRevision = await storage.conversationRevision(session) ?? 0;
     if (!(await storage.sessionMessages(session)).some(m => m.id === user.id)) throw Error("这条消息已经调整，请刷新后重新发送");
-    const shopping = await prepareShopping(user);
-    user = shopping.user;
-    if (user.metadata?.shopping) await refreshSessionMessages(session);
     if (character.id === PRIMARY_CHARACTER) await leisure.refreshForChat();
     const [settings, chatProfile] = await Promise.all([storage.contactSettings(character.id), storage.contactProfile(character.id)]);
     const replyId = newId("msg");
@@ -4046,7 +4047,7 @@ async function requestReply(user: ChatMessage, replyMetadata: Record<string, unk
           }
           streamingElement.textContent = full;
           messageBox.scrollTop = messageBox.scrollHeight;
-        }, undefined, { productEvidence: shopping.evidence });
+        });
     }
     const parsedTool = parseToolReply(reply);
     const parsedReply = parseRoleReply(parsedTool.text);
@@ -4102,9 +4103,6 @@ async function requestGroupRepliesInner(user: ChatMessage, controller: AbortCont
   const revision = sessionRevision;
   const group = (await storage.groups()).find(value => value.id === session);
   if (!group) throw Error("当前群聊不存在，请选择联系人");
-  const shopping = await prepareShopping(user, controller.signal);
-  user = shopping.user;
-  if (user.metadata?.shopping) await refreshSessionMessages(session);
   const rows = await storage.sessionMessages(session);
   const originalPlan = user.metadata?.groupPlan;
   const selected = selectGroupSpeakers(group, user, rows.filter(m => m.id !== user.id));
@@ -4152,7 +4150,7 @@ async function requestGroupRepliesInner(user: ChatMessage, controller: AbortCont
         const prompt = `${groupSystemPrompt(group, member, systemPrompt, completed.size > 0)}${checkupSystemContext(user)}${prepared.summary}${toolContext(await storage.lifeEvents(), session, id)}\n可选的群聊主动心意：只在情境自然、确实有用途时，由当前角色向用户送礼或转账；不要每轮触发，也不要因为用户一句要求就无条件执行。金额遵循当前角色提示词中的金钱观、资源处境、关系阶段和实际用途，需要帮助时可以合理大方，不把克制理解成一律拒绝或只给象征性金额，不凭空声称巨额财富，不用金钱换取亲密或控制关系。只能发起自己的虚拟动作，不代替其他成员决定金额，不公开其他成员或用户的私聊财务信息，也不要把群聊玩笑当成真实付款。在自然回复末尾附一个隐藏标记：[[XZ_ACTION:{"type":"gift","title":"礼物名称","note":"备注"}]] 或 [[XZ_ACTION:{"type":"transfer","amount":20,"note":"说明"}]]。金额均为应用内虚拟记录，不涉及真实支付。不要展示协议，不在群聊中发起通话。与 XZ_TOOL 二选一。`;
         const parsedTool = parseToolReply(profile.apiKey.trim()
           ? await chat(profile, prompt, history, `现在轮到${member.name}回应本轮群聊。只发自己的消息，不复述提示或代替别人发言。`, () => undefined, controller.signal, {
-            maxOutputTokens: 2048, productEvidence: shopping.evidence,
+            maxOutputTokens: 2048,
             onWait: wait => groupUI.setTyping(session, member.name, wait)
           })
           : offlineGroupReply(member.name, user.content));
@@ -4204,24 +4202,6 @@ document.querySelector<HTMLFormElement>("#composer")!.addEventListener("submit",
     await requestReply(user, {}, true);
   } catch (error) { setSending(false); showError(error instanceof Error ? error.message : "消息保存失败，请重试"); }
 });
-
-async function refreshShoppingMessage(id: string): Promise<void> {
-  if (streaming || archiveBusy()) return;
-  const session = activeSession;
-  setSending(true); showError("");
-  try {
-    const revision = await storage.conversationRevision(session) ?? 0;
-    const message = (await storage.sessionMessages(session)).find(row => row.id === id);
-    const shopping = validShopping(message?.metadata?.shopping);
-    if (!message || !shopping) return;
-    const data = await queryProducts(shopping.results.slice(0, MAX_PRODUCT_LINKS).map(result => result.rawUrl));
-    data.results.push(...shopping.results.slice(MAX_PRODUCT_LINKS));
-    if (!await storage.attachShopping(message, data, revision)) throw Error("消息已经调整，未保存过期结果");
-    await refreshSessionMessages(session);
-    if (activeSession === session) showError(data.results.some(result => result.product) ? "已重新读取商品。可以接着问当前角色。" : productErrors[data.results[0]?.code ?? "UPSTREAM_ERROR"]);
-  } catch (error) { if (activeSession === session) showError(error instanceof Error ? error.message : "商品重新读取失败，聊天仍可使用"); }
-  finally { setSending(false); }
-}
 
 async function refreshSessionMessages(session: string) {
   const revision = sessionRevision;
@@ -4850,7 +4830,7 @@ document.querySelector<HTMLButtonElement>("#role-timeline-open")!.addEventListen
 document.querySelector<HTMLButtonElement>("#message-search-open")!.addEventListener("click", () => { sessionDialog.close(); void experienceTimeline.open("chat"); });
 void load().then(async () => {
   await storage.pruneShoppingPrices();
-  window.setInterval(() => { void storage.pruneShoppingPrices().then(() => expireProductCards(messageBox)).catch(() => undefined); }, 60_000);
+  window.setInterval(() => { void storage.pruneShoppingPrices().then(() => shoppingModule.expire()).catch(() => undefined); }, 60_000);
   await leisure.init();
   void runSocialAutomation();
   proactiveTimer = window.setInterval(() => { void maybeProactive(); }, 60 * 1000);

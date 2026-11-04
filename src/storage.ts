@@ -5,7 +5,22 @@ import type { ContactPreferences, SharedCharacterSettings } from "./types";
 import { normalizeLegacyGroup, isLegacyDateMemory } from "./groups";
 import { emptyCalendar, validCalendar, type CalendarData } from "./calendar";
 import type { GroupLifeScene } from "./types";
-import type { ShoppingAttachment } from "./shopping";
+import type { ShoppingAttachment, ShoppingWorkspace } from "./shopping";
+
+function stripShoppingPrices(data?: ShoppingAttachment, now = Date.now()): boolean {
+  let changed = false;
+  if (data?.version !== 1 || !Array.isArray(data.results)) return changed;
+  for (const result of data.results) {
+    const product = result?.product;
+    if (!product || typeof product.fetchedAt !== "number" || now < Math.min(product.expiresAt ?? Infinity, product.fetchedAt + 15 * 60_000)) continue;
+    if (product.price !== undefined || product.originalPrice !== undefined || Array.isArray(product.sku) && product.sku.some(row => row && row.price !== undefined)) {
+      delete product.price; delete product.originalPrice;
+      if (Array.isArray(product.sku)) product.sku = product.sku.filter(row => row && typeof row.name === "string").map(row => ({ name: row.name }));
+      product.priceExpired = true; product.unavailableFields = [...new Set([...(Array.isArray(product.unavailableFields) ? product.unavailableFields : []), "price", "originalPrice"])]; changed = true;
+    }
+  }
+  return changed;
+}
 
 export interface LeisureEffects { messages?: ChatMessage[]; diary?: DiaryRecord[]; lifeEvents?: LifeEventRecord[]; memories?: MemoryRecord[]; moments?: MomentRecord[] }
 export type SceneFloorScope = { kind: "life"; characterId: string } | { kind: "date"; characterId: string; id: string } | { kind: "adventure"; id: string } | { kind: "group-life"; groupId: string } | { kind: "group-date"; groupId: string; id: string };
@@ -154,7 +169,7 @@ export interface RelationshipArchiveFile {
 }
 function cleanArchiveKv(rows: ArchiveRows["kv"]): ArchiveRows["kv"] {
   return rows.filter(row => typeof row.key === "string" && !sharedKey(row.key)
-    && /^(?:calendar-data|character-settings|birthday-settings|birthday-claims|affection-state|music-tracks|music-active|continuous-life(?::[^\s]+)?|group-life:[^\s]+|date-sessions|fieldwork-data|active-session|travel-state|play-state|social-automation-state|starter-moments-seeded|contact:[^\s]+|draft:[^\s]+|read:[^\s]+|conversation-revision:[^\s]+)$/.test(row.key)).map(row => {
+    && /^(?:shopping-workspace|calendar-data|character-settings|birthday-settings|birthday-claims|affection-state|music-tracks|music-active|continuous-life(?::[^\s]+)?|group-life:[^\s]+|date-sessions|fieldwork-data|active-session|travel-state|play-state|social-automation-state|starter-moments-seeded|contact:[^\s]+|draft:[^\s]+|read:[^\s]+|conversation-revision:[^\s]+)$/.test(row.key)).map(row => {
       if (!String(row.key).startsWith("contact:")) return row;
       const prefs = row.value as ContactPreferences;
       return { key: row.key, value: { settings: prefs.settings, affection: prefs.affection, updatedAt: prefs.updatedAt } };
@@ -525,42 +540,29 @@ export const storage = {
   async addMessage(message: ChatMessage): Promise<void> {
     return this.addMessages([message]);
   },
-  async attachShopping(message: ChatMessage, shopping: ShoppingAttachment, revision: number): Promise<ChatMessage | undefined> {
-    const tx = (await db()).transaction(["messages", "kv"], "readwrite"), done = transactionDone(tx);
-    const rows = tx.objectStore("messages"), session = message.sessionId ?? "private";
-    let updated: ChatMessage | undefined;
-    const check = tx.objectStore("kv").get(`conversation-revision:${session}`);
-    check.onsuccess = () => {
-      if ((check.result?.value ?? 0) !== revision) return;
-      const get = rows.get(message.id);
-      get.onsuccess = () => {
-        const current = get.result as ChatMessage | undefined;
-        if (!current || (current.sessionId ?? "private") !== session || current.content !== message.content || current.metadata?.retractedAt || current.metadata?.hiddenAt) return;
-        updated = { ...current, metadata: { ...current.metadata, shopping } }; rows.put(updated);
-      };
+  async shoppingWorkspace(): Promise<ShoppingWorkspace | undefined> { return readKv<ShoppingWorkspace>("shopping-workspace"); },
+  async saveShoppingWorkspace(value: ShoppingWorkspace, expectedRevision: number): Promise<void> {
+    const tx = (await db()).transaction("kv", "readwrite"), done = transactionDone(tx), kv = tx.objectStore("kv"), get = kv.get("shopping-workspace");
+    let failure: Error | undefined;
+    const next = structuredClone({ ...value, revision: expectedRevision + 1, updatedAt: Date.now() });
+    stripShoppingPrices(next.attachment);
+    get.onsuccess = () => {
+      if ((get.result?.value?.revision ?? 0) !== expectedRevision) { failure = Error("选品资料已在其他页面修改，请关闭后重新打开；你的输入仍保留。"); tx.abort(); return; }
+      kv.put({ key: "shopping-workspace", value: next });
     };
-    await done; return updated;
+    try { await done; } catch (error) { throw failure ?? error; }
+    Object.assign(value, next);
   },
   /** Purge volatile prices on foreground use and before export; history keeps stable product facts. */
   async pruneShoppingPrices(now = Date.now()): Promise<void> {
-    const tx = (await db()).transaction("messages", "readwrite"), done = transactionDone(tx);
+    const tx = (await db()).transaction(["messages", "kv"], "readwrite"), done = transactionDone(tx);
+    const workspace = tx.objectStore("kv").get("shopping-workspace");
+    workspace.onsuccess = () => { if (workspace.result && stripShoppingPrices(workspace.result.value?.attachment, now)) tx.objectStore("kv").put(workspace.result); };
     const cursor = tx.objectStore("messages").openCursor();
     cursor.onsuccess = () => {
       const entry = cursor.result; if (!entry) return;
       const message = entry.value as ChatMessage, data = message.metadata?.shopping as ShoppingAttachment | undefined;
-      let changed = false;
-      if (data?.version === 1 && Array.isArray(data.results)) {
-        for (const result of data.results) {
-          const product = result?.product;
-          if (!product || typeof product.fetchedAt !== "number" || now < Math.min(product.expiresAt ?? Infinity, product.fetchedAt + 15 * 60_000)) continue;
-          if (product.price !== undefined || product.originalPrice !== undefined || Array.isArray(product.sku) && product.sku.some(row => row && row.price !== undefined)) {
-            delete product.price; delete product.originalPrice;
-            if (Array.isArray(product.sku)) product.sku = product.sku.filter(row => row && typeof row.name === "string").map(row => ({ name: row.name }));
-            product.priceExpired = true; product.unavailableFields = [...new Set([...(Array.isArray(product.unavailableFields) ? product.unavailableFields : []), "price", "originalPrice"])]; changed = true;
-          }
-        }
-      }
-      if (changed) entry.update(message);
+      if (stripShoppingPrices(data, now)) entry.update(message);
       entry.continue();
     };
     await done;

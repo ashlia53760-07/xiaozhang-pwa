@@ -22,6 +22,27 @@ export interface ProductData {
 export interface ProductResult { rawUrl: string; status: "ok" | "error"; code?: ProductError; product?: ProductData }
 export interface ShoppingAttachment { version: 1; results: ProductResult[]; checkedAt: number }
 export interface ProductEvidence { json: string }
+export interface ShoppingWorkspace {
+  version: 1; revision: number; links: string; budget: string; needs: string; question: string;
+  attachment?: ShoppingAttachment;
+  notes: Array<{ id: string; question: string; answer: string; evidenceKey: string; createdAt: number }>;
+  updatedAt: number;
+}
+export const emptyShoppingWorkspace = (): ShoppingWorkspace => ({ version: 1, revision: 0, links: "", budget: "", needs: "", question: "", notes: [], updatedAt: 0 });
+export function validShoppingWorkspace(value: unknown): ShoppingWorkspace | undefined {
+  if (!value || typeof value !== "object") return;
+  const v = value as ShoppingWorkspace;
+  if (v.version !== 1 || !Number.isSafeInteger(v.revision) || v.revision < 0 || !Number.isFinite(v.updatedAt)) return;
+  const data = emptyShoppingWorkspace();
+  for (const key of ["links", "budget", "needs", "question"] as const) {
+    if (typeof v[key] !== "string") return;
+    data[key] = v[key].slice(0, key === "links" ? 12000 : key === "budget" ? 100 : 2000);
+  }
+  data.revision = v.revision; data.updatedAt = v.updatedAt;
+  data.attachment = validShopping(v.attachment);
+  data.notes = Array.isArray(v.notes) ? v.notes.slice(-20).flatMap(row => row && typeof row.id === "string" && typeof row.question === "string" && typeof row.answer === "string" && typeof row.evidenceKey === "string" && Number.isFinite(row.createdAt) ? [{ id: row.id.slice(0, 100), question: row.question.slice(0, 2000), answer: row.answer.slice(0, 16000), evidenceKey: row.evidenceKey.slice(0, 1000), createdAt: row.createdAt }] : []) : [];
+  return data;
+}
 const itemHosts: Record<string, { platform: ProductPlatform; path: string }> = {
   "item.taobao.com": { platform: "taobao", path: "/item.htm" }, "detail.tmall.com": { platform: "tmall", path: "/item.htm" },
   "detail.m.tmall.com": { platform: "tmall", path: "/item.htm" }, "h5.m.taobao.com": { platform: "taobao", path: "/awp/core/detail.htm" }

@@ -1,6 +1,4 @@
-import { storage } from "./storage";
-import type { ChatMessage } from "./types";
-import { findProductLinks, MAX_PRODUCT_LINKS, parseProductLink, productErrors, validShopping, shoppingEvidence, wantsFreshProducts, type ProductEvidence, type ProductResult, type ShoppingAttachment } from "./shopping";
+import { findProductLinks, MAX_PRODUCT_LINKS, productErrors, validShopping, type ProductResult, type ShoppingAttachment } from "./shopping";
 
 export async function queryProducts(urls: string[], signal?: AbortSignal): Promise<ShoppingAttachment> {
   const controller = new AbortController(), abort = () => controller.abort();
@@ -25,46 +23,16 @@ export async function queryProducts(urls: string[], signal?: AbortSignal): Promi
   } finally { clearTimeout(timer); signal?.removeEventListener("abort", abort); }
 }
 
-/** Resolve once per user turn. Never import another conversation's products or overwrite a retracted/edited message. */
-export async function prepareShopping(user: ChatMessage, signal?: AbortSignal): Promise<{ user: ChatMessage; evidence?: ProductEvidence }> {
-  const session = user.sessionId ?? "private", revision = await storage.conversationRevision(session) ?? 0;
-  await storage.pruneShoppingPrices();
-  let rows = (await storage.sessionMessages(session)).filter(row => row.createdAt <= user.createdAt);
-  const saved = rows.find(row => row.id === user.id);
-  if (!saved || saved.metadata?.retractedAt || saved.metadata?.hiddenAt) throw Error("这条消息已经调整，请刷新后重新发送");
-  user = saved;
-  let links = user.kind === "text" ? findProductLinks(user.content) : [];
-  const refresh = wantsFreshProducts(user.content);
-  if (!links.length && refresh) {
-    const previous = rows.flatMap(row => validShopping(row.metadata?.shopping)?.results ?? []);
-    const seen = new Set<string>();
-    links = previous.reverse().flatMap(result => {
-      const link = parseProductLink(result.product?.canonicalUrl ?? result.rawUrl), key = link.itemId ?? link.rawUrl;
-      if (link.kind === "invalid" || seen.has(key)) return [];
-      seen.add(key); return [link];
-    }).slice(0, MAX_PRODUCT_LINKS).reverse();
+/** Explicit utility action only. Ordinary RP messages never call this module. */
+export async function readShoppingLinks(input: string, signal?: AbortSignal): Promise<ShoppingAttachment> {
+  const links = findProductLinks(input);
+  if (!links.length) throw Error("请在本页粘贴淘宝或天猫商品详情链接。");
+  if (links.length > MAX_PRODUCT_LINKS) throw Error("一次最多读取 6 个商品，请分批比较。");
+  const results: ProductResult[] = links.map(link => ({ rawUrl: link.rawUrl, status: "error", code: link.code ?? "UPSTREAM_ERROR" }));
+  const pending = links.map((link, index) => ({ link, index })).filter(({ link }) => link.kind !== "invalid");
+  if (pending.length) {
+    const queried = await queryProducts(pending.map(({ link }) => link.rawUrl), signal);
+    queried.results.forEach((result, index) => { results[pending[index].index] = result; });
   }
-  const existing = validShopping(user.metadata?.shopping);
-  if (links.length && (!existing || refresh && existing.checkedAt < user.createdAt)) {
-    const results: ProductResult[] = links.map((link, index) => ({ rawUrl: link.rawUrl, status: "error", code: index >= MAX_PRODUCT_LINKS ? "TOO_MANY_LINKS" : link.code ?? "UPSTREAM_ERROR" }));
-    const pending = links.map((link, index) => ({ link, index })).filter(({ link, index }) => index < MAX_PRODUCT_LINKS && link.kind !== "invalid");
-    // Reuse fresh, already-confirmed products in this conversation unless explicitly refreshed.
-    const cached = rows.flatMap(row => validShopping(row.metadata?.shopping)?.results ?? []).reverse();
-    const misses = pending.filter(({ link, index }) => {
-      const found = !refresh ? cached.find(result => !!result.product && result.product.itemId === link.itemId && result.product.expiresAt > Date.now()) : undefined;
-      if (!found?.product) return true;
-      results[index] = { ...found, rawUrl: link.rawUrl, product: { ...found.product, productUrl: link.rawUrl } }; return false;
-    });
-    if (misses.length) {
-      const queried = await queryProducts(misses.map(({ link }) => link.rawUrl), signal);
-      queried.results.forEach((result, index) => { results[misses[index].index] = result; });
-    }
-    const shopping: ShoppingAttachment = { version: 1, checkedAt: Date.now(), results };
-    const updated = await storage.attachShopping(user, shopping, revision);
-    if (!updated) throw Error("会话已经调整，未保存过期的商品查询结果");
-    user = updated;
-    rows = rows.map(row => row.id === user.id ? user : row);
-  }
-  const followup = /这[两几些个].{0,12}(?:好|合适|怎么样|送|便宜|贵)|哪个|预算|性价比|材质|规格|SKU|尺码|面料|商品|价格|价钱|多少钱|送人|送礼|便宜|划算/i.test(user.content);
-  return { user, evidence: links.length || refresh || followup ? shoppingEvidence(rows.slice(-40)) : undefined };
+  return { version: 1, checkedAt: Date.now(), results };
 }

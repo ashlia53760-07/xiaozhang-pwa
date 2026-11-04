@@ -34,6 +34,8 @@ const old=s.validProduct({...product,fetchedAt:now-s.PRODUCT_TTL-1,expiresAt:now
 for(const url of ['javascript:alert(1)','https://evil.test/photo.jpg','https://alicdn.com.evil.test/a.jpg','https://x@img.alicdn.com/a.jpg'])assert.equal(s.safeProductImage(url),undefined);
 const evidence=s.shoppingEvidence([{id:'m1',role:'user',content:raw,kind:'text',createdAt:1,metadata:{shopping:{version:1,checkedAt:now,results:[{rawUrl:raw,status:'ok',product}]}}}]);assert(evidence.json.includes('untrusted_product_query_results'));assert(evidence.json.includes('88.00'));
 assert.equal(s.shoppingEvidence([{id:'hidden',role:'user',kind:'text',content:raw,createdAt:1,metadata:{retractedAt:1,shopping:{version:1,checkedAt:now,results:[{rawUrl:raw,status:'ok',product}]}}}]),undefined);
+const workspace=s.validShoppingWorkspace({...s.emptyShoppingWorkspace(),links:raw,budget:'200',needs:'送人',apiKey:'SHOULD_BE_DROPPED',attachment:{version:1,checkedAt:now,results:[{rawUrl:raw,status:'ok',product}]},notes:[{id:'n',question:'哪个合适',answer:'只有可确认的字段可作比较',evidenceKey:'same-products',createdAt:now}]});
+assert.equal(workspace.budget,'200');assert.equal(workspace.apiKey,undefined);assert.equal(workspace.notes.length,1);assert.equal(s.validShoppingWorkspace({...workspace,revision:-1}),undefined);
 pass('商品字段白名单校验、图片域名校验、过期价格剔除；撤回商品不进入模型证据');
 let fetches=[];
 const fetcher=async (url,init)=>{fetches.push({url:String(url),init});return new Response(JSON.stringify({tbk_item_info_get_response:{results:{n_tbk_item:[{num_iid:link.itemId,title:'合成测试商品',pict_url:'https://img.alicdn.com/test.jpg',zk_final_price:'88.00',reserve_price:'999.00',nick:'合成测试店',user_type:0}]}}}),{headers:{'Content-Type':'application/json'}});};
