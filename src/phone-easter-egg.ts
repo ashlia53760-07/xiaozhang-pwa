@@ -1,27 +1,35 @@
 import { characters, PRIMARY_CHARACTER } from "./characters";
 
-type TraceCopy = { title: string; body: string };
+type TraceCopy = { object: string; clue: string; front: string; reveal: string; mark: string; style: "paper" | "bookmark" | "doodle" };
 type TraceCharacter = { id: string; name: string };
 
 const AWAY_KEY = "xiaozhang-phone-away-at";
-const MIN_AWAY_MS = 15_000;
-const traces: Record<string, TraceCopy> = {
-  "zhang-qiling": { title: "他把屏幕亮了一下", body: "没有留下消息，只确认你还会回来。" },
-  "wu-xie": { title: "有人翻过功能菜单", body: "像在找一条线索，最后又替你合上了。" },
-  "wang-pangzi": { title: "有人看过你的加号", body: "投喂入口还在，他大概只是确认库存。" },
-  "xie-yuchen": { title: "有人替你理平了页面", body: "顶部的字没有乱，连边角都像被照看过。" },
-  "hei-xiazi": { title: "有人在屏幕外笑了一声", body: "光标停过的地方，恰好是你最常点的入口。" },
-  "zhang-haike": { title: "有人核对过这台手机", body: "没有改动设置，只留下了一次很轻的访问痕迹。" },
-  "liu-sang": { title: "有人听见了屏幕的动静", body: "他没碰聊天记录，只把页面停在原处。" },
-  "a-ning": { title: "有人检查过你的界面", body: "像确认装备一样，所有入口都还在原位。" },
-  "huo-xiuxiu": { title: "有人悄悄看了看", body: "她没有打扰你，只把这页留给了你。" },
-  "zhang-haiyan": { title: "有人动过你的手机", body: "动作很快，像顺手确认了一件有趣的事。" },
-  "zhang-haixia": { title: "有人替你看过一眼", body: "没有留下声响，页面仍停在你离开的位置。" },
-  "zhang-haiqi": { title: "有人来过这里", body: "她看过一遍，确认你没有把重要的东西落下。" },
-  "wang-can": { title: "有人检查过屏幕", body: "没有多余动作，只有一次短暂的确认。" },
-  "li-cu": { title: "有人偷看了一眼", body: "他想装作没来过，但把页面停得太整齐了。" },
-  "su-wan": { title: "有人替你确认过入口", body: "没有改设置，只把最常用的地方看了一遍。" },
-  "yang-hao": { title: "有人来过", body: "没动你的东西，像是只想确定你还在用。" }
+const MIN_AWAY_MS = 2 * 60_000;
+const AUTO_COOLDOWN_MS = 4 * 60 * 60_000;
+const traces: Record<string, TraceCopy[]> = {
+  "zhang-qiling": [
+    { object: "一张折过两次的窄纸条", clue: "地图边角画着一小段山脊", front: "回来以后，先喝点水。", reveal: "背面只有两个字：在等。墨迹很淡，像是不想留下。", mark: "山", style: "paper" },
+    { object: "一枚夹在手机壳里的旧车票", clue: "日期被手指磨得很浅", front: "收好。下次还要一起走。", reveal: "车票背后没有目的地，只写着：别赶路。", mark: "票", style: "bookmark" },
+    { object: "屏幕边缘的一道浅浅指痕", clue: "像是有人想抹掉，又停了手", front: "他看过你写到一半的话。", reveal: "没有碰发送键。只在旁边留了一笔：等你自己说完。", mark: "痕", style: "doodle" }
+  ],
+  "wu-xie": [
+    { object: "从旧本子上撕下的纸签", clue: "上面抄着一串对得上的日期", front: "你上次说的那件事，我又翻了一遍。", reveal: "日期旁边写着：等你有空，再一起查后半段。", mark: "记", style: "paper" },
+    { object: "一张被折成三角的小地图", clue: "路绕远了，但终点被圈得很仔细", front: "这条路我先替你看过了。", reveal: "圈外补着一行：不过还是得等你自己来选。", mark: "图", style: "paper" }
+  ],
+  "wang-pangzi": [{ object: "一枚黏在屏幕边的贴纸", clue: "画了只抱着零食袋的小胖鸟", front: "手机里怎么连点吃的都没有？", reveal: "角落还有一行小字：回来记得投喂胖爷。", mark: "吃", style: "doodle" }],
+  "xie-yuchen": [{ object: "一张边缘压得平平的便签", clue: "纸面有淡淡的花纹压痕", front: "桌面有点乱。我替你理好了。", reveal: "落款写得很小：不必谢，记得把自己也照顾好。", mark: "花", style: "paper" }],
+  "hei-xiazi": [{ object: "一小段贴在屏幕下方的胶带", clue: "上面用笔画了副歪歪的墨镜", front: "这地方视野不错。", reveal: "翻过来才看见补充：放心，没看你没写完的消息。", mark: "镜", style: "doodle" }],
+  "zhang-haike": [{ object: "一枚夹在页面角上的薄书签", clue: "边缘压着规整的张家暗纹", front: "界面检查完毕。没有多余改动。", reveal: "书签里侧补了一句：族长说过，你会回来。", mark: "张", style: "bookmark" }],
+  "liu-sang": [{ object: "一截折成耳朵形状的纸角", clue: "纸上画了几圈越来越小的声纹", front: "你不在的时候，手机安静得很。", reveal: "下面还有一句：我听见你回来了。", mark: "听", style: "paper" }],
+  "a-ning": [{ object: "一张临时装备检查条", clue: "每个功能入口旁都打了勾", front: "东西都在原位。可以放心出发。", reveal: "最后一项没有勾：回来以后，告诉我你去了哪儿。", mark: "✓", style: "paper" }],
+  "huo-xiuxiu": [{ object: "一枚夹着花瓣的细书签", clue: "花瓣被压得平整，还留着浅浅的香气", front: "替你夹在这里啦。", reveal: "翻到背面，是她画的一朵小花，旁边写着：下次一起去看真的。", mark: "秀", style: "bookmark" }],
+  "zhang-haiyan": [{ object: "一张画满箭头的便笺", clue: "箭头绕了一圈，又指回聊天框", front: "我刚才发现了一个很好玩的入口。", reveal: "最下面画了个圈：等你回来，带你一起试。", mark: "趣", style: "doodle" }],
+  "zhang-haixia": [{ object: "一枚夹在聊天页边上的书签", clue: "上面只标了刚好停住的那一行", front: "帮你留在这里了。", reveal: "背面写着：别急，回来再接着说。", mark: "虾", style: "bookmark" }],
+  "zhang-haiqi": [{ object: "一张叠得整齐的留言纸", clue: "折角像一枚很小的屋檐", front: "有空再回来，不必赶。", reveal: "纸条背面写着：饭要趁热吃，话也可以慢慢讲。", mark: "琪", style: "paper" }],
+  "wang-can": [{ object: "一枚不起眼的黑色标签", clue: "背面标了时间，没有写地点", front: "屏幕检查完成。", reveal: "撕开夹层，里面只有一句：你回来得比我预计得早。", mark: "灿", style: "bookmark" }],
+  "li-cu": [{ object: "一张从草稿纸上撕下来的纸片", clue: "边上画了个假装不在意的小人", front: "我就随便看了一眼。", reveal: "背面却认真写着：你怎么这么久才回来。", mark: "簇", style: "doodle" }],
+  "su-wan": [{ object: "一枚做了记号的透明书签", clue: "小箭头指向你常用的聊天框", front: "我帮你找到啦，回来就能接着用。", reveal: "旁边添了个笑脸：这个位置很顺手，对吧？", mark: "万", style: "bookmark" }],
+  "yang-hao": [{ object: "一张揉过又展开的纸条", clue: "折痕很多，字倒是写得很直", front: "你东西没少。我没乱动。", reveal: "角落里还有一行：下次别走这么久。", mark: "好", style: "paper" }]
 };
 
 function currentCharacter(value: TraceCharacter | undefined): TraceCharacter {
@@ -33,17 +41,24 @@ function currentCharacter(value: TraceCharacter | undefined): TraceCharacter {
 /** A local interface-only clue. It never enters chat history, memory or model context. */
 export class PhoneEasterEgg {
   private initialized = false;
-  private hiddenAt = 0;
   private hideTimer = 0;
   private longPressTimer = 0;
+  private lastVisitKey = "xiaozhang-phone-trace-auto-at";
 
   constructor(private options: {
     trigger: HTMLButtonElement;
     card: HTMLElement;
     title: HTMLElement;
+    object: HTMLElement;
+    clue: HTMLElement;
+    mark: HTMLElement;
     traceTitle: HTMLElement;
     traceBody: HTMLElement;
     traceByline: HTMLElement;
+    front: HTMLElement;
+    back: HTMLElement;
+    frontCopy: HTMLElement;
+    flip: HTMLButtonElement;
     close: HTMLButtonElement;
     character: () => TraceCharacter | undefined;
   }) {}
@@ -53,15 +68,21 @@ export class PhoneEasterEgg {
     this.initialized = true;
     this.options.trigger.addEventListener("click", () => this.open());
     this.options.close.addEventListener("click", () => this.close());
+    this.options.flip.addEventListener("click", () => {
+      const revealBack = this.options.back.hidden;
+      this.options.front.hidden = revealBack;
+      this.options.back.hidden = !revealBack;
+      this.options.flip.textContent = revealBack ? "翻回正面" : "翻过来看";
+      this.options.card.classList.toggle("phone-trace-reversed", revealBack);
+    });
     this.options.title.addEventListener("pointerdown", () => {
       window.clearTimeout(this.longPressTimer);
-      this.longPressTimer = window.setTimeout(() => this.leaveTrace(), 900);
+      this.longPressTimer = window.setTimeout(() => this.leaveTrace(true), 900);
     });
     for (const event of ["pointerup", "pointercancel", "pointerleave"]) this.options.title.addEventListener(event, () => window.clearTimeout(this.longPressTimer));
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") {
-        this.hiddenAt = Date.now();
-        localStorage.setItem(AWAY_KEY, String(this.hiddenAt));
+        localStorage.setItem(AWAY_KEY, String(Date.now()));
         return;
       }
       this.checkReturn();
@@ -73,23 +94,37 @@ export class PhoneEasterEgg {
   private checkReturn() {
     const awayAt = Number(localStorage.getItem(AWAY_KEY) ?? 0);
     localStorage.removeItem(AWAY_KEY);
-    if (awayAt && Date.now() - awayAt >= MIN_AWAY_MS) this.leaveTrace();
+    if (awayAt && Date.now() - awayAt >= MIN_AWAY_MS && Date.now() - Number(localStorage.getItem(this.lastVisitKey) ?? 0) >= AUTO_COOLDOWN_MS) this.leaveTrace();
   }
 
-  private leaveTrace() {
+  private leaveTrace(manual = false) {
     const character = currentCharacter(this.options.character());
-    const copy = traces[character.id] ?? traces[PRIMARY_CHARACTER];
-    this.options.traceTitle.textContent = copy.title;
-    this.options.traceBody.textContent = copy.body;
-    this.options.traceByline.textContent = `${character.name} · 只留在界面上的小痕迹`;
+    const options = traces[character.id] ?? traces[PRIMARY_CHARACTER];
+    const variantKey = `xiaozhang-phone-trace-variant:${character.id}`;
+    const variant = Math.max(0, Number(localStorage.getItem(variantKey) ?? 0)) % options.length;
+    const copy = options[variant];
+    localStorage.setItem(variantKey, String(variant + 1));
+    this.options.card.dataset.style = copy.style;
+    this.options.mark.textContent = copy.mark;
+    this.options.object.textContent = copy.object;
+    this.options.clue.textContent = copy.clue;
+    this.options.traceBody.textContent = copy.reveal;
+    this.options.traceByline.textContent = `${character.name} · ${copy.mark}`;
+    this.options.front.hidden = false;
+    this.options.back.hidden = true;
+    this.options.flip.textContent = "翻过来看";
+    this.options.frontCopy.textContent = copy.front;
+    this.options.card.classList.remove("phone-trace-reversed");
     this.options.trigger.hidden = false;
     this.options.trigger.dataset.characterId = character.id;
-    this.options.trigger.setAttribute("aria-label", `${character.name}留下的手机痕迹`);
+    this.options.trigger.setAttribute("aria-label", `查看${character.name}留下的东西`);
+    this.options.trigger.querySelector("span:last-child")!.textContent = "页边有东西";
     this.options.card.dataset.characterId = character.id;
     this.options.card.classList.remove("phone-trace-card-new");
     void this.options.card.offsetWidth;
     this.options.card.classList.add("phone-trace-card-new");
     this.open();
+    if (!manual) localStorage.setItem(this.lastVisitKey, String(Date.now()));
   }
 
   private open() {

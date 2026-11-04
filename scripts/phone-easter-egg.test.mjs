@@ -7,6 +7,8 @@ const context = await browser.newContext({ viewport: { width: 390, height: 844 }
 await context.addInitScript(() => {
   for (const key of ["auto-moments", "auto-diary", "proactive-enabled"]) localStorage.setItem(`xiaozhang-${key}`, "false");
   localStorage.removeItem("xiaozhang-phone-away-at");
+  localStorage.removeItem("xiaozhang-phone-trace-auto-at");
+  localStorage.setItem("xiaozhang-phone-trace-variant:zhang-qiling", "0");
 });
 const page = await context.newPage();
 const errors = [], requests = [];
@@ -22,7 +24,14 @@ try {
   await page.locator("#app-title").dispatchEvent("pointerup");
   assert.equal(await trigger.isVisible(), true);
   assert.equal(await card.isVisible(), true);
-  assert.match(await card.innerText(), /屏幕|界面|手机/);
+  assert.match(await page.locator("#phone-trace-object").innerText(), /窄纸条/);
+  assert.equal(await page.locator("#phone-trace-mark").innerText(), "山");
+  assert.match(await page.locator("#phone-trace-front-copy").innerText(), /回来以后/);
+  await page.click("#phone-trace-flip");
+  assert.equal(await page.locator("#phone-trace-front").isVisible(), false);
+  assert.match(await page.locator("#phone-trace-body").innerText(), /在等/);
+  await page.click("#phone-trace-flip");
+  assert.equal(await page.locator("#phone-trace-front").isVisible(), true);
   assert.equal(await page.locator("#messages .message-row").count(), before);
   assert.equal(requests.length, 0);
   await page.screenshot({ path: ".local-review/phone-easter-egg.png" });

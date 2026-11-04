@@ -1,15 +1,25 @@
 .topbar-identity { display:flex; align-items:center; gap:9px; min-width:0; }
 .topbar-identity > div { min-width:0; }
-.phone-trace-trigger { display:inline-flex; align-items:center; gap:5px; flex:0 0 auto; min-height:28px; border:1px solid color-mix(in srgb,var(--accent) 28%,var(--ui-line)); border-radius:999px; padding:4px 8px; background:color-mix(in srgb,var(--paper) 88%,transparent); color:var(--text); font-size:10px; cursor:pointer; opacity:.9; }
+.phone-trace-trigger { display:inline-flex; align-items:center; gap:6px; flex:0 0 auto; min-height:30px; border:1px solid color-mix(in srgb,var(--accent) 28%,var(--ui-line)); border-radius:8px 8px 8px 2px; padding:5px 9px; background:color-mix(in srgb,var(--paper) 92%,transparent); color:var(--text); font-size:10px; cursor:pointer; box-shadow:1px 2px 0 color-mix(in srgb,var(--accent) 12%,transparent); transform:rotate(-2deg); }
 .phone-trace-trigger:hover, .phone-trace-trigger:focus-visible { border-color:var(--accent); background:color-mix(in srgb,var(--accent) 10%,var(--paper)); outline:none; }
 .phone-trace-trigger[hidden], .phone-trace-card[hidden] { display:none; }
-.phone-trace-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent); }
-.phone-trace-card { position:relative; z-index:10; width:min(100% - 24px, 720px); margin:7px auto 0; padding:11px 13px 12px; border:1px solid color-mix(in srgb,var(--accent) 24%,var(--ui-line)); border-radius:9px; background:color-mix(in srgb,var(--panel) 96%,transparent); box-shadow:0 6px 18px #15212b18; }
-.phone-trace-card-new { animation:phone-trace-in .24s ease-out both; }
-.phone-trace-card-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:7px; color:color-mix(in srgb,var(--text) 62%,transparent); font-size:10px; letter-spacing:.08em; }
-.phone-trace-card-head button { border:0; padding:2px 4px; background:transparent; color:inherit; cursor:pointer; font-size:11px; }
-.phone-trace-card strong { display:block; margin-bottom:4px; font-size:13px; font-weight:600; }
-.phone-trace-card p { font-size:12px; line-height:1.65; }
-.phone-trace-card small { display:block; margin-top:7px; color:color-mix(in srgb,var(--text) 56%,transparent); font-size:10px; }
-@keyframes phone-trace-in { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
+.phone-trace-dot { width:7px; height:7px; flex:0 0 7px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent); }
+.phone-trace-card { position:relative; z-index:10; width:min(calc(100% - 28px), 390px); margin:9px auto 1px; padding:12px 14px 10px; border:1px solid color-mix(in srgb,var(--accent) 24%,var(--ui-line)); border-radius:4px 8px 5px 3px; background:color-mix(in srgb,var(--paper) 96%,transparent); color:var(--text); box-shadow:2px 4px 0 color-mix(in srgb,var(--accent) 10%,transparent),0 7px 18px #15212b18; transform:rotate(-.5deg); }
+.phone-trace-card::before { content:""; position:absolute; top:-5px; left:18px; width:48px; height:12px; background:color-mix(in srgb,var(--accent) 15%,var(--paper)); border-inline:1px solid color-mix(in srgb,var(--accent) 18%,transparent); transform:rotate(-3deg); }
+.phone-trace-card-new { animation:phone-trace-in .3s cubic-bezier(.2,.8,.3,1.15) both; }
+.phone-trace-card-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:9px; color:color-mix(in srgb,var(--text) 62%,transparent); font-size:10px; }
+.phone-trace-card-head > div { display:flex; gap:5px; }
+.phone-trace-card-head button { min-height:28px; border:1px solid color-mix(in srgb,var(--text) 12%,transparent); border-radius:5px; padding:4px 8px; background:color-mix(in srgb,var(--panel) 72%,transparent); color:var(--text); cursor:pointer; font-size:10px; }
+.phone-trace-object { position:relative; display:grid; grid-template-columns:38px minmax(0,1fr); align-items:center; column-gap:9px; min-height:52px; margin-bottom:10px; padding:8px; border:1px dashed color-mix(in srgb,var(--accent) 28%,var(--ui-line)); border-radius:4px; background:repeating-linear-gradient(0deg,transparent,transparent 21px,color-mix(in srgb,var(--accent) 6%,transparent) 22px); }
+.phone-trace-object > span:first-child { grid-row:span 2; display:grid; place-items:center; width:34px; height:34px; border-radius:50%; background:color-mix(in srgb,var(--accent) 13%,var(--panel)); font-family:serif; font-size:17px; }
+.phone-trace-object > span:nth-child(2) { align-self:end; font-size:12px; font-weight:550; }
+.phone-trace-object > i { align-self:start; color:color-mix(in srgb,var(--text) 58%,transparent); font-size:10px; font-style:normal; }
+.phone-trace-card[data-style="bookmark"] .phone-trace-object { border-style:solid; border-top:3px solid color-mix(in srgb,var(--accent) 45%,var(--ui-line)); }
+.phone-trace-card[data-style="doodle"] .phone-trace-object > span:first-child { border:1px dashed var(--accent); background:transparent; transform:rotate(7deg); }
+.phone-trace-card strong { display:block; margin-bottom:4px; font-family:serif; font-size:15px; font-weight:550; }
+.phone-trace-card p { min-height:2.8em; font-size:12px; line-height:1.7; }
+.phone-trace-card small { display:block; margin-top:7px; color:color-mix(in srgb,var(--text) 56%,transparent); font-size:10px; text-align:right; }
+.phone-trace-reversed { transform:rotate(.35deg); }
+@keyframes phone-trace-in { from { opacity:0; transform:translateY(-8px) rotate(-2deg) scale(.98); } to { opacity:1; transform:translateY(0) rotate(-.5deg) scale(1); } }
 @media (max-width:390px) { .topbar-identity { gap:6px; } .phone-trace-trigger { max-width:84px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; } .phone-trace-card { width:calc(100% - 18px); } }
+@media (prefers-reduced-motion:reduce) { .phone-trace-card-new { animation:none; } }

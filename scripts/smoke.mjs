@@ -55,9 +55,10 @@ assert.doesNotMatch(main, /id="user-avatar-button"/, "头像设置入口不应�
 assert.match(main, /id=\"topbar-menu-toggle\"/, "顶部功能应折叠在菜单中");
 assert.match(main, /id=\"phone-trace-trigger\"/, "顶部应有可发现的手机痕迹入口");
 assert.match(main, /phoneEasterEgg\.init\(\)/, "手机痕迹彩蛋应在应用数据加载后初始化");
-assert.match(phoneEgg, /MIN_AWAY_MS = 15_000/, "手机痕迹应只在离开页面一段时间后触发");
+assert.match(phoneEgg, /MIN_AWAY_MS = 2 \* 60_000/, "手机痕迹应只在离开页面一段时间后触发");
+assert.match(phoneEgg, /AUTO_COOLDOWN_MS = 4 \* 60 \* 60_000/, "手机痕迹应有自动触发冷却");
 assert.match(phoneEgg, /localStorage\.setItem\(AWAY_KEY/, "手机痕迹应记录页面离开时间");
-assert.match(phoneEgg, /界面上的小痕迹/, "手机痕迹应保持在界面层");
+assert.match(phoneEgg, /never enters chat history, memory or model context/, "手机痕迹应保持在界面层");
 assert.match(main, /data-role-interaction/, "摸头、投喂和拥抱应放在角色记录中");
 assert.match(main, /<textarea id=\"draft\"[\s\S]*?<button id=\"send\"[\s\S]*?<button id=\"plus-open\"/, "聊天加号应位于输入框右侧");
 assert.match(main, /id=\"plus-menu\"[\s\S]*id=\"voice-record\"[\s\S]*id=\"sticker-choose\"/, "语音和表情包入口应放在加号菜单中");
@@ -98,7 +99,7 @@ assert.match(main, /async function saveDateMemory\(\)/, "约会应支持用户�
 assert.match(main, /dateSessions\?/, "约会进度应进入备份结构");
 assert.match(main, /musicVolume\.addEventListener/, "播放器应支持持久化音量");
 assert.match(main, /data-music-up/, "播放列表应支持调整顺序");
-assert.match(await readFile(new URL("../public/sw.js", import.meta.url), "utf8"), /shell-v44/, "Service Worker 应刷新到本轮缓存版本");
+assert.match(await readFile(new URL("../public/sw.js", import.meta.url), "utf8"), /shell-v45/, "Service Worker 应刷新到本轮缓存版本");
 assert.match(await readFile(new URL("../public/character/offline_system_prompt.txt", import.meta.url), "utf8"), /连续生活中的线下见面/, "线下 system prompt 文件应存在");
 assert.match(style, /#meet-dialog, #date-dialog, #call-dialog/, "线下、约会和通话应使用全屏界面");
 assert.match(html, /apple-mobile-web-app-capable/, "PWA 应保留 iOS 主屏幕能力");
