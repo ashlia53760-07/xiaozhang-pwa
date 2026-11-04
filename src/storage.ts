@@ -4,9 +4,10 @@ import { characters, PRIMARY_CHARACTER, emptyCharacterSettings, ownsCharacter, c
 import type { ContactPreferences, SharedCharacterSettings } from "./types";
 import { normalizeLegacyGroup } from "./groups";
 import { emptyCalendar, validCalendar, type CalendarData } from "./calendar";
+import type { GroupLifeScene } from "./types";
 
 export interface LeisureEffects { messages?: ChatMessage[]; diary?: DiaryRecord[]; lifeEvents?: LifeEventRecord[]; memories?: MemoryRecord[]; moments?: MomentRecord[] }
-export type SceneFloorScope = { kind: "life"; characterId: string } | { kind: "date"; characterId: string; id: string } | { kind: "adventure"; id: string };
+export type SceneFloorScope = { kind: "life"; characterId: string } | { kind: "date"; characterId: string; id: string } | { kind: "adventure"; id: string } | { kind: "group-life"; groupId: string } | { kind: "group-date"; groupId: string; id: string };
 export type SceneFloorRow = Pick<ChatMessage, "id" | "role" | "content" | "createdAt" | "speakerId" | "metadata">;
 export type SceneFloorChange = { type: "edit"; content: string } | { type: "rewind" };
 function floorSignature(rows: SceneFloorRow[]): string {
@@ -152,7 +153,7 @@ export interface RelationshipArchiveFile {
 }
 function cleanArchiveKv(rows: ArchiveRows["kv"]): ArchiveRows["kv"] {
   return rows.filter(row => typeof row.key === "string" && !sharedKey(row.key)
-    && /^(?:calendar-data|character-settings|birthday-settings|birthday-claims|affection-state|music-tracks|music-active|continuous-life(?::[^\s]+)?|date-sessions|fieldwork-data|active-session|travel-state|play-state|social-automation-state|starter-moments-seeded|contact:[^\s]+|draft:[^\s]+|read:[^\s]+|conversation-revision:[^\s]+)$/.test(row.key)).map(row => {
+    && /^(?:calendar-data|character-settings|birthday-settings|birthday-claims|affection-state|music-tracks|music-active|continuous-life(?::[^\s]+)?|group-life:[^\s]+|date-sessions|fieldwork-data|active-session|travel-state|play-state|social-automation-state|starter-moments-seeded|contact:[^\s]+|draft:[^\s]+|read:[^\s]+|conversation-revision:[^\s]+)$/.test(row.key)).map(row => {
       if (!String(row.key).startsWith("contact:")) return row;
       const prefs = row.value as ContactPreferences;
       return { key: row.key, value: { settings: prefs.settings, affection: prefs.affection, updatedAt: prefs.updatedAt } };
@@ -967,7 +968,37 @@ export const storage = {
   async dateSessions(): Promise<DateSession[]> {
     return (await readKv<DateSession[]>(DATE_SESSIONS_KEY) ?? []).sort((a, b) => b.updatedAt - a.updatedAt);
   },
+  async groupLife(groupId: string): Promise<GroupLifeScene | undefined> { return readKv<GroupLifeScene>(`group-life:${groupId}`); },
+  async groupLifeScenes(): Promise<GroupLifeScene[]> {
+    const rows = await request((await db()).transaction("kv", "readonly").objectStore("kv").getAll());
+    return rows.filter(row => row.key.startsWith("group-life:") && row.value).map(row => row.value);
+  },
+  /** Group scenes compare their revision inside the write transaction, including each generated floor. */
+  async saveGroupScene(value: GroupLifeScene | DateSession, expectedRevision?: number): Promise<void> {
+    if (!value.groupId) throw Error("缺少剧场所属群聊");
+    const isLife = "location" in value, key = isLife ? `group-life:${value.groupId}` : DATE_SESSIONS_KEY;
+    const tx = (await db()).transaction("kv", "readwrite"), done = transactionDone(tx), kv = tx.objectStore("kv");
+    let failure: Error | undefined;
+    const get = kv.get(key);
+    get.onsuccess = () => {
+      const dates = isLife ? [] : (get.result?.value ?? []) as DateSession[];
+      const original = isLife ? get.result?.value as GroupLifeScene | undefined : dates.find(row => row.id === value.id && row.groupId === value.groupId);
+      if (!isLife && dates.some(row => row.id === value.id && row.groupId !== value.groupId)) { failure = Error("剧场编号冲突，未覆盖其他记录。"); tx.abort(); return; }
+      if ((original ? original.revision ?? 0 : undefined) !== expectedRevision) { failure = Error("剧场已在其他页面修改，请重新打开；已有记录仍保留。"); tx.abort(); return; }
+      const next = { ...value, revision: (expectedRevision ?? 0) + 1, updatedAt: Date.now() };
+      if (isLife) kv.put({ key, value: next });
+      else kv.put({ key, value: [...dates.filter(row => row.id !== value.id).map(row => row.groupId === value.groupId && value.active && row.active ? { ...row, active: false, revision: (row.revision ?? 0) + 1 } : row), next] });
+    };
+    try { await done; } catch (error) { throw failure ?? error; }
+    value.revision = (expectedRevision ?? 0) + 1;
+    value.updatedAt = Date.now();
+  },
   async sceneFloors(scope: SceneFloorScope): Promise<SceneFloorRow[]> {
+    if (scope.kind === "group-life" || scope.kind === "group-date") {
+      const scene = scope.kind === "group-life" ? await this.groupLife(scope.groupId) : (await this.dateSessions()).find(value => value.id === scope.id && value.groupId === scope.groupId);
+      if (!scene) throw Error("这场多人剧场已调整，请重新打开");
+      return scene.messages;
+    }
     if (scope.kind === "life") {
       if (!characters.some(character => character.id === scope.characterId)) throw Error("找不到这位线下联系人");
       return this.sessionMessages(lifeSession(scope.characterId));
@@ -990,18 +1021,33 @@ export const storage = {
     if (floorSignature(await this.sceneFloors(scope)) !== signature) throw Error("记录已在其他页面变化，请重新打开这一层；你的编辑内容仍保留");
     if (change.type === "edit" && change.content === expected[index].content) return { removed: 0 };
     if (change.type === "rewind" && index === expected.length - 1) throw Error("这里已经是最后一层，可以直接继续");
-    const checkpoint = change.type === "rewind" ? await this.makeArchive(`${scope.kind === "date" ? "约会" : "线下"}回退前 · ${new Date().toLocaleString()}`, "checkpoint") : undefined;
-    const database = await db(), tx = database.transaction(["messages", "kv", "memories"], "readwrite"), done = transactionDone(tx);
+    const checkpoint = change.type === "rewind" ? await this.makeArchive(`${scope.kind === "date" || scope.kind === "group-date" ? "约会" : "线下"}回退前 · ${new Date().toLocaleString()}`, "checkpoint") : undefined;
+    const database = await db(), tx = database.transaction(["messages", "kv", "memories", "groups"], "readwrite"), done = transactionDone(tx);
     const kv = tx.objectStore("kv"), at = Date.now();
     let failure: Error | undefined;
-    const contextScope = scope.kind === "life" ? lifeSession(scope.characterId) : scope.kind === "date" ? `date:${scope.characterId}:${scope.id}` : `fieldwork:${scope.id}`;
+    const contextScope = scope.kind === "group-life" ? `group-life:${scope.groupId}` : scope.kind === "group-date" ? `group-date:${scope.groupId}:${scope.id}` : scope.kind === "life" ? lifeSession(scope.characterId) : scope.kind === "date" ? `date:${scope.characterId}:${scope.id}` : `fieldwork:${scope.id}`;
     const apply = <T extends SceneFloorRow>(rows: T[]): T[] => {
       if (floorSignature(rows) !== signature) throw Error("记录已在其他页面变化，请重新打开这一层；你的编辑内容仍保留");
       if (change.type === "rewind") return rows.slice(0, index + 1);
       return rows.map(row => row.id === id ? { ...row, content: change.content, metadata: { ...row.metadata, editedAt: at } } : row);
     };
     const run = (write: () => void) => { try { write(); } catch (error) { failure = error instanceof Error ? error : Error("楼层保存失败"); tx.abort(); } };
-    if (scope.kind === "life") {
+    if (scope.kind === "group-life" || scope.kind === "group-date") {
+      const key = scope.kind === "group-life" ? `group-life:${scope.groupId}` : DATE_SESSIONS_KEY, get = kv.get(key);
+      get.onsuccess = () => run(() => {
+        const dates = scope.kind === "group-date" ? (get.result?.value ?? []) as DateSession[] : [];
+        const scene = scope.kind === "group-life" ? get.result?.value as GroupLifeScene | undefined : dates.find(row => row.id === scope.id && row.groupId === scope.groupId);
+        if (!scene) throw Error("多人剧场已变化，未修改记录");
+        scene.messages = apply(scene.messages); scene.updatedAt = at; scene.revision = (scene.revision ?? 0) + 1;
+        scene.continuationState = undefined;
+        if ("activity" in scene) scene.activity = scene.messages.filter(row => row.role === "user").at(-1)?.content.slice(0, 120) || "从保留的现场记录继续";
+        if (change.type === "rewind") {
+          scene.active = true;
+          for (const other of dates) if (other.id !== scene.id && other.groupId === scope.groupId) { other.active = false; other.revision = (other.revision ?? 0) + 1; }
+        }
+        kv.put({ key, value: scope.kind === "group-life" ? scene : dates });
+      });
+    } else if (scope.kind === "life") {
       const get = tx.objectStore("messages").getAll();
       get.onsuccess = () => run(() => {
         const rows = (get.result as ChatMessage[]).filter(row => (row.sessionId ?? "private") === contextScope && !row.metadata?.hiddenAt && !row.metadata?.retractedAt).sort((a, b) => a.createdAt - b.createdAt);
@@ -1048,6 +1094,17 @@ export const storage = {
     kv.delete(`context-summary:${contextScope}`); kv.delete(`context-lease:${contextScope}`);
     bumpConversationRevision(tx, contextScope);
     const changedIds = new Set(change.type === "edit" ? [id] : expected.slice(index + 1).map(row => row.id));
+    if (scope.kind === "group-life" || scope.kind === "group-date") {
+      const get = tx.objectStore("groups").get(scope.groupId);
+      get.onsuccess = () => {
+        const group = get.result as GroupRecord | undefined; if (!group) return;
+        for (const memory of group.memories ?? []) if (memory.messageIds?.some(source => changedIds.has(source))) {
+          memory.reviewReason = "来源楼层已编辑或回退，请核对";
+          if (memory.source === "conversation") memory.enabled = false;
+        }
+        tx.objectStore("groups").put(group);
+      };
+    }
     const memories = tx.objectStore("memories").openCursor();
     memories.onsuccess = () => {
       const row = memories.result; if (!row) return;
@@ -1063,9 +1120,9 @@ export const storage = {
     return { checkpoint: checkpoint?.id, removed: change.type === "rewind" ? expected.length - index - 1 : 0 };
   },
   async saveDateSession(value: DateSession): Promise<void> {
-    const sessions = (await this.dateSessions()).filter((session) => session.id !== value.id);
-    sessions.push(value);
-    await writeKv(DATE_SESSIONS_KEY, sessions);
+    const tx = (await db()).transaction("kv", "readwrite"), done = transactionDone(tx), kv = tx.objectStore("kv"), get = kv.get(DATE_SESSIONS_KEY);
+    get.onsuccess = () => kv.put({ key: DATE_SESSIONS_KEY, value: [...((get.result?.value ?? []) as DateSession[]).filter(session => session.id !== value.id), value] });
+    await done;
   },
   async deleteDateSession(id: string): Promise<void> {
     await writeKv(DATE_SESSIONS_KEY, (await this.dateSessions()).filter((session) => session.id !== id));

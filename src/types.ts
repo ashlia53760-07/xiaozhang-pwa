@@ -243,8 +243,38 @@ export interface LifeSceneState {
 
 export type DateSceneKind = "walk" | "shopping" | "movie" | "meal" | "birthday" | "festival" | "rain" | "night" | "snow" | "seaside" | "camp" | "custom";
 
+export interface GroupSceneCast {
+  groupId: string;
+  memberIds: string[];
+  replyMode?: "inherit" | "natural" | "selected" | "all";
+  selectedMemberIds?: string[];
+  /** Only public material from this group, captured when an independent play begins. */
+  openingContext?: string;
+  revision?: number;
+  continuationState?: { id: string; memberIds: string[] };
+}
+
+export interface GroupLifeScene extends GroupSceneCast {
+  id: string;
+  active: boolean;
+  location: string;
+  timeLabel: string;
+  environment: string;
+  activity: string;
+  messages: ChatMessage[];
+  updatedAt: number;
+}
+
 export interface DateSession {
   characterId?: string;
+  groupId?: string;
+  memberIds?: string[];
+  replyMode?: GroupSceneCast["replyMode"];
+  selectedMemberIds?: string[];
+  openingContext?: string;
+  openingMemberIds?: string[];
+  revision?: number;
+  continuationState?: GroupSceneCast["continuationState"];
   id: string;
   backgroundMediaId?: string;
   scene: DateSceneKind;

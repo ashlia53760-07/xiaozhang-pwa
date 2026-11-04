@@ -9,6 +9,8 @@ import "./calendar.css";
 import "./heritage-themes.css";
 import "./scene-floors.css";
 import { SceneFloors } from "./scene-floors";
+import { GroupScenes, type GroupScene } from "./group-scenes";
+import "./group-scenes.css";
 import { themes, selectedTheme } from "./themes";
 import { CalendarUI } from "./calendar-ui";
 import { calendarContext, contactBirthday, diaryDay, mergeCalendar, moodLabel, validBirthday, validCalendar, validDay, type CalendarData } from "./calendar";
@@ -146,7 +148,7 @@ root.insertAdjacentHTML("beforeend", `
   <section id="date-picker">
     <div class="date-intro"><span class="scene-kicker">CHOOSE A MOMENT</span><h3>把时间，留给彼此。</h3><p>选择一个场景，或写一段属于你们的开场。<br>独立剧场的经历，只有你选择保存后才会成为长期回忆。</p></div>
     <div id="date-scene-grid" class="date-scene-grid"></div>
-    <label class="date-custom-label">自定义剧场<textarea id="date-custom-setting" rows="3" maxlength="240" placeholder="地点、天气、氛围，以及你想体验的故事…"></textarea></label>
+    <label class="date-custom-label">自定义剧场<textarea id="date-custom-setting" rows="5" maxlength="6000" placeholder="地点、天气、人物安排、故事开场，或粘贴你写的小剧场（最多 6000 字）…"></textarea></label>
     <div class="date-background-editor"><img id="date-background-preview" alt="约会背景预览" hidden><div><strong>这一场的背景</strong><p class="hint" data-date-background-label>素白书页，也可以换成你的照片。</p><div class="scene-actions"><button type="button" data-date-background-choose>上传背景</button><button type="button" data-date-background-remove hidden>恢复素白</button></div></div></div>
     <button id="date-start" type="button" class="primary">翻开这一页</button>
   </section>
@@ -317,6 +319,15 @@ let pendingDateBackgroundId: string | undefined;
 let dateBackgroundUrl: string | undefined;
 let dateBackgroundRevision = 0;
 let selectedDateScene: import("./types").DateSceneKind = "walk";
+let dateSetupOwner = "";
+const dateSetupDrafts = new Map<string, { text: string; backgroundId?: string; scene: import("./types").DateSceneKind }>();
+function selectDateSetup(owner: string) {
+  if (owner === dateSetupOwner) return;
+  if (dateSetupOwner) dateSetupDrafts.set(dateSetupOwner, { text: dateCustomSetting.value, backgroundId: pendingDateBackgroundId, scene: selectedDateScene });
+  dateSetupOwner = owner;
+  const saved = dateSetupDrafts.get(owner);
+  dateCustomSetting.value = saved?.text ?? ""; pendingDateBackgroundId = saved?.backgroundId; selectedDateScene = saved?.scene ?? "walk";
+}
 const plusMenu = document.querySelector<HTMLDivElement>("#plus-menu")!;
 const stickerSuggest = document.querySelector<HTMLDivElement>("#sticker-suggest")!;
 const roleInteractionButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-role-interaction]"));
@@ -1065,6 +1076,7 @@ function setSending(value: boolean) {
   if (!value) groupUI.setTyping("", "");
   document.querySelectorAll<HTMLButtonElement>("#life-send, #date-send, #life-end, #date-end, #date-restart, [data-scene-action]").forEach((button) => { button.disabled = value; });
   for (const id of ["life-send", "date-send"]) document.getElementById(id)!.textContent = value ? "回应中…" : "发送";
+  document.querySelectorAll<HTMLInputElement | HTMLSelectElement>("[data-group-scene-mode], [data-group-scene-member]").forEach(input => { input.disabled = value; });
 }
 function renderThemeKeepsake() {
   if (["rococo", "bronze"].includes(document.documentElement.dataset.theme ?? "")) messageBox.prepend(themeKeepsake);
@@ -1398,15 +1410,112 @@ const sceneRenderRevisions = new WeakMap<HTMLElement, number>();
 let sceneSelectionMode: "life" | "date" | undefined;
 let sceneSelectedIds = new Set<string>();
 let sceneSelectionBusy = false;
+const groupScenes = new GroupScenes({
+  prompt: () => systemPrompt,
+  render: renderGroupScene,
+  status: (mode, text) => showSceneStatus(mode === "life" ? meetDialog : dateDialog, text),
+  savedInput: mode => { (mode === "life" ? lifeDraft : dateDraft).value = ""; },
+  available: async members => {
+    if (members.some(member => groupMemberKey(member) === PRIMARY_CHARACTER) && await leisure.away()) throw Error("张起灵还在旅途中，现场进度已保留，回来再继续。");
+  }
+});
+for (const mode of ["life", "date"] as const) {
+  const dialog = mode === "life" ? meetDialog : dateDialog;
+  const host = document.createElement("div"); host.dataset.groupSceneSetup = mode;
+  (mode === "life" ? lifeBegin : document.querySelector("#date-start")!).before(host);
+  const stop = document.createElement("button"); stop.type = "button"; stop.textContent = "停止接话"; stop.hidden = true; stop.className = "group-scene-stop"; stop.dataset.groupSceneStop = mode;
+  dialog.querySelector(".scene-status")!.after(stop); stop.addEventListener("click", () => groupScenes.stop());
+  dialog.addEventListener("change", event => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement || input instanceof HTMLSelectElement) || !input.matches("[data-group-scene-mode], [data-group-scene-member]")) return;
+    const settings = input.closest(".group-scene-settings")!;
+    const value = settings.querySelector<HTMLSelectElement>("[data-group-scene-mode]")!.value as import("./types").GroupSceneCast["replyMode"];
+    const ids = [...settings.querySelectorAll<HTMLInputElement>("[data-group-scene-member]:checked")].map(row => row.dataset.groupSceneMember!);
+    if (streaming || messageMutation) return;
+    messageMutation = true;
+    void groupScenes.configure(mode, value, ids).then(() => renderGroupSceneSettings(mode)).catch(error => showSceneStatus(dialog, error instanceof Error ? error.message : "接话设置保存失败")).finally(() => { messageMutation = false; });
+  });
+  dialog.addEventListener("cancel", event => { if (streaming && groupScenes.group(mode)) event.preventDefault(); });
+  dialog.querySelector("form")!.addEventListener("submit", event => { if (streaming && groupScenes.group(mode)) event.preventDefault(); });
+}
+
+function renderGroupSceneSettings(mode: "life" | "date") {
+  const dialog = mode === "life" ? meetDialog : dateDialog;
+  const opened = !!dialog.querySelector(".group-scene-settings[open]");
+  dialog.querySelector<HTMLElement>("[data-group-scene-setup]")!.innerHTML = groupScenes.settings(mode);
+  const card = mode === "life" ? lifeStateCard : dateStateCard;
+  card.querySelector("[data-group-scene-stage]")?.remove();
+  if (groupScenes.group(mode)) { const host = document.createElement("div"); host.dataset.groupSceneStage = mode; host.innerHTML = groupScenes.settings(mode); card.append(host); }
+  if (opened) dialog.querySelectorAll<HTMLDetailsElement>(".group-scene-settings").forEach(details => { details.open = true; });
+  if (streaming) dialog.querySelectorAll<HTMLInputElement | HTMLSelectElement>("[data-group-scene-mode], [data-group-scene-member]").forEach(input => { input.disabled = true; });
+}
+
+function renderGroupScene(mode: "life" | "date", scene: GroupScene) {
+  if (mode === "life" && "location" in scene) {
+    lifeSetup.hidden = scene.active; lifeStage.hidden = !scene.active; lifeWriting.hidden = !scene.active; lifeEnd.hidden = !scene.active; lifeEventNote.hidden = true;
+    renderSceneState(lifeStateCard, scene); renderSceneMessages(lifeMessages, scene.messages);
+  } else if (mode === "date" && "title" in scene) {
+    activeDate = scene; datePicker.hidden = true; dateStage.hidden = false;
+    document.querySelector<HTMLButtonElement>("#date-end")!.hidden = !scene.active;
+    dateStateCard.innerHTML = `<div class="scene-state-title"><strong>${escapeHtml(scene.title)}</strong><span>${scene.active ? "多人剧场 · 进行中" : "多人剧场 · 已结束"}</span></div><p>${escapeHtml(scene.setting)}</p><small>${escapeHtml(scene.atmosphere)}</small>`;
+    renderSceneMessages(dateMessages, scene.messages);
+  }
+  renderGroupSceneSettings(mode);
+}
+
+async function runGroupScene(mode: "life" | "date", operation: () => Promise<void>) {
+  if (archiveBusy() || sceneSelectionBusy) return;
+  setSending(true);
+  groupScenes.startOperation();
+  const dialog = mode === "life" ? meetDialog : dateDialog;
+  const stop = dialog.querySelector<HTMLButtonElement>("[data-group-scene-stop]")!; stop.hidden = false;
+  try { await operation(); }
+  catch (error) { showSceneStatus(dialog, `${error instanceof Error ? error.message : "多人剧场操作失败"} 已保存的楼层仍保留。`); }
+  finally { stop.hidden = true; setSending(false); }
+}
+
+async function openGroupScene(mode: "life" | "date", groupId: string, dateId?: string) {
+  const dialog = mode === "life" ? meetDialog : dateDialog;
+  try {
+    const { group, scene } = await groupScenes.prepare(mode, groupId, dateId);
+    sceneCharacterId = group.members.find(member => member.enabled)?.characterId ?? PRIMARY_CHARACTER;
+    if (mode === "life") {
+      fieldworkMeetId = undefined; continuousLife = undefined; configureLifePage(false);
+      dialog.querySelector("h2")!.textContent = `线下 · ${group.title}`;
+      dialog.querySelector<HTMLElement>(".scene-kicker")!.textContent = "同行 · 此刻";
+      lifeSetup.querySelector("h3")!.textContent = "把大家见面的现场定下来。";
+      lifeSetup.querySelector("p")!.textContent = "接上本群的公开对话，与同行的人继续这一段故事。";
+      lifeDraft.value = ""; lifeDraft.placeholder = "对大家说些什么，或写下你的行动…";
+      document.querySelector<HTMLButtonElement>("#life-random")!.hidden = true;
+      lifeSetup.hidden = Boolean(scene?.active); lifeStage.hidden = !scene?.active; lifeWriting.hidden = !scene?.active; lifeEnd.hidden = !scene?.active;
+      if (scene && "location" in scene) { lifeLocation.value = scene.location; lifeTime.value = scene.timeLabel; lifeEnvironment.value = scene.environment; }
+      else { lifeLocation.value = "附近安静的街巷"; lifeTime.value = "傍晚"; lifeEnvironment.value = "风不大，路灯刚亮"; }
+    } else {
+      selectDateSetup(`group:${group.id}`);
+      activeDate = scene && "title" in scene ? scene : undefined;
+      dialog.querySelector("h2")!.textContent = `心动约会 · ${group.title}`;
+      datePicker.querySelector("h3")!.textContent = "和大家，翻开同一页故事。";
+      datePicker.hidden = Boolean(scene); dateStage.hidden = !scene; dateDraft.value = "";
+      document.querySelector<HTMLButtonElement>("#date-end")!.hidden = !scene?.active;
+      if (!scene) renderDateScenes();
+      await applyDateBackground();
+    }
+    if (scene && (scene.active || mode === "date")) renderGroupScene(mode, scene);
+    else renderGroupSceneSettings(mode);
+    showSceneStatus(dialog, ""); if (!dialog.open) dialog.showModal();
+  } catch (error) { groupScenes.clear(mode); showError(error instanceof Error ? error.message : "群聊剧场打开失败"); }
+}
+
 const sceneFloors = new SceneFloors({
-  scope: mode => mode === "date" ? activeDate ? { kind: "date", characterId: sceneCharacterId, id: activeDate.id } : undefined : fieldworkMeetId ? { kind: "adventure", id: fieldworkMeetId } : { kind: "life", characterId: sceneCharacterId },
+  scope: mode => groupScenes.group(mode) ? groupScenes.scope(mode) : mode === "date" ? activeDate ? { kind: "date", characterId: sceneCharacterId, id: activeDate.id } : undefined : fieldworkMeetId ? { kind: "adventure", id: fieldworkMeetId } : { kind: "life", characterId: sceneCharacterId },
   busy: () => archiveBusy() || sceneSelectionBusy || !!sceneSelectionMode,
   lock: value => { messageMutation = value; },
   status: (mode, text) => showSceneStatus(mode === "life" ? meetDialog : dateDialog, text),
   changed: async (scope, id, change) => {
-    const mode = scope.kind === "date" ? "date" : "life";
+    const mode = scope.kind === "date" || scope.kind === "group-date" ? "date" : "life";
     leaveSceneSelection();
-    if (scope.kind === "life") {
+    if (scope.kind === "group-life" || scope.kind === "group-date") await groupScenes.reload(mode);
+    else if (scope.kind === "life") {
       continuousLife = await storage.continuousLife(scope.characterId);
       if (continuousLife) renderSceneState(lifeStateCard, continuousLife);
       lifeEventNote.hidden = true;
@@ -1456,9 +1565,11 @@ function renderSceneMessages(target: HTMLElement, values: ChatMessage[]) {
   sceneAvatarUrls.set(target, []);
   const mode = target === dateMessages ? "date" : "life";
   target.innerHTML = values.length ? values.map((message, index) => {
-    const speaker = message.role === "assistant" ? characters.find((item) => item.id === message.metadata?.characterId || item.id === message.speakerId || item.name === message.speakerId) ?? characterById(sceneCharacterId) : undefined;
+    const group = groupScenes.group(mode);
+    const member = group?.members.find(item => item.id === message.metadata?.groupMemberId || item.name === message.speakerId);
+    const speaker = message.role === "assistant" ? characters.find((item) => item.id === message.metadata?.characterId || item.id === message.speakerId || item.name === message.speakerId) ?? (group ? undefined : characterById(sceneCharacterId)) : undefined;
     const avatarKey = speaker?.id ?? "user";
-    const name = speaker?.name ?? "我";
+    const name = message.role === "user" ? group?.userName || "我" : member?.name || speaker?.name || message.speakerId || "同行者";
     const time = new Date(message.createdAt);
     const label = Number.isNaN(time.getTime()) ? "" : time.toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
     const selected = sceneSelectionMode === mode && sceneSelectedIds.has(message.id);
@@ -1534,7 +1645,11 @@ async function changeDateBackground(file?: File) {
       id = newId("date-bg");
       await storage.saveMedia({ id, blob: file, mime: file.type, origin: "date_background", createdAt: Date.now() });
     }
-    if (session) { session.backgroundMediaId = id; session.updatedAt = Date.now(); await storage.saveDateSession(session); }
+    if (session) {
+      const next = { ...session, backgroundMediaId: id, updatedAt: Date.now() };
+      if (session.groupId) { if (streaming) throw Error("请等本轮接话完成再更换背景"); await storage.saveGroupScene(next, session.revision ?? 0); activeDate = next; await groupScenes.reload("date"); }
+      else { await storage.saveDateSession(next); activeDate = next; }
+    }
     else pendingDateBackgroundId = id;
     await applyDateBackground();
     showSceneStatus(dateDialog, file ? "背景已保存；约会内容仍只按你写下的设定展开。" : "已恢复素白书页。");
@@ -1681,6 +1796,7 @@ async function openFieldworkMeet(id: string) {
   const { adventure } = await fieldworkAdventure(id);
   const { members } = await fieldworkMembers(adventure);
   if (adventure.active && members.some((member) => (member.characterId || characterByName(member.name)?.id) === PRIMARY_CHARACTER) && await leisure.away()) throw Error("张起灵还在旅途中。冒险进度已保留，等他回来再一起出发。");
+  groupScenes.clear("life"); renderGroupSceneSettings("life");
   fieldworkMeetId = id;
   sceneCharacterId = members[0].characterId || characterByName(members[0].name)?.id || PRIMARY_CHARACTER;
   configureLifePage(true);
@@ -1772,6 +1888,7 @@ async function endFieldworkMeet() {
 }
 
 async function sendLifeText(text: string) {
+  if (groupScenes.group("life")) { await runGroupScene("life", () => groupScenes.send("life", text)); return; }
   if (fieldworkMeetId) { await sendFieldworkLifeText(text); return; }
   if (sceneCharacterId === PRIMARY_CHARACTER && await leisure.away()) { showSceneStatus(meetDialog, "他还在旅途中。见面进度已保留，回来后继续；现在可以在线上聊天。"); return; }
   if (!continuousLife?.active || !text.trim() || streaming) return;
@@ -1795,7 +1912,7 @@ async function sendLifeText(text: string) {
 }
 
 async function maybeLifeEvent(force = false) {
-  if (fieldworkMeetId || streaming) return;
+  if (groupScenes.group("life") || fieldworkMeetId || streaming) return;
   if (!continuousLife?.active) return;
   const now = Date.now();
   if (continuousLife.lastEventAt && now - continuousLife.lastEventAt < 20 * 60 * 1000) {
@@ -1822,12 +1939,14 @@ async function maybeLifeEvent(force = false) {
 
 async function openMeet() {
   if (streaming) { showError("请等当前回复完成再进入线下"); return; }
-  if (!sessionCharacter(activeSession)) { showError("请先选择一位私聊联系人"); return; }
+  if (!sessionCharacter(activeSession)) { await openGroupScene("life", activeSession); return; }
+  groupScenes.clear("life"); renderGroupSceneSettings("life");
   fieldworkMeetId = undefined;
   configureLifePage(false);
   sceneCharacterId = currentCharacter().id;
   if (sceneCharacterId === PRIMARY_CHARACTER && await leisure.away()) { showError("他还在旅途中。线下进度保留，回来再继续；在线消息照常。"); return; }
   continuousLife = await storage.continuousLife(sceneCharacterId);
+  if (!continuousLife) { lifeLocation.value = "附近安静的街巷"; lifeTime.value = "傍晚"; lifeEnvironment.value = "风不大，路灯刚亮"; }
   meetDialog.querySelector("h2")!.textContent = `线下 · ${characterById(sceneCharacterId).name}`;
   const active = Boolean(continuousLife?.active);
   lifeSetup.hidden = active;
@@ -1849,6 +1968,11 @@ async function openMeet() {
 }
 
 async function beginMeet() {
+  if (groupScenes.group("life")) {
+    const location = lifeLocation.value.trim(), timeLabel = lifeTime.value.trim(), environment = lifeEnvironment.value.trim();
+    if (!location || !timeLabel || !environment) { showSceneStatus(meetDialog, "补充地点、时间和环境，再和大家见面。"); return; }
+    await runGroupScene("life", () => groupScenes.beginLife({ location: location.slice(0, 100), timeLabel: timeLabel.slice(0, 50), environment: environment.slice(0, 160) })); return;
+  }
   if (fieldworkMeetId) { await beginFieldworkMeet(); return; }
   if (sceneCharacterId === PRIMARY_CHARACTER && await leisure.away()) { showSceneStatus(meetDialog, "他还在旅途中。线下进度已保留，回来后可以继续。"); return; }
   if (continuousLife?.active) return;
@@ -1878,6 +2002,7 @@ async function beginMeet() {
 }
 
 async function endMeet() {
+  if (groupScenes.group("life")) { await runGroupScene("life", async () => { await groupScenes.end("life"); await refreshSessionMessages(activeSession); meetDialog.close(); }); return; }
   if (fieldworkMeetId) { await endFieldworkMeet(); return; }
   if (streaming || !continuousLife) return;
   const lifeMessagesSaved = await storage.sessionMessages(lifeSession(sceneCharacterId));
@@ -1901,6 +2026,14 @@ function renderDateScenes() {
 }
 
 async function startDate() {
+  if (groupScenes.group("date")) {
+    const base = dateSceneCatalog.find(scene => scene.id === selectedDateScene), custom = dateCustomSetting.value.trim();
+    if (!base && !custom) return;
+    await runGroupScene("date", async () => {
+      await groupScenes.beginDate({ scene: custom ? "custom" : selectedDateScene, title: custom ? "自定义多人剧场" : base!.title, setting: custom || base!.setting, atmosphere: custom ? "按用户提供的剧本与人物安排展开" : base!.atmosphere, backgroundMediaId: pendingDateBackgroundId });
+      pendingDateBackgroundId = undefined; await applyDateBackground();
+    }); return;
+  }
   if (sceneCharacterId === PRIMARY_CHARACTER && await leisure.away()) { showSceneStatus(dateDialog, "他还在旅途中，约会进度保留，回来再继续。"); return; }
   const base = dateSceneCatalog.find((scene) => scene.id === selectedDateScene);
   const custom = dateCustomSetting.value.trim();
@@ -1937,6 +2070,7 @@ async function startDate() {
 }
 
 async function sendDateText(text: string) {
+  if (groupScenes.group("date")) { await runGroupScene("date", () => groupScenes.send("date", text)); return; }
   if (sceneCharacterId === PRIMARY_CHARACTER && await leisure.away()) { showSceneStatus(dateDialog, "他还在旅途中，约会进度保留，回来再继续。"); return; }
   if (!activeDate?.active || !text.trim() || streaming) return;
   setSending(true);
@@ -1975,7 +2109,11 @@ async function startSceneSelection(mode: "life" | "date") {
   sceneSelectionMode = mode;
   sceneSelectedIds = new Set<string>();
   try {
-    if (mode === "life" && fieldworkMeetId) {
+    if (groupScenes.group(mode)) {
+      const scene = groupScenes.current(mode);
+      if (!scene?.active) { leaveSceneSelection(); return; }
+      renderSceneMessages(sceneTarget(mode), scene.messages);
+    } else if (mode === "life" && fieldworkMeetId) {
       const { adventure } = await fieldworkAdventure(fieldworkMeetId);
       renderFieldworkMeet(adventure);
     } else if (mode === "life") {
@@ -2002,7 +2140,10 @@ async function deleteSelectedSceneMessages(mode: "life" | "date") {
   updateSceneSelectionUi(mode);
   const dialog = mode === "life" ? meetDialog : dateDialog;
   try {
-    if (mode === "life" && fieldworkMeetId) {
+    if (groupScenes.group(mode)) {
+      await groupScenes.remove(mode, new Set(ids)); leaveSceneSelection();
+      const scene = groupScenes.current(mode); if (scene) renderGroupScene(mode, scene);
+    } else if (mode === "life" && fieldworkMeetId) {
       const { adventure } = await fieldworkAdventure(fieldworkMeetId);
       const selected = new Set(ids);
       adventure.messages = adventure.messages.filter((message) => !selected.has(message.id));
@@ -2044,6 +2185,7 @@ async function sceneAction(mode: "life" | "date", action: SceneAction) {
   closeSceneActionMenus();
   if (streaming) { showSceneStatus(dialog, "请等当前回复完成，再操作这段现场。"); return; }
   if (action === "select") { await startSceneSelection(mode); return; }
+  if (groupScenes.group(mode)) { await runGroupScene(mode, () => groupScenes.action(mode, action)); return; }
 
   // Fieldwork replies are authored by several characters in sequence. Removing the
   // last record is safe; rolling back one speaker would change the shared order.
@@ -2145,8 +2287,10 @@ async function sceneAction(mode: "life" | "date", action: SceneAction) {
 
 async function openDate() {
   if (streaming) { showError("请等当前回复完成再进入约会"); return; }
-  if (!sessionCharacter(activeSession)) { showError("请先选择一位私聊联系人"); return; }
+  if (!sessionCharacter(activeSession)) { await openGroupScene("date", activeSession); return; }
+  groupScenes.clear("date"); renderGroupSceneSettings("date"); datePicker.querySelector("h3")!.textContent = "把时间，留给彼此。";
   sceneCharacterId = currentCharacter().id;
+  selectDateSetup(privateSession(sceneCharacterId));
   if (sceneCharacterId === PRIMARY_CHARACTER && await leisure.away()) { showError("他还在旅途中。约会进度保留，回来再继续；其他独立功能照常。"); return; }
   const sessions = await storage.dateSessions();
   activeDate = sessions.find((session) => session.active && ownsCharacter(session, sceneCharacterId));
@@ -2161,9 +2305,13 @@ async function openDate() {
   dateDialog.showModal();
 }
 
-async function endDate() { if (!activeDate || streaming) return; activeDate.active = false; activeDate.updatedAt = Date.now(); await storage.saveDateSession(activeDate); activeDate = undefined; dateStage.hidden = true; datePicker.hidden = false; pendingDateBackgroundId = undefined; document.querySelector<HTMLButtonElement>("#date-end")!.hidden = true; await applyDateBackground(); showSceneStatus(dateDialog, ""); renderDateScenes(); }
+async function endDate() {
+  if (groupScenes.group("date")) { await runGroupScene("date", async () => { await groupScenes.end("date"); activeDate = undefined; dateStage.hidden = true; datePicker.hidden = false; pendingDateBackgroundId = undefined; document.querySelector<HTMLButtonElement>("#date-end")!.hidden = true; await applyDateBackground(); renderDateScenes(); }); return; }
+  if (!activeDate || streaming) return; activeDate.active = false; activeDate.updatedAt = Date.now(); await storage.saveDateSession(activeDate); activeDate = undefined; dateStage.hidden = true; datePicker.hidden = false; pendingDateBackgroundId = undefined; document.querySelector<HTMLButtonElement>("#date-end")!.hidden = true; await applyDateBackground(); showSceneStatus(dateDialog, ""); renderDateScenes();
+}
 
 async function saveDateMemory() {
+  if (groupScenes.group("date")) { await runGroupScene("date", () => groupScenes.saveMemory()); return; }
   if (!activeDate?.messages.length) { showSceneStatus(dateDialog, "这场约会还没有可保存的内容"); return; }
   const meaningful = activeDate.messages.filter((message) => message.content.trim()).slice(-6);
   const excerpt = meaningful.map((message) => `${message.role === "assistant" ? characterById(sceneCharacterId).name : "我"}：${message.content.trim().slice(0, 100)}`).join("；");
@@ -2173,6 +2321,10 @@ async function saveDateMemory() {
 }
 
 async function restartDate() {
+  if (groupScenes.group("date")) {
+    await endDate(); if (streaming) return;
+    dateCustomSetting.value = ""; renderGroupSceneSettings("date"); return;
+  }
   if (streaming) return;
   if (activeDate) {
     activeDate.active = false;
@@ -2194,6 +2346,7 @@ document.querySelector("#meet-open")?.addEventListener("click", () => { void ope
 meetDialog.addEventListener("close", () => { if (sceneSelectionMode === "life") leaveSceneSelection(); fieldworkMeetId = undefined; });
 lifeBegin.addEventListener("click", () => { void beginMeet(); });
 meetForm.addEventListener("submit", (event) => {
+  if (streaming && groupScenes.group("life")) { event.preventDefault(); return; }
   if (!(event.submitter instanceof HTMLButtonElement) || event.submitter.value !== "cancel") event.preventDefault();
 });
 document.querySelector<HTMLButtonElement>("#life-send")?.addEventListener("click", () => { void sendLifeText(lifeDraft.value); });
@@ -2731,6 +2884,7 @@ type BackupPayload = {
   musicTracks?: MusicTrack[];
   activeMusicTrackId?: string;
   continuousLife?: import("./types").LifeSceneState;
+  groupLifeScenes?: import("./types").GroupLifeScene[];
   dateSessions?: import("./types").DateSession[];
   videoCallBackgroundId?: string;
   travel?: TravelState;
@@ -2781,6 +2935,7 @@ async function exportData() {
   const payload: BackupPayload = {
     format: "xiaozhang-pwa-backup", version: 4, savedAt: Date.now(), travel: savedTravel, play: savedPlay,
     contactData: await storage.contactBackup(),
+    groupLifeScenes: await storage.groupLifeScenes(),
     profile: { baseUrl: savedProfile.baseUrl, model: savedProfile.model, temperature: savedProfile.temperature, protocol: savedProfile.protocol ?? "openai" },
     imageProfile: { baseUrl: savedImageProfile.baseUrl, model: savedImageProfile.model },
     ttsProfile: { provider: savedTtsProfile.provider, baseUrl: savedTtsProfile.baseUrl, model: savedTtsProfile.model, voiceId: savedTtsProfile.voiceId, groupId: savedTtsProfile.groupId },
@@ -2911,6 +3066,9 @@ async function importData(file: File) {
     if (!await storage.activeMusicTrack() && payload.activeMusicTrackId && payload.musicTracks.some((track) => track.id === payload.activeMusicTrackId)) await storage.saveActiveMusicTrack(payload.activeMusicTrackId);
   }
   if (payload.continuousLife?.id === "continuous-life" && !await storage.continuousLife()) await storage.saveContinuousLife(payload.continuousLife);
+  for (const scene of Array.isArray(payload.groupLifeScenes) ? payload.groupLifeScenes : []) {
+    if (scene?.id && typeof scene.groupId === "string" && typeof scene.location === "string" && typeof scene.timeLabel === "string" && typeof scene.environment === "string" && Array.isArray(scene.messages) && Array.isArray(scene.memberIds) && !await storage.groupLife(scene.groupId)) await storage.saveGroupScene(scene);
+  }
   await leisure.mergeBackup(payload.travel, payload.play);
   if (payload.fieldwork) {
     const incoming = normalizeFieldwork(payload.fieldwork);
@@ -4607,8 +4765,18 @@ async function runSocialAutomation() {
 
 const leisure = new Leisure({
   changed: async () => { await refreshSessionMessages(activeSession); },
-  hasMeeting: async () => !!(await storage.continuousLife())?.active || (await storage.dateSessions()).some(s => s.active && ownsCharacter(s, PRIMARY_CHARACTER)),
-  pauseMeetings: async () => { if (sceneCharacterId !== PRIMARY_CHARACTER) return; if (continuousLife?.active) await storage.saveContinuousLife(continuousLife); if (activeDate?.active) await storage.saveDateSession(activeDate); meetDialog.close(); dateDialog.close(); },
+  hasMeeting: async () => {
+    const dates = await storage.dateSessions(), groups = await storage.groups();
+    const hasPrimary = (scene: GroupScene) => scene.active && groups.find(group => group.id === scene.groupId)?.members.some(member => scene.memberIds?.includes(member.id) && groupMemberKey(member) === PRIMARY_CHARACTER);
+    return !!(await storage.continuousLife())?.active || dates.some(s => s.active && ownsCharacter(s, PRIMARY_CHARACTER)) || (await storage.groupLifeScenes()).some(hasPrimary) || dates.some(hasPrimary);
+  },
+  pauseMeetings: async () => {
+    const groupMeeting = (["life", "date"] as const).some(mode => groupScenes.current(mode)?.active && groupScenes.group(mode)?.members.some(member => groupScenes.current(mode)?.memberIds?.includes(member.id) && groupMemberKey(member) === PRIMARY_CHARACTER));
+    if (sceneCharacterId !== PRIMARY_CHARACTER && !groupMeeting) return;
+    if (continuousLife?.active) await storage.saveContinuousLife(continuousLife);
+    if (activeDate?.active && !activeDate.groupId) await storage.saveDateSession(activeDate);
+    meetDialog.close(); dateDialog.close();
+  },
   busy: () => streaming || !!callMode || !!recording || archivesUI.isOpen() || messageMutation,
   error: showError
 });
@@ -4617,6 +4785,10 @@ const experienceTimeline = new ExperienceTimeline(async (entry: TimelineEntry) =
     await switchSession(entry.session);
     requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(entry.id.slice("message:".length))}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" }));
   } else if (entry.kind === "life" && entry.session) {
+    if (entry.session.startsWith("group-life:")) {
+      await switchSession(entry.session.slice("group-life:".length)); await openMeet();
+      requestAnimationFrame(() => lifeMessages.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(entry.id.slice("message:".length))}"]`)?.scrollIntoView({ block: "center" })); return;
+    }
     const characterId = entry.session === "life" ? PRIMARY_CHARACTER : entry.session.startsWith("life:") ? entry.session.slice("life:".length) : entry.session.startsWith("private:") ? entry.session.slice("private:".length) : PRIMARY_CHARACTER;
     await switchSession(privateSession(characterId));
     await openMeet();
@@ -4624,7 +4796,13 @@ const experienceTimeline = new ExperienceTimeline(async (entry: TimelineEntry) =
   } else if (entry.kind === "date" && entry.session) {
     const date = (await storage.dateSessions()).find(value => value.id === entry.session);
     if (!date) { showError("这场约会记录已不存在"); return; }
-    sceneCharacterId = date.characterId ?? PRIMARY_CHARACTER; activeDate = date;
+    if (date.groupId) {
+      await switchSession(date.groupId); await openGroupScene("date", date.groupId, date.id);
+      const messageId = entry.id.slice(`date:${date.id}:`.length);
+      requestAnimationFrame(() => dateMessages.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(messageId)}"]`)?.scrollIntoView({ block: "center" })); return;
+    }
+    groupScenes.clear("date"); renderGroupSceneSettings("date");
+    sceneCharacterId = date.characterId ?? PRIMARY_CHARACTER; selectDateSetup(privateSession(sceneCharacterId)); activeDate = date;
     dateDialog.querySelector("h2")!.textContent = `心动约会 · ${characterById(sceneCharacterId).name}`;
     datePicker.hidden = true; dateStage.hidden = false;
     document.querySelector<HTMLButtonElement>("#date-end")!.hidden = date.active;
