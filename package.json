@@ -9,6 +9,7 @@
   },
   "type": "module",
   "scripts": {
+    "test:date-isolation": "node scripts/date-isolation.test.mjs",
     "test:group-scenes": "node scripts/group-scenes.test.mjs",
     "test:scene-floors": "node scripts/scene-floors.test.mjs",
     "test:scrolling-intros": "node scripts/scrolling-intros.test.mjs",
@@ -28,7 +29,7 @@
     "test:role-actions": "node scripts/role-actions.test.mjs",
     "test:context": "node scripts/context-summary.test.mjs",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && tsc -p tsconfig.worker.json && vite build",
     "preview": "vite preview",
     "test:journey:rules": "node scripts/journey-rules.test.mjs",
     "test:journey:ui": "node scripts/journey-ui.test.mjs",
@@ -42,7 +43,8 @@
     "test:experience": "node scripts/experience-ui.test.mjs",
     "test:contact-voice": "node scripts/contact-voice.test.mjs",
     "test:groups": "node scripts/group-activity.test.mjs && node scripts/groups.test.mjs",
-    "test": "npm run build && node scripts/smoke.mjs"
+    "test": "npm run build && node scripts/smoke.mjs",
+    "test:shopping": "node scripts/shopping.test.mjs && node scripts/shopping-ui.test.mjs"
   },
   "devDependencies": {
     "playwright": "^1.64.1",

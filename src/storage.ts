@@ -2,9 +2,10 @@ import type { ApiProfile, AudioAnalysisProfile, BirthdaySettings, CharacterSetti
 import type { TravelState, PlayState } from "./leisure-types";
 import { characters, PRIMARY_CHARACTER, emptyCharacterSettings, ownsCharacter, characterById, lifeSession } from "./characters";
 import type { ContactPreferences, SharedCharacterSettings } from "./types";
-import { normalizeLegacyGroup } from "./groups";
+import { normalizeLegacyGroup, isLegacyDateMemory } from "./groups";
 import { emptyCalendar, validCalendar, type CalendarData } from "./calendar";
 import type { GroupLifeScene } from "./types";
+import type { ShoppingAttachment } from "./shopping";
 
 export interface LeisureEffects { messages?: ChatMessage[]; diary?: DiaryRecord[]; lifeEvents?: LifeEventRecord[]; memories?: MemoryRecord[]; moments?: MomentRecord[] }
 export type SceneFloorScope = { kind: "life"; characterId: string } | { kind: "date"; characterId: string; id: string } | { kind: "adventure"; id: string } | { kind: "group-life"; groupId: string } | { kind: "group-date"; groupId: string; id: string };
@@ -523,6 +524,46 @@ export const storage = {
   },
   async addMessage(message: ChatMessage): Promise<void> {
     return this.addMessages([message]);
+  },
+  async attachShopping(message: ChatMessage, shopping: ShoppingAttachment, revision: number): Promise<ChatMessage | undefined> {
+    const tx = (await db()).transaction(["messages", "kv"], "readwrite"), done = transactionDone(tx);
+    const rows = tx.objectStore("messages"), session = message.sessionId ?? "private";
+    let updated: ChatMessage | undefined;
+    const check = tx.objectStore("kv").get(`conversation-revision:${session}`);
+    check.onsuccess = () => {
+      if ((check.result?.value ?? 0) !== revision) return;
+      const get = rows.get(message.id);
+      get.onsuccess = () => {
+        const current = get.result as ChatMessage | undefined;
+        if (!current || (current.sessionId ?? "private") !== session || current.content !== message.content || current.metadata?.retractedAt || current.metadata?.hiddenAt) return;
+        updated = { ...current, metadata: { ...current.metadata, shopping } }; rows.put(updated);
+      };
+    };
+    await done; return updated;
+  },
+  /** Purge volatile prices on foreground use and before export; history keeps stable product facts. */
+  async pruneShoppingPrices(now = Date.now()): Promise<void> {
+    const tx = (await db()).transaction("messages", "readwrite"), done = transactionDone(tx);
+    const cursor = tx.objectStore("messages").openCursor();
+    cursor.onsuccess = () => {
+      const entry = cursor.result; if (!entry) return;
+      const message = entry.value as ChatMessage, data = message.metadata?.shopping as ShoppingAttachment | undefined;
+      let changed = false;
+      if (data?.version === 1 && Array.isArray(data.results)) {
+        for (const result of data.results) {
+          const product = result?.product;
+          if (!product || typeof product.fetchedAt !== "number" || now < Math.min(product.expiresAt ?? Infinity, product.fetchedAt + 15 * 60_000)) continue;
+          if (product.price !== undefined || product.originalPrice !== undefined || Array.isArray(product.sku) && product.sku.some(row => row && row.price !== undefined)) {
+            delete product.price; delete product.originalPrice;
+            if (Array.isArray(product.sku)) product.sku = product.sku.filter(row => row && typeof row.name === "string").map(row => ({ name: row.name }));
+            product.priceExpired = true; product.unavailableFields = [...new Set([...(Array.isArray(product.unavailableFields) ? product.unavailableFields : []), "price", "originalPrice"])]; changed = true;
+          }
+        }
+      }
+      if (changed) entry.update(message);
+      entry.continue();
+    };
+    await done;
   },
   async addMessages(messages: ChatMessage[], guard?: { session: string; revision: number }): Promise<void> {
     const database = await db();
@@ -1166,7 +1207,7 @@ export const storage = {
   async memories(): Promise<MemoryRecord[]> {
     const database = await db();
     const rows = await request(database.transaction("memories", "readonly").objectStore("memories").getAll());
-    return (rows as MemoryRecord[]).filter((value) => value.enabled).sort((a, b) => b.updatedAt - a.updatedAt);
+    return (rows as MemoryRecord[]).filter((value) => value.enabled && !isLegacyDateMemory(value)).sort((a, b) => b.updatedAt - a.updatedAt);
   },
   async allMemories(): Promise<MemoryRecord[]> {
     const database = await db();

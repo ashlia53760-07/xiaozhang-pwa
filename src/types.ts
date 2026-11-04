@@ -248,7 +248,7 @@ export interface GroupSceneCast {
   memberIds: string[];
   replyMode?: "inherit" | "natural" | "selected" | "all";
   selectedMemberIds?: string[];
-  /** Only public material from this group, captured when an independent play begins. */
+  /** Legacy snapshot retained for backup compatibility; independent dates never consume it. */
   openingContext?: string;
   revision?: number;
   continuationState?: { id: string; memberIds: string[] };
@@ -272,6 +272,8 @@ export interface DateSession {
   replyMode?: GroupSceneCast["replyMode"];
   selectedMemberIds?: string[];
   openingContext?: string;
+  /** Belongs exclusively to this date; source signatures prevent stale recall after floor edits. */
+  localMemories?: { content: string; sourceMessageIds: string[]; sourceSignature: string; createdAt: number }[];
   openingMemberIds?: string[];
   revision?: number;
   continuationState?: GroupSceneCast["continuationState"];

@@ -167,7 +167,9 @@ try {
   await floor("date", 1); await page.click("#scene-floor-rewind"); await page.click("#scene-floor-confirm-rewind"); await page.waitForSelector("#scene-floor-dialog[open]", { state: "hidden" });
   await action("date", "regenerate"); date = await scene("date"); assert.equal(date.messages.length, 3); assert(calls.at(-1).body.messages.at(-1).content.includes("修正后的信件"));
   await page.click("#date-dialog .scene-options summary"); await page.click("#date-save-memory"); await idle();
-  assert((await data("groups")).find(row => row.id === group.id).memories.some(row => row.content.includes("约会剧场回忆")));
+  assert.deepEqual((await data("groups")).find(row => row.id === group.id).memories, group.memories);
+  assert((await scene("date")).localMemories.some(row => row.content.includes("修正后的信件")));
+  for (const marker of ["GROUP_PUBLIC_MEMORY", "GROUP_ONLINE_CONTINUITY", "GROUP_LIFE_CURRENT", "EDITED_NARRATIVE"]) assert(!JSON.stringify(calls.at(-1).body).includes(marker), marker);
   assert(!(await data("allMemories")).some(row => row.content.includes("约会剧场回忆")));
   const dateId = date.id; await close("date"); await page.reload(); await ready(); await feature("#date-open"); assert.equal((await scene("date")).id, dateId);
   for (const theme of ["ink", "warm", "night", "rococo", "bronze"]) for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 1280, height: 900 }]) await scrolling("date", viewport.width, viewport.height, theme);
@@ -176,7 +178,7 @@ try {
   const stale = await scene("date"), changed = structuredClone(stale); changed.messages[0].content += " CONCURRENT_EDIT";
   await data("saveGroupScene", changed, stale.revision);
   assert(await data("saveGroupScene", stale, stale.revision).then(() => false, () => true));
-  pass("多人约会单次合写、长剧本、长按回退、群共同回忆、刷新续演和并发保护正常；长设定卡不挤占正文");
+  pass("多人约会单次合写、长剧本、长按回退、本场独立回忆、刷新续演和并发保护正常；不读取群记忆或线上线下经历");
 
   await close("date");
   const cast = await page.evaluate(async () => (await import("/__group-scene-test/characters.js")).characters.map(row => ({ id: row.id, characterId: row.id, name: row.name, persona: row.persona, enabled: true })));
@@ -219,6 +221,7 @@ try {
     }
     assert.deepEqual(imported.find(row => row.key === `group-life:${group.id}`).value.messages, backup.groupLifeScenes.find(row => row.groupId === group.id).messages);
     assert.deepEqual(imported.find(row => row.key === "date-sessions").value.find(row => row.id === dateId).messages, backup.dateSessions.find(row => row.id === dateId).messages);
+    assert.deepEqual(imported.find(row => row.key === "date-sessions").value.find(row => row.id === dateId).localMemories, backup.dateSessions.find(row => row.id === dateId).localMemories);
     await restored.locator("#settings-dialog").evaluate(el => el.close());
     if (!await restored.locator("#topbar-menu").isVisible()) await restored.click("#topbar-menu-toggle");
     await restored.click("#date-open"); await restored.waitForSelector("#date-dialog[open]");

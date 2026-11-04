@@ -1,6 +1,25 @@
-import type { ChatMessage, MemoryRecord } from "./types";
+import type { ChatMessage, MemoryRecord, DateSession } from "./types";
 import { chatEventText } from "./checkup";
 import { collapsePhoneMessages } from "./phone-messages";
+
+const dateSourceSignature = (messages: ChatMessage[]) => JSON.stringify(messages.map(row => [row.id, row.content]));
+export function rememberDate(session: DateSession): void {
+  const sources = session.messages.filter(row => row.content.trim()).slice(-6);
+  if (!sources.length) return;
+  const sourceSignature = dateSourceSignature(sources);
+  if (session.localMemories?.some(row => row.sourceSignature === sourceSignature)) return;
+  session.localMemories = [...(session.localMemories ?? []), {
+    content: sources.map(row => `${row.role === "user" ? "用户" : row.speakerId || "场景叙事"}：${row.content.slice(0, 180)}`).join("；").slice(0, 1200),
+    sourceMessageIds: sources.map(row => row.id), sourceSignature, createdAt: Date.now()
+  }].slice(-12);
+  session.updatedAt = Date.now();
+}
+export function dateMemoryContext(session?: DateSession): string {
+  return (session?.localMemories ?? []).filter(memory => {
+    const sources = memory.sourceMessageIds.map(id => session!.messages.find(row => row.id === id));
+    return sources.every((row): row is ChatMessage => !!row) && dateSourceSignature(sources as ChatMessage[]) === memory.sourceSignature;
+  }).slice(-3).map(row => row.content).join("\n").slice(0, 2400);
+}
 
 /** Conservative local estimate, not a provider tokenizer or billing count. */
 export function contextUnits(text: string): number {

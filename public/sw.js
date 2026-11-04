@@ -1,4 +1,4 @@
-const CACHE = "xiaozhang-pwa-shell-v40";
+const CACHE = "xiaozhang-pwa-shell-v41";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./character/system_prompt.txt", "./character/offline_system_prompt.txt", "./character/images/standing.png", "./character/images/stretch.png", "./character/images/hold_chick.png", "./character/images/sword_chick.png", "./character/images/draw_sword.png", "./landscapes/mountain.svg", "./landscapes/seaside.svg"];
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
@@ -19,7 +19,7 @@ self.addEventListener("install", (event) => {
 });
 self.addEventListener("activate", (event) => { event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key.startsWith("xiaozhang-pwa-shell-") && key !== CACHE).map((key) => caches.delete(key)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET" || new URL(event.request.url).origin !== self.location.origin) return;
+  if (event.request.method !== "GET" || new URL(event.request.url).origin !== self.location.origin || new URL(event.request.url).pathname.startsWith("/api/")) return;
   event.respondWith(fetch(event.request).then((response) => {
     if (response.ok) {
       const copy = response.clone();

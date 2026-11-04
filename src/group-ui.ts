@@ -1,6 +1,6 @@
 import { storage, newId } from "./storage";
 import { characters, characterByName } from "./characters";
-import { groupEventText, MAX_GROUP_MEMBERS, type GroupMember } from "./groups";
+import { groupEventText, MAX_GROUP_MEMBERS, isLegacyDateMemory, type GroupMember } from "./groups";
 import type { ChatMessage, GroupRecord, GroupQuote } from "./types";
 
 const esc = (text: string) => text.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -316,7 +316,7 @@ export class GroupUI {
     document.querySelector<HTMLElement>("#group-memory-form")!.hidden = this.libraryTab !== "memories";
     const list = document.querySelector("#group-library-list")!;
     if (this.libraryTab === "memories") {
-      list.innerHTML = (group.memories ?? []).filter(m => matches(m.content)).map(m => `<article class="group-record"><small>${m.source === "conversation" ? "来源：用户从本群对话明确保存" : "来源：用户手动保存"} · ${m.enabled ? "影响后续回复" : "已停用"}</small><p>${esc(m.content)}</p><div class="group-inline-actions"><button type="button" data-group-memory-edit="${esc(m.id)}">编辑</button><button type="button" data-group-memory-toggle="${esc(m.id)}">${m.enabled ? "停用" : "启用"}</button><button type="button" data-group-memory-delete="${esc(m.id)}">删除</button>${m.messageIds?.[0] ? `<button type="button" data-group-locate="${esc(m.messageIds[0])}">查看来源</button>` : ""}</div></article>`).join("");
+      list.innerHTML = (group.memories ?? []).filter(m => matches(m.content)).map(m => `<article class="group-record"><small>${m.source === "conversation" ? "来源：用户从本群对话明确保存" : "来源：用户手动保存"} · ${isLegacyDateMemory(m) ? "旧约会存档，不参与共同回复" : m.enabled ? "影响后续回复" : "已停用"}</small><p>${esc(m.content)}</p><div class="group-inline-actions"><button type="button" data-group-memory-edit="${esc(m.id)}">编辑</button><button type="button" data-group-memory-toggle="${esc(m.id)}">${m.enabled ? "停用" : "启用"}</button><button type="button" data-group-memory-delete="${esc(m.id)}">删除</button>${m.messageIds?.[0] ? `<button type="button" data-group-locate="${esc(m.messageIds[0])}">查看来源</button>` : ""}</div></article>`).join("");
       list.querySelectorAll<HTMLButtonElement>("[data-group-memory-edit]").forEach(b => b.addEventListener("click", () => {
         const m = group.memories!.find(m => m.id === b.dataset.groupMemoryEdit)!; this.editingMemory = m.id; this.memoryMessageIds = m.messageIds ?? [];
         document.querySelector<HTMLTextAreaElement>("#group-memory-content")!.value = m.content;
