@@ -2,8 +2,4 @@
 .group-scene-settings summary { cursor: pointer; }
 .group-scene-settings p { margin: 9px 0; overflow-wrap: anywhere; }
 .group-scene-settings small { display: block; opacity: .75; line-height: 1.6; }
-.group-scene-settings select { width: 100%; margin: 6px 0 10px; }
-.group-scene-picks { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 10px; }
-.group-scene-picks label { display: flex; align-items: center; gap: 5px; margin: 0; }
-.group-scene-picks input { width: auto; margin: 0; }
 .group-scene-stop { margin: 4px 0 8px; font-size: 12px; }

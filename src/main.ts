@@ -1411,7 +1411,6 @@ let sceneSelectionMode: "life" | "date" | undefined;
 let sceneSelectedIds = new Set<string>();
 let sceneSelectionBusy = false;
 const groupScenes = new GroupScenes({
-  prompt: () => systemPrompt,
   render: renderGroupScene,
   status: (mode, text) => showSceneStatus(mode === "life" ? meetDialog : dateDialog, text),
   savedInput: mode => { (mode === "life" ? lifeDraft : dateDraft).value = ""; },
@@ -1423,18 +1422,8 @@ for (const mode of ["life", "date"] as const) {
   const dialog = mode === "life" ? meetDialog : dateDialog;
   const host = document.createElement("div"); host.dataset.groupSceneSetup = mode;
   (mode === "life" ? lifeBegin : document.querySelector("#date-start")!).before(host);
-  const stop = document.createElement("button"); stop.type = "button"; stop.textContent = "停止接话"; stop.hidden = true; stop.className = "group-scene-stop"; stop.dataset.groupSceneStop = mode;
+  const stop = document.createElement("button"); stop.type = "button"; stop.textContent = "停止续写"; stop.hidden = true; stop.className = "group-scene-stop"; stop.dataset.groupSceneStop = mode;
   dialog.querySelector(".scene-status")!.after(stop); stop.addEventListener("click", () => groupScenes.stop());
-  dialog.addEventListener("change", event => {
-    const input = event.target;
-    if (!(input instanceof HTMLInputElement || input instanceof HTMLSelectElement) || !input.matches("[data-group-scene-mode], [data-group-scene-member]")) return;
-    const settings = input.closest(".group-scene-settings")!;
-    const value = settings.querySelector<HTMLSelectElement>("[data-group-scene-mode]")!.value as import("./types").GroupSceneCast["replyMode"];
-    const ids = [...settings.querySelectorAll<HTMLInputElement>("[data-group-scene-member]:checked")].map(row => row.dataset.groupSceneMember!);
-    if (streaming || messageMutation) return;
-    messageMutation = true;
-    void groupScenes.configure(mode, value, ids).then(() => renderGroupSceneSettings(mode)).catch(error => showSceneStatus(dialog, error instanceof Error ? error.message : "接话设置保存失败")).finally(() => { messageMutation = false; });
-  });
   dialog.addEventListener("cancel", event => { if (streaming && groupScenes.group(mode)) event.preventDefault(); });
   dialog.querySelector("form")!.addEventListener("submit", event => { if (streaming && groupScenes.group(mode)) event.preventDefault(); });
 }
@@ -1461,6 +1450,8 @@ function renderGroupScene(mode: "life" | "date", scene: GroupScene) {
     renderSceneMessages(dateMessages, scene.messages);
   }
   renderGroupSceneSettings(mode);
+  const target = mode === "life" ? lifeMessages : dateMessages;
+  target.scrollTop = target.scrollHeight;
 }
 
 async function runGroupScene(mode: "life" | "date", operation: () => Promise<void>) {
@@ -1566,16 +1557,17 @@ function renderSceneMessages(target: HTMLElement, values: ChatMessage[]) {
   const mode = target === dateMessages ? "date" : "life";
   target.innerHTML = values.length ? values.map((message, index) => {
     const group = groupScenes.group(mode);
+    const narrative = !!group && message.role === "assistant" && message.metadata?.sceneNarrative === true;
     const member = group?.members.find(item => item.id === message.metadata?.groupMemberId || item.name === message.speakerId);
     const speaker = message.role === "assistant" ? characters.find((item) => item.id === message.metadata?.characterId || item.id === message.speakerId || item.name === message.speakerId) ?? (group ? undefined : characterById(sceneCharacterId)) : undefined;
-    const avatarKey = speaker?.id ?? "user";
-    const name = message.role === "user" ? group?.userName || "我" : member?.name || speaker?.name || message.speakerId || "同行者";
+    const avatarKey = narrative ? "" : speaker?.id ?? "user";
+    const name = narrative ? "场景叙事" : message.role === "user" ? group?.userName || "我" : member?.name || speaker?.name || message.speakerId || "同行者";
     const time = new Date(message.createdAt);
     const label = Number.isNaN(time.getTime()) ? "" : time.toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
     const selected = sceneSelectionMode === mode && sceneSelectedIds.has(message.id);
-    return `<article class="scene-message ${message.role}${selected ? " is-selected" : ""}" data-message-id="${escapeHtml(message.id)}"><label class="scene-select-control" title="选择这条消息"><input type="checkbox" data-scene-select value="${escapeHtml(message.id)}" ${selected ? "checked" : ""}><span aria-hidden="true"></span></label><div class="scene-entry-portrait"><span class="scene-avatar-fallback" aria-hidden="true">${escapeHtml(name.slice(0, 1))}</span><img data-scene-avatar="${escapeHtml(avatarKey)}" src="./character/images/standing.png" alt="${escapeHtml(name)}的头像" ${avatarKey !== PRIMARY_CHARACTER ? "hidden" : ""}></div><div class="scene-entry-count">第 ${String(index + 1).padStart(2, "0")} 则 · ${message.role === "assistant" ? `${escapeHtml(name)}的回应` : "你的落笔"}</div><div class="scene-entry-paper"><header><strong>${escapeHtml(name)}</strong><time datetime="${Number.isNaN(time.getTime()) ? "" : time.toISOString()}">${escapeHtml(label)}</time></header><p>${escapeHtml(cleanTheatreReply(message.content))}</p></div></article>`;
+    return `<article class="scene-message ${message.role}${narrative ? " scene-narrative" : ""}${selected ? " is-selected" : ""}" data-message-id="${escapeHtml(message.id)}"><label class="scene-select-control" title="选择这条消息"><input type="checkbox" data-scene-select value="${escapeHtml(message.id)}" ${selected ? "checked" : ""}><span aria-hidden="true"></span></label>${narrative ? "" : `<div class="scene-entry-portrait"><span class="scene-avatar-fallback" aria-hidden="true">${escapeHtml(name.slice(0, 1))}</span><img data-scene-avatar="${escapeHtml(avatarKey)}" src="./character/images/standing.png" alt="${escapeHtml(name)}的头像" ${avatarKey !== PRIMARY_CHARACTER ? "hidden" : ""}></div>`}<div class="scene-entry-count">第 ${String(index + 1).padStart(2, "0")} 则 · ${narrative ? "这一幕" : message.role === "assistant" ? `${escapeHtml(name)}的回应` : "你的落笔"}</div><div class="scene-entry-paper"><header><strong>${escapeHtml(name)}</strong><time datetime="${Number.isNaN(time.getTime()) ? "" : time.toISOString()}">${escapeHtml(label)}</time></header><p>${escapeHtml(cleanTheatreReply(message.content))}</p></div></article>`;
   }).join("") : `<div class="scene-empty"><span>序 · 章</span><p>风景已经铺开。<br>从你的一句话开始。</p></div>`;
-  if (mode === "date") target.prepend(dateStateCard);
+  target.prepend(mode === "date" ? dateStateCard : lifeStateCard);
   target.querySelectorAll<HTMLElement>(".scene-entry-paper").forEach((paper, index) => {
     paper.tabIndex = 0;
     paper.setAttribute("aria-haspopup", "dialog");

@@ -482,7 +482,7 @@ button:focus-visible { outline:2px solid color-mix(in srgb, #68aabc 60%, transpa
 .scene-reader .scene-state-title span, .scene-reader .scene-state-card small { font-size:11px; color:color-mix(in srgb, var(--text) 65%, var(--panel)); }
 .scene-reader .scene-state-card p { margin:5px 0 0; font-size:12px; line-height:1.6; }
 .scene-reader .scene-state-card small { display:block; margin-top:4px; }
-#date-messages > #date-state-card { display:block; margin-bottom:24px; }
+#date-messages > #date-state-card, #life-messages > #life-state-card { display:block; margin-bottom:24px; }
 #life-stage:not([hidden]) { display:flex; flex:1 1 auto; min-height:0; flex-direction:column; gap:0; overflow:hidden; }
 #meet-dialog .scene-messages, #date-dialog .scene-messages { display:block; flex:1 1 auto; min-height:0; padding:12px 0 22px; overflow-y:auto; overscroll-behavior:contain; touch-action:pan-y; scrollbar-width:thin; scroll-padding-bottom:20px; -webkit-overflow-scrolling:touch; }
 .scene-reader .scene-message, .scene-reader .scene-message.user { position:relative; display:block; width:100%; max-width:none; padding:0; margin:0 0 30px; border:0; border-radius:0; background:transparent; box-shadow:none; }
