@@ -6,6 +6,7 @@ const api = await readFile(new URL("../src/api.ts", import.meta.url), "utf8");
 const storage = await readFile(new URL("../src/storage.ts", import.meta.url), "utf8");
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const style = await readFile(new URL("../src/style.css", import.meta.url), "utf8");
+const phoneEgg = await readFile(new URL("../src/phone-easter-egg.ts", import.meta.url), "utf8");
 
 assert.match(main, /async function generateImageMessage\(\)/, "生图入口应使用实际处理函数");
 assert.match(main, /#plus-generate.*generateImageMessage/s, "加号菜单应能调用生图处理函数");
@@ -52,6 +53,11 @@ assert.match(main, /id="plus-open"[^>]*><span aria-hidden="true"><\/span>/, "加
 assert.match(style, /\.composer-plus::before, \.composer-plus::after \{ content:""; position:absolute; left:50%; top:50%/, "加号应通过水平和垂直线定位到圆心");
 assert.doesNotMatch(main, /id="user-avatar-button"/, "头像设置入口不应出现在聊天头部");
 assert.match(main, /id=\"topbar-menu-toggle\"/, "顶部功能应折叠在菜单中");
+assert.match(main, /id=\"phone-trace-trigger\"/, "顶部应有可发现的手机痕迹入口");
+assert.match(main, /phoneEasterEgg\.init\(\)/, "手机痕迹彩蛋应在应用数据加载后初始化");
+assert.match(phoneEgg, /MIN_AWAY_MS = 15_000/, "手机痕迹应只在离开页面一段时间后触发");
+assert.match(phoneEgg, /localStorage\.setItem\(AWAY_KEY/, "手机痕迹应记录页面离开时间");
+assert.match(phoneEgg, /界面上的小痕迹/, "手机痕迹应保持在界面层");
 assert.match(main, /data-role-interaction/, "摸头、投喂和拥抱应放在角色记录中");
 assert.match(main, /<textarea id=\"draft\"[\s\S]*?<button id=\"send\"[\s\S]*?<button id=\"plus-open\"/, "聊天加号应位于输入框右侧");
 assert.match(main, /id=\"plus-menu\"[\s\S]*id=\"voice-record\"[\s\S]*id=\"sticker-choose\"/, "语音和表情包入口应放在加号菜单中");

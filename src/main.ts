@@ -14,6 +14,8 @@ import "./group-scenes.css";
 import "./script-library.css";
 import { ScriptLibraryUI } from "./script-library-ui";
 import { validTheatreScript } from "./script-library";
+import "./phone-easter-egg.css";
+import { PhoneEasterEgg } from "./phone-easter-egg";
 import { themes, selectedTheme } from "./themes";
 import { CalendarUI } from "./calendar-ui";
 import { calendarContext, contactBirthday, diaryDay, mergeCalendar, moodLabel, validBirthday, validCalendar, validDay, type CalendarData } from "./calendar";
@@ -90,7 +92,8 @@ let audioAnalysisProfile: AudioAnalysisProfile = { provider: "gemini", baseUrl: 
 
 root.innerHTML = `
   <main class="app-shell">
-    <header class="topbar"><div><span class="eyebrow">陪伴桌宠</span><h1>小张起灵</h1></div><button id="topbar-menu-toggle" class="topbar-menu-toggle" type="button" aria-expanded="false" aria-controls="topbar-menu">功能</button><div id="topbar-menu" class="topbar-menu" hidden><button id="session-open" class="topbar-button" type="button">会话</button><button id="moments-open" class="topbar-button" type="button">朋友圈</button><button id="album-open" class="topbar-button" type="button">相册</button><button id="checkup-open" class="topbar-button" type="button">查岗</button><button id="diary-open" class="topbar-button" type="button">日历</button><button id="music-open" class="topbar-button" type="button">一起听</button><button id="life-open" class="topbar-button" type="button">生活</button><button id="role-open" class="topbar-button" type="button">关系与回忆</button><button id="pose-open" class="topbar-button" type="button">切换姿态</button><button id="settings" class="topbar-button" type="button">设置</button></div></header>
+    <header class="topbar"><div class="topbar-identity"><div><span class="eyebrow">陪伴桌宠</span><h1 id="app-title">小张起灵</h1></div><button id="phone-trace-trigger" class="phone-trace-trigger" type="button" hidden><span class="phone-trace-dot" aria-hidden="true"></span><span>有人来过</span></button></div><button id="topbar-menu-toggle" class="topbar-menu-toggle" type="button" aria-expanded="false" aria-controls="topbar-menu">功能</button><div id="topbar-menu" class="topbar-menu" hidden><button id="session-open" class="topbar-button" type="button">会话</button><button id="moments-open" class="topbar-button" type="button">朋友圈</button><button id="album-open" class="topbar-button" type="button">相册</button><button id="checkup-open" class="topbar-button" type="button">查岗</button><button id="diary-open" class="topbar-button" type="button">日历</button><button id="music-open" class="topbar-button" type="button">一起听</button><button id="life-open" class="topbar-button" type="button">生活</button><button id="role-open" class="topbar-button" type="button">关系与回忆</button><button id="pose-open" class="topbar-button" type="button">切换姿态</button><button id="settings" class="topbar-button" type="button">设置</button></div></header>
+    <aside id="phone-trace-card" class="phone-trace-card" hidden aria-live="polite"><div class="phone-trace-card-head"><span>手机痕迹</span><button id="phone-trace-close" type="button">收起</button></div><strong id="phone-trace-title"></strong><p id="phone-trace-body"></p><small id="phone-trace-byline"></small></aside>
     <img id="pet" class="floating-pet" src="./character/images/standing.png" alt="张起灵" draggable="false" title="拖动我"><div id="pet-feedback" class="pet-feedback" role="status" aria-live="polite" hidden></div><div id="pet-action-menu" class="pet-action-menu" aria-label="桌宠互动" hidden><button type="button" data-pet-action="touch">摸摸头</button><button type="button" data-pet-action="feed">投喂</button><button type="button" data-pet-action="hug">抱抱</button><button type="button" data-pet-action="pose">换个姿态</button><button type="button" data-pet-action="close">收起</button></div>
     <section class="chat-panel"><div class="chat-presence"><div class="presence-person"><img src="./character/images/standing.png" alt="张起灵"><span>张起灵</span></div><input id="user-avatar-input" type="file" accept="image/png,image/jpeg,image/webp" hidden></div><div class="theme-keepsake" aria-hidden="true"><span class="theme-keepsake-rococo"><i>Pour toi</i><b>把日子写成给你的信</b><small>LES LETTRES DE NOS JOURS</small></span><span class="theme-keepsake-bronze"><small>山川有迹 · 故纸藏声</small><b>灯未熄，等你归。</b><i>长白 / 雨村 / 人间</i></span></div><div id="messages" class="messages" aria-live="polite"></div><p id="error" class="error" hidden></p><div id="plus-menu" class="plus-menu" hidden><button id="voice-record" type="button">语音录制</button><button id="voice-call-open" type="button">语音通话</button><button id="video-call-open" type="button">视频通话</button><label class="plus-menu-label">导入表情<input id="sticker-file" type="file" accept="image/png,image/jpeg,image/webp" hidden></label><button id="sticker-choose" type="button">表情包库</button><button id="plus-image" type="button">发送图片</button><button id="plus-generate" type="button">生成图片</button><button id="plus-gift" type="button">送礼</button><button id="plus-transfer" type="button">转账</button><button id="plus-group-collection" type="button">群收款</button><button id="plus-group-roll" type="button">群接龙</button></div><div id="sticker-suggest" class="sticker-suggest" hidden></div><form id="composer" class="composer"><textarea id="draft" rows="1" maxlength="4000" placeholder="说点什么…"></textarea><button id="send" type="submit">发送</button><button id="plus-open" class="composer-plus" type="button" aria-label="更多功能" aria-expanded="false"><span aria-hidden="true"></span></button></form></section>
   </main>
@@ -324,6 +327,16 @@ let dateBackgroundRevision = 0;
 let selectedDateScene: import("./types").DateSceneKind = "walk";
 const plusMenu = document.querySelector<HTMLDivElement>("#plus-menu")!;
 const stickerSuggest = document.querySelector<HTMLDivElement>("#sticker-suggest")!;
+const phoneEasterEgg = new PhoneEasterEgg({
+  trigger: document.querySelector<HTMLButtonElement>("#phone-trace-trigger")!,
+  card: document.querySelector<HTMLElement>("#phone-trace-card")!,
+  title: document.querySelector<HTMLElement>("#app-title")!,
+  traceTitle: document.querySelector<HTMLElement>("#phone-trace-title")!,
+  traceBody: document.querySelector<HTMLElement>("#phone-trace-body")!,
+  traceByline: document.querySelector<HTMLElement>("#phone-trace-byline")!,
+  close: document.querySelector<HTMLButtonElement>("#phone-trace-close")!,
+  character: () => { const value = currentCharacter(); return value ? { id: value.id, name: value.name } : undefined; }
+});
 const roleInteractionButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-role-interaction]"));
 const interactionRecords = document.querySelector<HTMLDivElement>("#interaction-records")!;
 
@@ -1354,6 +1367,7 @@ async function load() {
   renderMessages();
   await renderConversationHeader();
   await checkBirthdays();
+  phoneEasterEgg.init();
   document.documentElement.dataset.appReady = "true";
 }
 
