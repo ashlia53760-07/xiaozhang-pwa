@@ -1,5 +1,5 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["worker", "functions", "src/shopping.ts"],
+  "include": ["worker"],
   "compilerOptions": { "tsBuildInfoFile": "./.local-review/worker.tsbuildinfo" }
 }

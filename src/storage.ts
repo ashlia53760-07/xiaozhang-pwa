@@ -5,23 +5,6 @@ import type { ContactPreferences, SharedCharacterSettings } from "./types";
 import { normalizeLegacyGroup, isLegacyDateMemory } from "./groups";
 import { emptyCalendar, validCalendar, type CalendarData } from "./calendar";
 import type { GroupLifeScene } from "./types";
-import type { ShoppingAttachment, ShoppingWorkspace } from "./shopping";
-
-function stripShoppingPrices(data?: ShoppingAttachment, now = Date.now()): boolean {
-  let changed = false;
-  if (data?.version !== 1 || !Array.isArray(data.results)) return changed;
-  for (const result of data.results) {
-    const product = result?.product;
-    if (!product || typeof product.fetchedAt !== "number" || now < Math.min(product.expiresAt ?? Infinity, product.fetchedAt + 15 * 60_000)) continue;
-    if (product.price !== undefined || product.originalPrice !== undefined || Array.isArray(product.sku) && product.sku.some(row => row && row.price !== undefined)) {
-      delete product.price; delete product.originalPrice;
-      if (Array.isArray(product.sku)) product.sku = product.sku.filter(row => row && typeof row.name === "string").map(row => ({ name: row.name }));
-      product.priceExpired = true; product.unavailableFields = [...new Set([...(Array.isArray(product.unavailableFields) ? product.unavailableFields : []), "price", "originalPrice"])]; changed = true;
-    }
-  }
-  return changed;
-}
-
 export interface LeisureEffects { messages?: ChatMessage[]; diary?: DiaryRecord[]; lifeEvents?: LifeEventRecord[]; memories?: MemoryRecord[]; moments?: MomentRecord[] }
 export type SceneFloorScope = { kind: "life"; characterId: string } | { kind: "date"; characterId: string; id: string } | { kind: "adventure"; id: string } | { kind: "group-life"; groupId: string } | { kind: "group-date"; groupId: string; id: string };
 export type SceneFloorRow = Pick<ChatMessage, "id" | "role" | "content" | "createdAt" | "speakerId" | "metadata">;
@@ -539,33 +522,6 @@ export const storage = {
   },
   async addMessage(message: ChatMessage): Promise<void> {
     return this.addMessages([message]);
-  },
-  async shoppingWorkspace(): Promise<ShoppingWorkspace | undefined> { return readKv<ShoppingWorkspace>("shopping-workspace"); },
-  async saveShoppingWorkspace(value: ShoppingWorkspace, expectedRevision: number): Promise<void> {
-    const tx = (await db()).transaction("kv", "readwrite"), done = transactionDone(tx), kv = tx.objectStore("kv"), get = kv.get("shopping-workspace");
-    let failure: Error | undefined;
-    const next = structuredClone({ ...value, revision: expectedRevision + 1, updatedAt: Date.now() });
-    stripShoppingPrices(next.attachment);
-    get.onsuccess = () => {
-      if ((get.result?.value?.revision ?? 0) !== expectedRevision) { failure = Error("选品资料已在其他页面修改，请关闭后重新打开；你的输入仍保留。"); tx.abort(); return; }
-      kv.put({ key: "shopping-workspace", value: next });
-    };
-    try { await done; } catch (error) { throw failure ?? error; }
-    Object.assign(value, next);
-  },
-  /** Purge volatile prices on foreground use and before export; history keeps stable product facts. */
-  async pruneShoppingPrices(now = Date.now()): Promise<void> {
-    const tx = (await db()).transaction(["messages", "kv"], "readwrite"), done = transactionDone(tx);
-    const workspace = tx.objectStore("kv").get("shopping-workspace");
-    workspace.onsuccess = () => { if (workspace.result && stripShoppingPrices(workspace.result.value?.attachment, now)) tx.objectStore("kv").put(workspace.result); };
-    const cursor = tx.objectStore("messages").openCursor();
-    cursor.onsuccess = () => {
-      const entry = cursor.result; if (!entry) return;
-      const message = entry.value as ChatMessage, data = message.metadata?.shopping as ShoppingAttachment | undefined;
-      if (stripShoppingPrices(data, now)) entry.update(message);
-      entry.continue();
-    };
-    await done;
   },
   async addMessages(messages: ChatMessage[], guard?: { session: string; revision: number }): Promise<void> {
     const database = await db();

@@ -1,9 +1,3 @@
 name = "xiaozhang-pwa"
 pages_build_output_dir = "./dist"
 compatibility_date = "2026-10-17"
-compatibility_flags = ["nodejs_compat"]
-
-[vars]
-PRODUCT_SOURCE = "disabled"
-TAOBAO_USE_APPROVED = "false"
-ENABLE_SHORT_LINKS = "false"

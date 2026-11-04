@@ -11,9 +11,6 @@ import "./scene-floors.css";
 import { SceneFloors } from "./scene-floors";
 import { GroupScenes, type GroupScene } from "./group-scenes";
 import "./group-scenes.css";
-import "./shopping.css";
-import { ShoppingModule } from "./shopping-module";
-import { validShoppingWorkspace } from "./shopping";
 import { themes, selectedTheme } from "./themes";
 import { CalendarUI } from "./calendar-ui";
 import { calendarContext, contactBirthday, diaryDay, mergeCalendar, moodLabel, validBirthday, validCalendar, validDay, type CalendarData } from "./calendar";
@@ -90,7 +87,7 @@ let audioAnalysisProfile: AudioAnalysisProfile = { provider: "gemini", baseUrl: 
 
 root.innerHTML = `
   <main class="app-shell">
-    <header class="topbar"><div><span class="eyebrow">陪伴桌宠</span><h1>小张起灵</h1></div><button id="topbar-menu-toggle" class="topbar-menu-toggle" type="button" aria-expanded="false" aria-controls="topbar-menu">功能</button><div id="topbar-menu" class="topbar-menu" hidden><button id="session-open" class="topbar-button" type="button">会话</button><button id="moments-open" class="topbar-button" type="button">朋友圈</button><button id="album-open" class="topbar-button" type="button">相册</button><button id="checkup-open" class="topbar-button" type="button">查岗</button><button id="diary-open" class="topbar-button" type="button">日历</button><button id="music-open" class="topbar-button" type="button">一起听</button><button id="life-open" class="topbar-button" type="button">生活</button><button id="role-open" class="topbar-button" type="button">关系与回忆</button><button id="pose-open" class="topbar-button" type="button">切换姿态</button><button id="shopping-open" class="topbar-button" type="button">选品辅助 · 附赠</button><button id="settings" class="topbar-button" type="button">设置</button></div></header>
+    <header class="topbar"><div><span class="eyebrow">陪伴桌宠</span><h1>小张起灵</h1></div><button id="topbar-menu-toggle" class="topbar-menu-toggle" type="button" aria-expanded="false" aria-controls="topbar-menu">功能</button><div id="topbar-menu" class="topbar-menu" hidden><button id="session-open" class="topbar-button" type="button">会话</button><button id="moments-open" class="topbar-button" type="button">朋友圈</button><button id="album-open" class="topbar-button" type="button">相册</button><button id="checkup-open" class="topbar-button" type="button">查岗</button><button id="diary-open" class="topbar-button" type="button">日历</button><button id="music-open" class="topbar-button" type="button">一起听</button><button id="life-open" class="topbar-button" type="button">生活</button><button id="role-open" class="topbar-button" type="button">关系与回忆</button><button id="pose-open" class="topbar-button" type="button">切换姿态</button><button id="settings" class="topbar-button" type="button">设置</button></div></header>
     <img id="pet" class="floating-pet" src="./character/images/standing.png" alt="张起灵" draggable="false" title="拖动我"><div id="pet-feedback" class="pet-feedback" role="status" aria-live="polite" hidden></div><div id="pet-action-menu" class="pet-action-menu" aria-label="桌宠互动" hidden><button type="button" data-pet-action="touch">摸摸头</button><button type="button" data-pet-action="feed">投喂</button><button type="button" data-pet-action="hug">抱抱</button><button type="button" data-pet-action="pose">换个姿态</button><button type="button" data-pet-action="close">收起</button></div>
     <section class="chat-panel"><div class="chat-presence"><div class="presence-person"><img src="./character/images/standing.png" alt="张起灵"><span>张起灵</span></div><input id="user-avatar-input" type="file" accept="image/png,image/jpeg,image/webp" hidden></div><div class="theme-keepsake" aria-hidden="true"><span class="theme-keepsake-rococo"><i>Pour toi</i><b>把日子写成给你的信</b><small>LES LETTRES DE NOS JOURS</small></span><span class="theme-keepsake-bronze"><small>山川有迹 · 故纸藏声</small><b>灯未熄，等你归。</b><i>长白 / 雨村 / 人间</i></span></div><div id="messages" class="messages" aria-live="polite"></div><p id="error" class="error" hidden></p><div id="plus-menu" class="plus-menu" hidden><button id="voice-record" type="button">语音录制</button><button id="voice-call-open" type="button">语音通话</button><button id="video-call-open" type="button">视频通话</button><label class="plus-menu-label">导入表情<input id="sticker-file" type="file" accept="image/png,image/jpeg,image/webp" hidden></label><button id="sticker-choose" type="button">表情包库</button><button id="plus-image" type="button">发送图片</button><button id="plus-generate" type="button">生成图片</button><button id="plus-gift" type="button">送礼</button><button id="plus-transfer" type="button">转账</button><button id="plus-group-collection" type="button">群收款</button><button id="plus-group-roll" type="button">群接龙</button></div><div id="sticker-suggest" class="sticker-suggest" hidden></div><form id="composer" class="composer"><textarea id="draft" rows="1" maxlength="4000" placeholder="说点什么…"></textarea><button id="send" type="submit">发送</button><button id="plus-open" class="composer-plus" type="button" aria-label="更多功能" aria-expanded="false"><span aria-hidden="true"></span></button></form></section>
   </main>
@@ -799,9 +796,7 @@ for (const [id, page] of [["forum-open", "forum"], ["browser-open", "browser"], 
   document.querySelector<HTMLButtonElement>(`#${id}`)!.addEventListener("click", () => { closePlusMenu(); void fieldworkUI.open(page); });
 }
 
-const shoppingModule: ShoppingModule = new ShoppingModule({ profile: () => { const character = sessionCharacter(activeSession); return character ? storage.contactProfile(character.id) : storage.profile(); }, busy: () => archiveBusy() });
-document.querySelector("#shopping-open")!.addEventListener("click", () => { void shoppingModule.open().catch(error => showError(error instanceof Error ? error.message : "选品辅助暂时无法打开")); });
-function archiveBusy(): boolean { return streaming || !!recording || !!callMode || musicAnalysisBusy || momentGenerationInFlight || diaryGenerationInFlight || importingBackup || messageMutation || shoppingModule.isBusy(); }
+function archiveBusy(): boolean { return streaming || !!recording || !!callMode || musicAnalysisBusy || momentGenerationInFlight || diaryGenerationInFlight || importingBackup || messageMutation; }
 const archivesUI = new ArchivesUI(archiveBusy);
 const transactionUI = new TransactionUI({
   session: () => activeSession, busy: archiveBusy,
@@ -2889,7 +2884,6 @@ type BackupPayload = {
   fieldwork?: FieldworkData;
   birthdaySettings?: BirthdaySettings;
   calendar?: CalendarData;
-  shoppingWorkspace?: import("./shopping").ShoppingWorkspace;
   media: Array<{ id: string; mime: string; origin: string; createdAt: number; data: string }>;
 };
 
@@ -2903,7 +2897,6 @@ function blobData(blob: Blob): Promise<string> {
 }
 
 async function exportData() {
-  await storage.pruneShoppingPrices();
   const [savedMessages, stickers, memories, moments, diary, background, savedAffection, interactions, lifeEvents, customGifts, savedCharacterSettings, groups, savedActiveSession, savedTtsProfile, savedAudioAnalysisProfile, savedAvatar, savedCharacterAvatar, savedNpcAvatarIds, savedMusicTracks, savedActiveMusicTrack, savedContinuousLife, savedDateSessions, savedVideoCallBackground, savedMomentCover, savedFieldwork, savedBirthdaySettings, savedCalendar] = await Promise.all([
     storage.messages(), storage.stickers(), storage.allMemories(), storage.moments(), storage.diaries(), storage.background(), storage.affection(), storage.interactions(), storage.lifeEvents(), storage.customGifts(), storage.characterSettings(), storage.groups(), storage.activeSession(), storage.ttsProfile(), storage.audioAnalysisProfile(), storage.userAvatar(), storage.characterAvatar(), storage.npcAvatars(), storage.musicTracks(), storage.activeMusicTrack(), storage.continuousLife(), storage.dateSessions(), storage.videoCallBackground(), storage.momentCover(), storage.fieldwork<FieldworkData>(), storage.birthdaySettings(), storage.calendar()
   ]);
@@ -2935,7 +2928,6 @@ async function exportData() {
     format: "xiaozhang-pwa-backup", version: 4, savedAt: Date.now(), travel: savedTravel, play: savedPlay,
     contactData: await storage.contactBackup(),
     groupLifeScenes: await storage.groupLifeScenes(),
-    shoppingWorkspace: validShoppingWorkspace(await storage.shoppingWorkspace()),
     profile: { baseUrl: savedProfile.baseUrl, model: savedProfile.model, temperature: savedProfile.temperature, protocol: savedProfile.protocol ?? "openai" },
     imageProfile: { baseUrl: savedImageProfile.baseUrl, model: savedImageProfile.model },
     ttsProfile: { provider: savedTtsProfile.provider, baseUrl: savedTtsProfile.baseUrl, model: savedTtsProfile.model, voiceId: savedTtsProfile.voiceId, groupId: savedTtsProfile.groupId },
@@ -2989,8 +2981,6 @@ async function importData(file: File) {
   if (payload.fieldwork !== undefined && (!payload.fieldwork || typeof payload.fieldwork !== "object")) throw Error("资料与探索备份结构无效，尚未导入任何记录");
   if (payload.calendar !== undefined && !validCalendar(payload.calendar)) throw Error("日历备份结构无效，尚未导入任何记录");
   if (payload.calendar) await storage.updateCalendar(local => mergeCalendar(local, payload.calendar!));
-  const shoppingWorkspace = validShoppingWorkspace(payload.shoppingWorkspace);
-  if (shoppingWorkspace && !await storage.shoppingWorkspace()) await storage.saveShoppingWorkspace(shoppingWorkspace, 0);
   if (payload.birthdaySettings && typeof payload.birthdaySettings === "object") {
     const localBirthday = await storage.birthdaySettings();
     const incoming = payload.birthdaySettings;
@@ -4829,8 +4819,6 @@ const experienceTimeline = new ExperienceTimeline(async (entry: TimelineEntry) =
 document.querySelector<HTMLButtonElement>("#role-timeline-open")!.addEventListener("click", () => { roleDialog.close(); void experienceTimeline.open(); });
 document.querySelector<HTMLButtonElement>("#message-search-open")!.addEventListener("click", () => { sessionDialog.close(); void experienceTimeline.open("chat"); });
 void load().then(async () => {
-  await storage.pruneShoppingPrices();
-  window.setInterval(() => { void storage.pruneShoppingPrices().then(() => shoppingModule.expire()).catch(() => undefined); }, 60_000);
   await leisure.init();
   void runSocialAutomation();
   proactiveTimer = window.setInterval(() => { void maybeProactive(); }, 60 * 1000);
