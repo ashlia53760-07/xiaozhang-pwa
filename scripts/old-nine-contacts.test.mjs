@@ -24,6 +24,7 @@ try {
   assert.equal(await page.locator("[data-contact-id]").count(), 10);
   assert.equal(await page.locator('[data-contact-id="wang-meng"]').count(), 0);
   assert.equal(await page.locator('[data-contact-id="old-zhang-xiaoyu"]').count(), 1);
+  assert.equal(await page.locator('[data-contact-id="old-zhang-xiaoyu"] strong').innerText(), "张小鱼");
   assert.equal(await page.locator("#session-form h2").innerText(), "老九门");
   await page.locator('[data-contact-id="old-er-yuehong"]').click();
   await page.click("#conversation-details");
