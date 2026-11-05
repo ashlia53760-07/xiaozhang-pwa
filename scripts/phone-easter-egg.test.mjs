@@ -19,9 +19,15 @@ try {
   const trigger = page.locator("#phone-trace-trigger"), card = page.locator("#phone-trace-card");
   assert.equal(await trigger.isVisible(), false);
   const before = await page.locator("#messages .message-row").count();
-  await page.locator("#app-title").dispatchEvent("pointerdown");
+  await page.locator("#app-title").hover();
+  await page.mouse.down();
   await page.waitForTimeout(1_050);
-  await page.locator("#app-title").dispatchEvent("pointerup");
+  await page.mouse.up();
+  assert.equal(await trigger.isVisible(), false);
+  await page.locator("#pet").hover();
+  await page.mouse.down();
+  await page.waitForTimeout(1_050);
+  await page.mouse.up();
   assert.equal(await trigger.isVisible(), true);
   assert.equal(await card.isVisible(), true);
   assert.match(await page.locator("#phone-trace-object").innerText(), /窄纸条/);

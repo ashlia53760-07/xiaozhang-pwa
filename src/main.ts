@@ -331,6 +331,7 @@ const phoneEasterEgg = new PhoneEasterEgg({
   trigger: document.querySelector<HTMLButtonElement>("#phone-trace-trigger")!,
   card: document.querySelector<HTMLElement>("#phone-trace-card")!,
   title: document.querySelector<HTMLElement>("#app-title")!,
+  pet,
   object: document.querySelector<HTMLElement>("#phone-trace-object")!,
   clue: document.querySelector<HTMLElement>("#phone-trace-clue")!,
   mark: document.querySelector<HTMLElement>("#phone-trace-mark")!,

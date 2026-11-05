@@ -49,6 +49,7 @@ export class PhoneEasterEgg {
     trigger: HTMLButtonElement;
     card: HTMLElement;
     title: HTMLElement;
+    pet: HTMLImageElement;
     object: HTMLElement;
     clue: HTMLElement;
     mark: HTMLElement;
@@ -75,11 +76,20 @@ export class PhoneEasterEgg {
       this.options.flip.textContent = revealBack ? "翻回正面" : "翻过来看";
       this.options.card.classList.toggle("phone-trace-reversed", revealBack);
     });
-    this.options.title.addEventListener("pointerdown", () => {
+    let pressStart: { x: number; y: number; pointerId: number } | undefined;
+    const startLongPress = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      pressStart = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
       window.clearTimeout(this.longPressTimer);
       this.longPressTimer = window.setTimeout(() => this.leaveTrace(true), 900);
+    };
+    const cancelLongPress = () => { window.clearTimeout(this.longPressTimer); pressStart = undefined; };
+    this.options.pet.addEventListener("pointerdown", startLongPress);
+    this.options.pet.addEventListener("pointermove", event => {
+      if (pressStart && event.pointerId === pressStart.pointerId && Math.abs(event.clientX - pressStart.x) + Math.abs(event.clientY - pressStart.y) > 6) cancelLongPress();
     });
-    for (const event of ["pointerup", "pointercancel", "pointerleave"]) this.options.title.addEventListener(event, () => window.clearTimeout(this.longPressTimer));
+    for (const event of ["pointerup", "pointercancel", "pointerleave"]) this.options.pet.addEventListener(event, cancelLongPress);
+    this.options.pet.addEventListener("contextmenu", event => event.preventDefault());
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") {
         localStorage.setItem(AWAY_KEY, String(Date.now()));
