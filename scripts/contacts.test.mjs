@@ -55,9 +55,9 @@ try {
   await page.goto(origin); await ready();
   assert.match(await page.locator('#messages').textContent(), /张的旧聊天秘密/);
   assert.equal(await page.evaluate(() => new Promise(r => {const o=indexedDB.open('xiaozhang-pwa');o.onsuccess=()=>{r(o.result.version);o.result.close();};})),4);
-  await page.click('#contacts-back'); await page.waitForSelector('#session-dialog[open]'); assert.equal(await page.locator('[data-contact-id]').count(),16);
+  await page.click('#contacts-back'); await page.waitForSelector('#session-dialog[open]'); assert.equal(await page.locator('[data-contact-id]').count(),17);
   await page.screenshot({path:new URL('contacts-mobile.png',folder).pathname.replace(/^\/(\w:)/,'$1')});
-  assert.equal(calls.length,0); check('legacy v2 preserved, sixteen contacts, no welcome API calls');
+  assert.equal(calls.length,0); check('legacy v2 preserved, seventeen current contacts, no welcome API calls');
   await page.locator('[data-contact-id="wu-xie"]').click();
   assert.equal(await page.locator('#messages .message-row').count(),0);
   await page.fill('#draft','吴邪的草稿'); await contacts('zhang-qiling'); await page.fill('#draft','张的草稿'); await contacts('wu-xie');

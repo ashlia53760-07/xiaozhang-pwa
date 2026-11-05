@@ -25,7 +25,7 @@ import { ArchivesUI } from "./archives-ui";
 import { ExperienceTimeline, type TimelineEntry } from "./experience-timeline";
 import { GroupUI } from "./group-ui";
 import { selectGroupSpeakers, groupSystemPrompt, groupHistory, groupEventText, groupQuote, groupProactiveDue, groupMemberKey, groupMessageCharacter, normalizeGroupReply, groupReplyCoversMember, isLegacyDateMemory } from "./groups";
-import { characters, PRIMARY_CHARACTER, characterById, characterByName, sessionCharacter, privateSession, lifeSession, ownsCharacter, personaPrompt, settingsSupplement, onlineConversationPrompt, localContactReply } from "./characters";
+import { characters, oldNineIds, PRIMARY_CHARACTER, characterById, characterByName, sessionCharacter, privateSession, lifeSession, ownsCharacter, personaPrompt, settingsSupplement, onlineConversationPrompt, localContactReply } from "./characters";
 import { analyzeAudio, chat, ChatRateLimitError, generateImage, synthesizeSpeech } from "./api";
 import { newId, storage } from "./storage";
 import { chatEventText, checkupSystemContext } from "./checkup";
@@ -638,6 +638,7 @@ document.querySelector("#session-open")!.textContent = "联系人";
 document.querySelector(".chat-panel")!.insertAdjacentHTML("afterbegin", `<header class="conversation-header"><button id="contacts-back" type="button" aria-label="打开联系人">‹</button><div><strong id="conversation-name">张起灵</strong><small id="conversation-status">独立私聊 · 本机保存</small></div><button id="conversation-details" type="button" aria-label="角色资料">···</button></header>`);
 sessionDialog.classList.add("contacts-dialog");
 document.querySelector("#session-form h2")!.textContent = "联系人";
+document.querySelector("#session-form .dialog-head h2")!.insertAdjacentHTML("afterend", `<button type="button" id="contact-era-flip" class="contact-era-flip" aria-label="切换到老九门联系人" title="切换到老九门联系人">⇄</button>`);
 document.querySelector("#private-session")!.setAttribute("hidden", "");
 document.querySelector("#private-session")!.insertAdjacentHTML("afterend", `<p class="contact-intro">各自的故事，各自慢慢说。私聊内容与记忆彼此独立。</p><label class="contact-search-label"><span>联系人与群聊</span><input id="contact-filter" type="search" placeholder="筛选联系人或群聊"></label><button id="message-search-open" type="button" class="contact-search-all">搜索全部聊天记录</button><div id="contact-list" class="contact-list"></div><h3>群聊</h3>`);
 roleForm.querySelector(".prompt-preview")!.insertAdjacentHTML("beforebegin", `<p id="role-save-status" role="status"></p><button id="contact-memory-open" type="button">管理这位角色的长期记忆</button><label>相处方式<select id="role-relationship-mode"><option value="legacy">沿用已有关系</option><option value="friendship">朋友相处</option><option value="romance">感情向相处</option></select></label><p class="hint" id="role-affection"></p><details class="contact-api"><summary>这位角色的聊天接口（默认沿用全局）</summary><label><input id="contact-api-enabled" type="checkbox">使用独立接口</label><label>协议<select id="contact-api-protocol"><option value="openai">OpenAI-compatible</option><option value="gemini">Gemini 原生</option></select></label><label>API 地址<input id="contact-api-url" type="url"></label><label>模型名称<input id="contact-api-model" type="text"></label><label>API Key<input id="contact-api-key" type="password" autocomplete="off"></label><p class="hint">仅保存在本机，不随备份导出。关闭独立接口后使用设置里的全局接口。云端语音继续使用全局 TTS 配置。</p></details>`);
@@ -679,23 +680,35 @@ async function switchSession(session: string) {
   void checkBirthdays();
   if (!window.matchMedia("(min-width: 980px)").matches) sessionDialog.close();
 }
+let contactEra: "current" | "old-nine" = "current";
+let contactsRevision = 0;
 async function renderContacts() {
+  const revision = ++contactsRevision;
+  const era = contactEra;
   await refreshContactRemarks();
   const all = await storage.messages();
-  contactAvatarUrls.forEach(url => URL.revokeObjectURL(url)); contactAvatarUrls = [];
-  const rows = await Promise.all(characters.map(async character => {
+  const urls: string[] = [];
+  const rows = await Promise.all(characters.filter(character => oldNineIds.has(character.id) === (era === "old-nine")).map(async character => {
     const session = privateSession(character.id);
     const history = all.filter(m => (m.sessionId ?? "private") === session && m.metadata?.event !== "pet_interaction");
     const last = history.at(-1), read = await storage.lastRead(session);
     const unread = history.filter(m => m.role === "assistant" && m.createdAt > read).length;
     const record = await storage.contactAvatar(character.id);
     const url = record ? URL.createObjectURL(record.blob) : "";
-    if (url) contactAvatarUrls.push(url);
+    if (url) urls.push(url);
     return `<button type="button" class="contact-row ${session === activeSession ? "selected" : ""}" data-contact-id="${character.id}"><span class="contact-portrait" style="--contact-color:${character.color}">${url ? `<img src="${url}" alt="${character.name}">` : character.initials}</span><span class="contact-copy"><strong>${escapeHtml(contactName(character.id))}</strong><small>${escapeHtml(last ? chatEventText(last).slice(0, 60) : character.subtitle)}</small></span><span class="contact-tail"><time>${last ? new Date(last.createdAt).toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" }) : ""}</time>${unread && session !== activeSession ? `<b>${unread > 99 ? "99+" : unread}</b>` : ""}</span></button>`;
   }));
+  if (revision !== contactsRevision) { urls.forEach(url => URL.revokeObjectURL(url)); return; }
+  contactAvatarUrls.forEach(url => URL.revokeObjectURL(url)); contactAvatarUrls = urls;
   document.querySelector("#contact-list")!.innerHTML = rows.join("");
+  document.querySelector("#session-form h2")!.textContent = era === "old-nine" ? "老九门" : "联系人";
+  const flip = document.querySelector<HTMLButtonElement>("#contact-era-flip")!;
+  flip.setAttribute("aria-label", era === "old-nine" ? "切换到现世联系人" : "切换到老九门联系人");
+  flip.title = flip.getAttribute("aria-label")!;
   document.querySelectorAll<HTMLButtonElement>("[data-contact-id]").forEach(button => button.addEventListener("click", () => { void switchSession(privateSession(button.dataset.contactId!)); }));
+  applyContactFilter();
 }
+document.querySelector("#contact-era-flip")!.addEventListener("click", () => { contactEra = contactEra === "current" ? "old-nine" : "current"; void renderContacts(); });
 async function openContacts() {
   await Promise.all([renderContacts(), renderGroups()]);
   applyContactFilter();

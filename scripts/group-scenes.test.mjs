@@ -181,7 +181,7 @@ try {
   pass("多人约会单次合写、长剧本、长按回退、本场独立回忆、刷新续演和并发保护正常；不读取群记忆或线上线下经历");
 
   await close("date");
-  const cast = await page.evaluate(async () => (await import("/__group-scene-test/characters.js")).characters.map(row => ({ id: row.id, characterId: row.id, name: row.name, persona: row.persona, enabled: true })));
+  const cast = await page.evaluate(async () => (await import("/__group-scene-test/characters.js")).characters.slice(0, 16).map(row => ({ id: row.id, characterId: row.id, name: row.name, persona: row.persona, enabled: true })));
   await db("groups", { ...group, id: "scene-sixteen", title: "十六人小剧场", replyMode: "all", members: cast });
   await switchGroup("scene-sixteen"); await feature("#date-open"); await page.fill("#date-custom-setting", "十六人在雨村准备晚宴，叙事中有主有次，所有人都可以自然互动。");
   before = calls.length; await page.click("#date-start"); await idle();

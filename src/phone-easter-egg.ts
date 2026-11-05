@@ -30,6 +30,16 @@ const traces: Record<string, TraceCopy[]> = {
   "li-cu": [{ object: "一张从草稿纸上撕下来的纸片", clue: "边上画了个假装不在意的小人", front: "我就随便看了一眼。", reveal: "背面却认真写着：你怎么这么久才回来。", mark: "簇", style: "doodle" }],
   "su-wan": [{ object: "一枚做了记号的透明书签", clue: "小箭头指向你常用的聊天框", front: "我帮你找到啦，回来就能接着用。", reveal: "旁边添了个笑脸：这个位置很顺手，对吧？", mark: "万", style: "bookmark" }],
   "yang-hao": [{ object: "一张揉过又展开的纸条", clue: "折痕很多，字倒是写得很直", front: "你东西没少。我没乱动。", reveal: "角落里还有一行：下次别走这么久。", mark: "好", style: "paper" }]
+  ,"wang-meng": [{ object: "一张吴山居的便笺", clue: "边角画了一个小小的方格", front: "店里不忙，你来了正好。", reveal: "背面写着：给你留了杯茶。", mark: "盟", style: "paper" }]
+  ,"old-zhang-qishan": [{ object: "一张折好的信笺", clue: "纸角压得平整", front: "事情不必急着说。", reveal: "背面留了一句：等你有空，我听着。", mark: "山", style: "paper" }]
+  ,"old-er-yuehong": [{ object: "一枚薄薄的戏签", clue: "上面有一笔淡红", front: "茶温正好。", reveal: "背面写着：若得闲，听一出戏。", mark: "红", style: "bookmark" }]
+  ,"old-ban-jieli": [{ object: "一张叠齐的纸片", clue: "边上画了一道短线", front: "你的东西，都在。", reveal: "背面写着：有话当面说清楚。", mark: "李", style: "paper" }]
+  ,"old-chen-pi": [{ object: "一张折得有些皱的纸", clue: "墨迹停在纸边", front: "我没动别的。", reveal: "背面添了句：你回来就好。", mark: "皮", style: "paper" }]
+  ,"old-wu-laogou": [{ object: "一张小纸签", clue: "上面印着一个小爪印", front: "它替你看着呢。", reveal: "背面写着：回来时慢些走。", mark: "吴", style: "bookmark" }]
+  ,"old-hei-bei": [{ object: "一片压平的纸角", clue: "只画了一道直线", front: "给你留的。", reveal: "背面写着：我在。", mark: "六", style: "paper" }]
+  ,"old-huo-xiangu": [{ object: "一张花纹信笺", clue: "纸边折得很齐", front: "有事便告诉我。", reveal: "背面写着：你不必一个人担着。", mark: "霍", style: "paper" }]
+  ,"old-qi-tiezui": [{ object: "一张写了小字的纸签", clue: "角上画了个不太圆的圈", front: "今日宜与你说话。", reveal: "背面添着：这一卦可不用算。", mark: "齐", style: "bookmark" }]
+  ,"old-xie-jiu": [{ object: "一张夹好的书签", clue: "边上留着一笔工整的字", front: "此处替你记下了。", reveal: "背面写着：等你回来，再一起看。", mark: "九", style: "bookmark" }]
 };
 
 function currentCharacter(value: TraceCharacter | undefined): TraceCharacter {
