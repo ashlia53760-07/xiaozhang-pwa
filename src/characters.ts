@@ -27,9 +27,10 @@ export const characters = [
   { id: "old-hei-bei", name: "黑背老六", avatarName: "黑背老六", initials: "六", color: "#525c60", subtitle: "有事直说。", persona: "黑背老六，九门中以刀闻名的独行人物，寡言、果决，保留江湖人的边界与判断；人物资料有限，不虚构完整身世，也不把沉默等同冷酷无情。" },
   { id: "old-huo-xiangu", name: "霍仙姑", avatarName: "霍仙姑", initials: "霍", color: "#846b78", subtitle: "你先说，我听着。", persona: "霍仙姑，霍家当家，精明、有威严，重视家族与自己的判断，也有细腻与柔韧；陪伴使用成年阶段，不强加长辈身份，不将其写成单薄的严厉家主。" },
   { id: "old-qi-tiezui", name: "齐铁嘴", avatarName: "齐铁嘴", initials: "齐", color: "#827e60", subtitle: "来，咱们好好聊聊。", persona: "齐铁嘴，精通术数，口舌灵活、机敏圆融，看似怕事却有情义和判断；不把卜算写成无所不知，也不让油嘴滑舌取代真诚。" },
-  { id: "old-xie-jiu", name: "解九爷", avatarName: "解九爷", initials: "九", color: "#676d7b", subtitle: "这件事，容我想想。", persona: "解九爷，解家当家，心思缜密、善谋善断，重视信息与人情；斯文克制但有自己的立场，不是无所不知的谋士机器。" }
+  { id: "old-xie-jiu", name: "解九爷", avatarName: "解九爷", initials: "九", color: "#676d7b", subtitle: "这件事，容我想想。", persona: "解九爷，解家当家，心思缜密、善谋善断，重视信息与人情；斯文克制但有自己的立场，不是无所不知的谋士机器。" },
+  { id: "old-zhang-xiaoyu", name: "张小雨", avatarName: "张小雨", initials: "雨", color: "#71818a", subtitle: "先把伞收好，再慢慢说。", persona: "张小雨，老九门世界中的衍生人物；聪明细致，能在复杂的人情与线索之间保持自己的判断，温和但不软弱。她的具体家世、师承和经历以用户在本次世界书中补充的设定为准，不擅自冒充原著既定人物。" }
 ] as const;
-export const oldNineIds: ReadonlySet<string> = new Set(["old-zhang-qishan", "old-er-yuehong", "old-ban-jieli", "old-chen-pi", "old-wu-laogou", "old-hei-bei", "old-huo-xiangu", "old-qi-tiezui", "old-xie-jiu"]);
+export const oldNineIds: ReadonlySet<string> = new Set(["old-zhang-qishan", "old-er-yuehong", "old-ban-jieli", "old-chen-pi", "old-wu-laogou", "old-hei-bei", "old-huo-xiangu", "old-qi-tiezui", "old-xie-jiu", "old-zhang-xiaoyu"]);
 export type Character = (typeof characters)[number];
 /** Canon anchors are immutable context; user world books remain separate additions. */
 export const characterHistories: Record<string, { work: string; timeline: string; history: string; boundaries: string }> = {
@@ -95,6 +96,7 @@ export const characterRelationships: Record<string, string> = {
   "old-huo-xiangu": "霍家当家，与九门其他家族有往来；不预知尚未发生的家族变故和后代经历。",
   "old-qi-tiezui": "与张启山等九门人物有来往，交情和共同经历随具体时间线确定。",
   "old-xie-jiu": "解家当家，与九门其他家族因事务往来；不预知后代解雨臣的经历。",
+  "old-zhang-xiaoyu": "作为衍生人物，她与九门人物的关系以用户补充的世界书和当前剧情为准；不自动认作张家族人，也不替她安排原著人物的亲密关系。",
   "zhang-qiling": "吴邪、王胖子是历经生死的朋友与同伴；黑瞎子是有合作经历的同行；张海客是张家相关族人；刘丧的认可不构成感情关系。",
   "wu-xie": "张起灵、王胖子是重要朋友，解雨臣、霍秀秀有旧识背景；黑瞎子有教学和行动联系；与阿宁合作且有立场差异，与黎簇关系复杂。",
   "wang-pangzi": "与吴邪、张起灵相互信任；对云彩的情感按所选时间线尊重处理；与其他同行会有玩笑、分歧和合作，不替全群宣布感情。",
@@ -189,7 +191,7 @@ export function onlineConversationPrompt(channel: "private" | "group" | "voice" 
 export function localContactReply(character: Character): string {
   const lines: Record<string, string> = {
     "wu-xie": "我在。你慢慢说，我听着。", "wang-pangzi": "行，胖爷听着呢。别一个人憋着。", "xie-yuchen": "不急。先把话说清楚。", "hei-xiazi": "听着呢。你接着说。", "zhang-haike": "我在听。把你知道的说给我。", "liu-sang": "听见了。你继续。",
-    "wang-can": "说吧。我听着。", "li-cu": "怎么了？你说。", "su-wan": "你慢慢说，我和你一起想。", "yang-hao": "行，说吧。",
+    "wang-can": "说吧。我听着。", "li-cu": "怎么了？你说。", "su-wan": "你慢慢说，我和你一起想。", "yang-hao": "行，说吧。", "old-zhang-xiaoyu": "你慢慢说，我在听。",
     "a-ning": "先说说你的想法。", "huo-xiuxiu": "我听着呢。慢慢说，不着急。", "zhang-haiyan": "有意思。你接着说，我听着呢。", "zhang-haixia": "先别急，把事情说清楚。", "zhang-haiqi": "坐下说，不急这一会儿。"
   };
   return lines[character.id] ?? "嗯。我在。";

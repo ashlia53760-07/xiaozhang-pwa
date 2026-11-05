@@ -21,8 +21,9 @@ try {
   assert.equal(await page.locator('[data-contact-id="old-er-yuehong"]').count(), 0);
   await page.click("#contact-era-flip");
   await page.waitForSelector('[data-contact-id="old-er-yuehong"]');
-  assert.equal(await page.locator("[data-contact-id]").count(), 9);
+  assert.equal(await page.locator("[data-contact-id]").count(), 10);
   assert.equal(await page.locator('[data-contact-id="wang-meng"]').count(), 0);
+  assert.equal(await page.locator('[data-contact-id="old-zhang-xiaoyu"]').count(), 1);
   assert.equal(await page.locator("#session-form h2").innerText(), "老九门");
   await page.locator('[data-contact-id="old-er-yuehong"]').click();
   await page.click("#conversation-details");

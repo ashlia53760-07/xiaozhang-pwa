@@ -40,6 +40,7 @@ const traces: Record<string, TraceCopy[]> = {
   ,"old-huo-xiangu": [{ object: "一张花纹信笺", clue: "纸边折得很齐", front: "有事便告诉我。", reveal: "背面写着：你不必一个人担着。", mark: "霍", style: "paper" }]
   ,"old-qi-tiezui": [{ object: "一张写了小字的纸签", clue: "角上画了个不太圆的圈", front: "今日宜与你说话。", reveal: "背面添着：这一卦可不用算。", mark: "齐", style: "bookmark" }]
   ,"old-xie-jiu": [{ object: "一张夹好的书签", clue: "边上留着一笔工整的字", front: "此处替你记下了。", reveal: "背面写着：等你回来，再一起看。", mark: "九", style: "bookmark" }]
+  ,"old-zhang-xiaoyu": [{ object: "一枚收好的青蓝色发卡", clue: "旁边压着一张写了日期的纸签", front: "先把这件事记下来。", reveal: "纸签背面添着：等你回来，再告诉我你的答案。", mark: "雨", style: "bookmark" }]
 };
 
 function currentCharacter(value: TraceCharacter | undefined): TraceCharacter {
