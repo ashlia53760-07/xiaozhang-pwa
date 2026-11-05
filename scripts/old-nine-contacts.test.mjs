@@ -26,6 +26,7 @@ try {
   assert.equal(await page.locator("#session-form h2").innerText(), "老九门");
   await page.locator('[data-contact-id="old-er-yuehong"]').click();
   await page.click("#conversation-details");
+  await page.waitForFunction(() => document.querySelector("#system-prompt-preview")?.textContent?.includes("民国时期长沙"));
   const prompt = await page.locator("#system-prompt-preview").textContent();
   assert.match(prompt, /民国时期长沙/);
   assert.match(prompt, /丫头/);
