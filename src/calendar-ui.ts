@@ -3,6 +3,7 @@ import { storage } from "./storage";
 import { birthdaySources, builtInHolidays } from "./calendar-data";
 import { contactBirthday, dateValue, dayKey, dayLabels, diaryDay, eventOnDay, lunarInfo, mergeCalendar, moodEmoji, moodLabel, moods, monthDays, parseIcs, periodLabels, validBirthday, validDay, validHolidayYear } from "./calendar";
 import type { BirthdaySettings } from "./types";
+import { CalendarSurpriseUI } from "./calendar-surprise-ui";
 
 const esc = (value: string) => value.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 export class CalendarUI {
@@ -11,20 +12,22 @@ export class CalendarUI {
   private host: HTMLElement;
   private revision = 0;
   private dirty = false;
-  constructor(private changed: () => Promise<void>, private notify: (message: string) => void, private birthdaysChanged: () => Promise<void>, private isEditingDiary: () => boolean = () => false) {
+  private surprises: CalendarSurpriseUI;
+  constructor(private changed: () => Promise<void>, private notify: (message: string) => void, private birthdaysChanged: () => Promise<void>, private isEditingDiary: () => boolean = () => false, private currentRole: () => string = () => "zhang-qiling") {
     this.host = document.createElement("section"); this.host.className = "calendar-module";
     this.host.innerHTML = `<div class="calendar-heading"><div><p class="calendar-eyebrow">把日子，一天一天留下</p><h3>我们的日历</h3></div><button type="button" id="calendar-today">回到今天</button></div>
       <div class="calendar-nav"><button type="button" id="calendar-prev" aria-label="上个月">‹</button><label><span class="sr-only">选择月份</span><input type="month" id="calendar-month" min="1900-01" max="2199-12"></label><button type="button" id="calendar-next" aria-label="下个月">›</button></div>
       <div class="calendar-weekdays" aria-hidden="true">${["一", "二", "三", "四", "五", "六", "日"].map(d => `<span>${d}</span>`).join("")}</div><div id="calendar-grid" class="calendar-grid" role="group" aria-label="月历日期"></div>
       <p class="calendar-legend">休 · 放假　班 · 调休上班　♥ · 生日　经 · 经期记录　● · 有记录</p><p id="calendar-season" class="calendar-season"></p><p id="calendar-holiday-source" class="hint"></p>
       <div class="calendar-tools"><button type="button" id="calendar-sync">更新本年休班安排</button><label class="calendar-file">导入 .ics 全天日程<input id="calendar-import" type="file" accept=".ics,text/calendar"></label></div><p id="calendar-status" role="status" aria-live="polite" class="hint"></p>
-      <section class="calendar-day-panel"><h3 id="calendar-day-title"></h3><div id="calendar-day-events"></div>
+      <section class="calendar-day-panel"><h3 id="calendar-day-title"></h3><div id="calendar-day-events"></div><section id="calendar-surprises"></section>
       <form id="calendar-record-form"><div class="calendar-fields"><label>今天的心情<select id="calendar-mood"><option value="">未记录</option>${moods.map(m => `<option value="${m}">${moodLabel(m)}</option>`).join("")}</select></label><label>经期记录<select id="calendar-period"><option value="">未记录</option>${Object.entries(periodLabels).map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select></label></div>
       <label>想记下的事<textarea id="calendar-note" rows="3" maxlength="3000" placeholder="身体感受、心情，或者今天的小事…"></textarea></label><div class="calendar-actions"><button type="submit">保存当天记录</button><button type="button" id="calendar-delete-record">清除当天记录</button></div></form></section>
       <label class="calendar-share"><input type="checkbox" id="calendar-share">让角色在私聊、通话和约会时关心我的记录</label><p class="hint">开启后，会将近七天的心情、经期、备注和我的日记带入一对一交流，也可供张起灵写夜记。关闭后不再带入新请求；已发生的对话保留。群聊与朋友圈不读取这些记录。</p>
-      <details id="calendar-birthdays"><summary>生日簿 · 16 位角色与我</summary><div id="calendar-birthday-settings"></div><p class="hint">可自行设定或恢复收录日期；生日互动沿用原有提醒开关。二月二十九日只在闰年当天提醒。</p><div id="calendar-birthday-list"></div></details>
+      <details id="calendar-birthdays"><summary>生日簿 · ${characters.length} 位角色与我</summary><div id="calendar-birthday-settings"></div><p class="hint">可自行设定或恢复收录日期；生日互动沿用原有提醒开关。二月二十九日只在闰年当天提醒。</p><div id="calendar-birthday-list"></div></details>
       <div class="calendar-diary-heading"><h3>日子里的文字</h3><label><input type="checkbox" id="calendar-all-diaries">查看全部日记</label></div>`;
     document.querySelector("#diary-dialog .diary-content")!.prepend(this.host);
+    this.surprises=new CalendarSurpriseUI(this.el("#calendar-surprises"));
     document.querySelector(".birthday-settings-section") && this.host.querySelector("#calendar-birthday-settings")!.append(document.querySelector(".birthday-settings-section")!);
     const diaryForm = document.querySelector("#diary-form")!;
     const date = document.createElement("label"); date.innerHTML = `记录日期<input type="date" id="diary-date" min="1900-01-01" max="2199-12-31" required>`; diaryForm.prepend(date);
@@ -71,6 +74,7 @@ export class CalendarUI {
     const revision = ++this.revision;
     const [data, settings, diaries] = await Promise.all([storage.calendar(), storage.birthdaySettings(), storage.diaries()]);
     if (revision !== this.revision) return;
+    this.surprises.render(this.selected,settings,this.currentRole());
     this.el<HTMLInputElement>("#calendar-month").value = this.month;
     this.el<HTMLInputElement>("#calendar-share").checked = data.shareWithChat;
     this.el<HTMLInputElement>("#birthday-enabled").checked = settings.enabled;

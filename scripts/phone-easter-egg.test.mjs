@@ -3,7 +3,7 @@ import { chromium } from "playwright";
 
 const origin = process.env.PHONE_EASTER_EGG_TEST_URL || "http://127.0.0.1:4184";
 const browser = await chromium.launch({ channel: "chrome", headless: true, args: ["--disable-gpu"], ...(process.env.TEST_PROXY ? { proxy: { server: process.env.TEST_PROXY } } : {}) });
-const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
+const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block", timezoneId: "Asia/Shanghai" });
 await context.addInitScript(() => {
   for (const key of ["auto-moments", "auto-diary", "proactive-enabled"]) localStorage.setItem(`xiaozhang-${key}`, "false");
   localStorage.removeItem("xiaozhang-phone-away-at");
@@ -15,6 +15,8 @@ const errors = [], requests = [];
 page.on("pageerror", error => errors.push(error.message));
 page.on("request", request => { if (request.method() === "POST") requests.push(request.url()); });
 try {
+  // Keep this regression on an ordinary day; seasonal cards have their own suite.
+  await page.clock.install({ time: new Date("2026-11-06T10:00:00+08:00") });
   await page.goto(origin); await page.waitForFunction(() => document.documentElement.dataset.appReady === "true");
   const trigger = page.locator("#phone-trace-trigger"), card = page.locator("#phone-trace-card");
   assert.equal(await trigger.isVisible(), false);

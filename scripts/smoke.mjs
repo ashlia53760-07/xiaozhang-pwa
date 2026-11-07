@@ -99,7 +99,7 @@ assert.match(main, /async function saveDateMemory\(\)/, "约会应支持用户�
 assert.match(main, /dateSessions\?/, "约会进度应进入备份结构");
 assert.match(main, /musicVolume\.addEventListener/, "播放器应支持持久化音量");
 assert.match(main, /data-music-up/, "播放列表应支持调整顺序");
-assert.match(await readFile(new URL("../public/sw.js", import.meta.url), "utf8"), /shell-v46/, "Service Worker 应刷新到本轮缓存版本");
+assert.match(await readFile(new URL("../public/sw.js", import.meta.url), "utf8"), /shell-v47/, "Service Worker 应刷新到本轮缓存版本");
 assert.match(await readFile(new URL("../public/character/offline_system_prompt.txt", import.meta.url), "utf8"), /连续生活中的线下见面/, "线下 system prompt 文件应存在");
 assert.match(style, /#meet-dialog, #date-dialog, #call-dialog/, "线下、约会和通话应使用全屏界面");
 assert.match(html, /apple-mobile-web-app-capable/, "PWA 应保留 iOS 主屏幕能力");

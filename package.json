@@ -19,6 +19,8 @@
     "test:calendar": "node scripts/calendar.test.mjs",
     "test:calendar:ui": "node scripts/calendar-ui.test.mjs",
     "test:calendar:offline": "node scripts/calendar-offline.test.mjs",
+    "test:calendar:surprises": "node scripts/calendar-surprises.test.mjs",
+    "test:calendar:surprises:ui": "node scripts/calendar-surprises-ui.test.mjs",
     "test:user-persona": "node scripts/user-persona.test.mjs",
     "test:chat-limits": "node scripts/chat-limits.test.mjs",
     "test:group-tools": "node scripts/group-tools.test.mjs",

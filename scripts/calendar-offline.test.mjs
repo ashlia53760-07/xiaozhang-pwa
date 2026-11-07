@@ -5,11 +5,12 @@ import { fileURLToPath } from "node:url";
 const origin = process.env.CALENDAR_PREVIEW_URL || "http://127.0.0.1:4177";
 const folder = new URL("../.local-review/calendar-tests/", import.meta.url); await mkdir(folder, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome", headless: true });
-const context = await browser.newContext({ viewport: { width: 390, height: 844 }, timezoneId: "Asia/Shanghai", serviceWorkers: "allow" });
+const context = await browser.newContext({ viewport: { width: 390, height: 844 }, timezoneId: "Asia/Shanghai", serviceWorkers: "allow", hasTouch: true });
 await context.addInitScript(() => { for (const key of ["auto-moments", "auto-diary", "proactive-enabled"]) localStorage.setItem(`xiaozhang-${key}`, "false"); });
 const page = await context.newPage(), errors = []; page.on("pageerror", e => errors.push(e.message));
 const ready = () => page.waitForFunction(() => document.documentElement.dataset.appReady === "true");
 try {
+  await page.clock.install({ time: new Date("2026-11-07T10:00:00+08:00") });
   await page.goto(origin); await ready(); await page.evaluate(() => navigator.serviceWorker.ready); await page.reload(); await ready();
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
   await page.locator("#diary-open").evaluate(b => b.click()); await page.waitForSelector("#calendar-grid button");
@@ -34,7 +35,25 @@ try {
   }
   await page.locator("#calendar-record-form").scrollIntoViewIfNeeded();
   await page.screenshot({ path: fileURLToPath(new URL("calendar-record-panel.png", folder)) });
+  await page.fill("#calendar-month", "2026-12"); await page.locator("#calendar-month").dispatchEvent("change");
+  await page.waitForSelector('[data-calendar-day="2026-12-22"]'); await page.click('[data-calendar-day="2026-12-22"]');
+  await page.waitForSelector('[data-egg-id="term-23"]');
+  assert.equal(await page.locator("#calendar-egg-character option").count(), 27);
+  await page.selectOption("#calendar-egg-character", "liu-sang");
+  assert.match(await page.locator(".calendar-surprise-scene").innerText(), /没有热闹/);
+  await page.locator('#diary-dialog form[method="dialog"] button').click();
+  const before = await page.locator("#messages .message-row").count();
+  const pet = await page.locator("#pet").boundingBox(); assert(pet);
+  const touch = await context.newCDPSession(page);
+  await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: pet.x + pet.width / 2, y: pet.y + pet.height / 2 }] });
+  await page.waitForTimeout(1050);
+  await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await page.waitForSelector('#phone-trace-card[data-surprise-id="term-20"]:not([hidden])');
+  await page.click("#phone-trace-flip"); assert.match(await page.locator("#phone-trace-body").innerText(), /热汤/);
+  await page.click("#phone-trace-next"); await page.waitForSelector('#phone-trace-card[data-surprise-id="daily"]');
+  assert.equal(await page.locator("#messages .message-row").count(), before, "touch release must not also pet the character");
+  await page.screenshot({ path: fileURLToPath(new URL("calendar-offline-touch-surprise.png", folder)) });
   assert.deepEqual(errors, []);
-  await writeFile(new URL("offline-result.json", folder), JSON.stringify({ passed: true, checks: ["built production app boots offline with active service worker", "calendar records survive offline reload", "bundled lunar holidays and official rest/work days work offline", "selected date remains distinct in all five themes", "all seven Rococo decorations and font are precached before first theme selection"], assets, errors }, null, 2));
-  console.log("PASS production calendar offline reload, persisted records, offline holidays and all five themes");
+  await writeFile(new URL("offline-result.json", folder), JSON.stringify({ passed: true, checks: ["built production app boots offline with active service worker", "calendar records survive offline reload", "bundled lunar holidays and official rest/work days work offline", "selected date remains distinct in all five themes", "all seven Rococo decorations and font are precached before first theme selection", "27-role winter solstice archive works offline", "real touch hold reveals Lidong offline, flips and cycles to daily trace without petting"], assets, errors }, null, 2));
+  console.log("PASS production calendar offline reload, persisted records, offline holidays, all five themes and touch-hold seasonal cards");
 } finally { await browser.close(); }

@@ -1,4 +1,5 @@
 import { characters, PRIMARY_CHARACTER } from "./characters";
+import type { CalendarSurprise } from "./calendar-surprises";
 
 type TraceCopy = { object: string; clue: string; front: string; reveal: string; mark: string; style: "paper" | "bookmark" | "doodle" };
 type TraceCharacter = { id: string; name: string };
@@ -55,6 +56,12 @@ export class PhoneEasterEgg {
   private hideTimer = 0;
   private longPressTimer = 0;
   private lastVisitKey = "xiaozhang-phone-trace-auto-at";
+  private traceRevision = 0;
+  private cycleKey = "";
+  private cycleIndex = 0;
+  private next?: HTMLButtonElement;
+  private custom?: HTMLDetailsElement;
+  private longPressFired = false;
 
   constructor(private options: {
     trigger: HTMLButtonElement;
@@ -73,14 +80,21 @@ export class PhoneEasterEgg {
     flip: HTMLButtonElement;
     close: HTMLButtonElement;
     character: () => TraceCharacter | undefined;
+    surprises?: (characterId:string) => Promise<CalendarSurprise[]>;
   }) {}
 
   init() {
     if (this.initialized) return;
     this.initialized = true;
+    this.next = document.createElement("button"); this.next.type="button"; this.next.id="phone-trace-next"; this.next.textContent="再翻一张"; this.next.hidden=true;
+    this.options.close.before(this.next);
+    this.next.addEventListener("click",()=>{void this.leaveTrace(true);});
+    this.custom=document.createElement("details"); this.custom.className="phone-trace-custom"; this.custom.hidden=true;
+    this.options.traceByline.before(this.custom);
     this.options.trigger.addEventListener("click", () => this.open());
     this.options.close.addEventListener("click", () => this.close());
     this.options.flip.addEventListener("click", () => {
+      window.clearTimeout(this.hideTimer);
       const revealBack = this.options.back.hidden;
       this.options.front.hidden = revealBack;
       this.options.back.hidden = !revealBack;
@@ -90,12 +104,17 @@ export class PhoneEasterEgg {
     let pressStart: { x: number; y: number; pointerId: number } | undefined;
     const startLongPress = (event: PointerEvent) => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
+      this.longPressFired=false;
       pressStart = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
       window.clearTimeout(this.longPressTimer);
-      this.longPressTimer = window.setTimeout(() => this.leaveTrace(true), 900);
+      this.longPressTimer = window.setTimeout(() => { this.longPressFired=true; void this.leaveTrace(true); }, 900);
     };
     const cancelLongPress = () => { window.clearTimeout(this.longPressTimer); pressStart = undefined; };
     this.options.pet.addEventListener("pointerdown", startLongPress);
+    // A completed hold must not also trigger the normal touch interaction/menu on release.
+    this.options.pet.addEventListener("click",event=>{
+      if(this.longPressFired){this.longPressFired=false;event.preventDefault();event.stopImmediatePropagation();}
+    },true);
     this.options.pet.addEventListener("pointermove", event => {
       if (pressStart && event.pointerId === pressStart.pointerId && Math.abs(event.clientX - pressStart.x) + Math.abs(event.clientY - pressStart.y) > 6) cancelLongPress();
     });
@@ -115,16 +134,35 @@ export class PhoneEasterEgg {
   private checkReturn() {
     const awayAt = Number(localStorage.getItem(AWAY_KEY) ?? 0);
     localStorage.removeItem(AWAY_KEY);
-    if (awayAt && Date.now() - awayAt >= MIN_AWAY_MS && Date.now() - Number(localStorage.getItem(this.lastVisitKey) ?? 0) >= AUTO_COOLDOWN_MS) this.leaveTrace();
+    if (awayAt && Date.now() - awayAt >= MIN_AWAY_MS && Date.now() - Number(localStorage.getItem(this.lastVisitKey) ?? 0) >= AUTO_COOLDOWN_MS) void this.leaveTrace();
   }
 
-  private leaveTrace(manual = false) {
+  private async leaveTrace(manual = false) {
+    const revision=++this.traceRevision;
     const character = currentCharacter(this.options.character());
+    // Local lookup only. A failed birthday-settings read must not break the original traces.
+    const seasonal=await this.options.surprises?.(character.id).catch(()=>[])??[];
+    if(revision!==this.traceRevision||currentCharacter(this.options.character()).id!==character.id)return;
+    const today=new Date(),day=`${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
+    const cycleKey=`${day}:${character.id}:${seasonal.map(c=>c.id).join(",")}`;
+    if(this.cycleKey!==cycleKey){this.cycleKey=cycleKey;this.cycleIndex=0;}
+    const index=manual?this.cycleIndex++%(seasonal.length+1):0;
+    const special=seasonal[index];
     const options = traces[character.id] ?? traces[PRIMARY_CHARACTER];
     const variantKey = `xiaozhang-phone-trace-variant:${character.id}`;
     const variant = Math.max(0, Number(localStorage.getItem(variantKey) ?? 0)) % options.length;
-    const copy = options[variant];
-    localStorage.setItem(variantKey, String(variant + 1));
+    const copy:TraceCopy = special?{
+      object:special.object,clue:`${special.kind} · ${special.title}`,front:special.front,reveal:special.scene,mark:special.mark,style:"paper"
+    }:options[variant];
+    if(!special)localStorage.setItem(variantKey, String(variant + 1));
+    this.options.card.dataset.surpriseId=special?.id??"daily";
+    this.options.traceTitle.textContent=special?special.title:"上面写着";
+    const backHeading=this.options.back.querySelector("strong"); if(backHeading)backHeading.textContent=special?"翻到这一页的小片段":"背面还留了一句话";
+    if(this.next){this.next.hidden=seasonal.length===0;this.next.setAttribute("aria-label",`再翻一张，节日与原有彩蛋共${seasonal.length+1}页`);}
+    if(this.custom){
+      this.custom.hidden=!special;this.custom.open=false;this.custom.replaceChildren();
+      if(special){const summary=document.createElement("summary");summary.textContent="风俗小注";const text=document.createElement("p");text.textContent=[special.custom,special.eraNote].filter(Boolean).join(" ");this.custom.append(summary,text);}
+    }
     this.options.card.dataset.style = copy.style;
     this.options.mark.textContent = copy.mark;
     this.options.object.textContent = copy.object;
@@ -139,22 +177,24 @@ export class PhoneEasterEgg {
     this.options.trigger.hidden = false;
     this.options.trigger.dataset.characterId = character.id;
     this.options.trigger.setAttribute("aria-label", `查看${character.name}留下的东西`);
-    this.options.trigger.querySelector("span:last-child")!.textContent = "页边有东西";
+    this.options.trigger.querySelector("span:last-child")!.textContent = special?"今日有留笺":"页边有东西";
     this.options.card.dataset.characterId = character.id;
     this.options.card.classList.remove("phone-trace-card-new");
     void this.options.card.offsetWidth;
     this.options.card.classList.add("phone-trace-card-new");
-    this.open();
+    this.open(!manual);
     if (!manual) localStorage.setItem(this.lastVisitKey, String(Date.now()));
   }
 
-  private open() {
+  private open(autoClose = false) {
     this.options.card.hidden = false;
     window.clearTimeout(this.hideTimer);
-    this.hideTimer = window.setTimeout(() => this.close(), 8_000);
+    if(autoClose)this.hideTimer = window.setTimeout(() => this.close(), 8_000);
   }
 
   private close() {
+    ++this.traceRevision;
+    window.clearTimeout(this.hideTimer);
     this.options.card.hidden = true;
     this.options.card.classList.remove("phone-trace-card-new");
   }

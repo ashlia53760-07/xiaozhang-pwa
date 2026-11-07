@@ -4,6 +4,11 @@
 .phone-trace-trigger { display:inline-flex; align-items:center; gap:6px; flex:0 0 auto; min-height:30px; border:1px solid color-mix(in srgb,var(--accent) 28%,var(--ui-line)); border-radius:8px 8px 8px 2px; padding:5px 9px; background:color-mix(in srgb,var(--paper) 92%,transparent); color:var(--text); font-size:10px; cursor:pointer; box-shadow:1px 2px 0 color-mix(in srgb,var(--accent) 12%,transparent); transform:rotate(-2deg); }
 .phone-trace-trigger:hover, .phone-trace-trigger:focus-visible { border-color:var(--accent); background:color-mix(in srgb,var(--accent) 10%,var(--paper)); outline:none; }
 .phone-trace-trigger[hidden], .phone-trace-card[hidden] { display:none; }
+.phone-trace-card-head button[hidden], .phone-trace-custom[hidden] { display:none; }
+.phone-trace-custom { margin-top:10px; border-top:1px dashed var(--ui-line); padding-top:8px; }
+.phone-trace-custom summary { cursor:pointer; font-size:11px; }
+.phone-trace-custom p { min-height:0; font-size:11px; line-height:1.8; }
+.phone-trace-card { max-height: min(62dvh, 560px); overflow-y:auto; }
 .phone-trace-dot { width:7px; height:7px; flex:0 0 7px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent); }
 .phone-trace-card { position:relative; z-index:10; width:min(calc(100% - 28px), 390px); margin:9px auto 1px; padding:12px 14px 10px; border:1px solid color-mix(in srgb,var(--accent) 24%,var(--ui-line)); border-radius:4px 8px 5px 3px; background:color-mix(in srgb,var(--paper) 96%,transparent); color:var(--text); box-shadow:2px 4px 0 color-mix(in srgb,var(--accent) 10%,transparent),0 7px 18px #15212b18; transform:rotate(-.5deg); }
 .phone-trace-card::before { content:""; position:absolute; top:-5px; left:18px; width:48px; height:12px; background:color-mix(in srgb,var(--accent) 15%,var(--paper)); border-inline:1px solid color-mix(in srgb,var(--accent) 18%,transparent); transform:rotate(-3deg); }

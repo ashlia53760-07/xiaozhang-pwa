@@ -18,6 +18,7 @@ import "./phone-easter-egg.css";
 import { PhoneEasterEgg } from "./phone-easter-egg";
 import { themes, selectedTheme } from "./themes";
 import { CalendarUI } from "./calendar-ui";
+import { birthdayGreeting, surprisesOnDay } from "./calendar-surprises";
 import { calendarContext, contactBirthday, diaryDay, mergeCalendar, moodLabel, validBirthday, validCalendar, validDay, type CalendarData } from "./calendar";
 import { TransactionUI } from "./transaction-ui";
 import { applyToolAction, parseToolReply, splitShares, toolContext, toolMessage, toolNotice, type ToolAction } from "./group-tools";
@@ -343,7 +344,8 @@ const phoneEasterEgg = new PhoneEasterEgg({
   frontCopy: document.querySelector<HTMLElement>("#phone-trace-front-copy")!,
   flip: document.querySelector<HTMLButtonElement>("#phone-trace-flip")!,
   close: document.querySelector<HTMLButtonElement>("#phone-trace-close")!,
-  character: () => { const value = currentCharacter(); return value ? { id: value.id, name: value.name } : undefined; }
+  character: () => { const value = currentCharacter(); return value ? { id: value.id, name: value.name } : undefined; },
+  surprises: async id => surprisesOnDay(localCalendarDay(Date.now()),id,await storage.birthdaySettings())
 });
 const roleInteractionButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-role-interaction]"));
 const interactionRecords = document.querySelector<HTMLDivElement>("#interaction-records")!;
@@ -3541,7 +3543,7 @@ document.querySelector<HTMLButtonElement>("#gift-save")!.addEventListener("click
 });
 lifeQuery.addEventListener("input", () => { void renderLife(); });
 
-const calendarUI = new CalendarUI(renderDiary, showError, checkBirthdays, () => !!editingDiaryId);
+const calendarUI = new CalendarUI(renderDiary, showError, checkBirthdays, () => !!editingDiaryId, () => currentCharacter().id);
 
 async function privateCalendarContext(): Promise<string> {
   return calendarContext(await storage.calendar(), await storage.diaries());
@@ -4570,9 +4572,7 @@ async function checkBirthdays(now = Date.now()): Promise<void> {
     const character = characterById(row.characterId);
     const session = privateSession(character.id);
     const isUserBirthday = row.subject === "user";
-    const content = isUserBirthday
-      ? `生日快乐。今天是你的生日。愿你这一年走得稳，想做的事都有时间完成。`
-      : `今天是我的生日。你记得，就很好。要是你愿意，晚一点告诉我想怎么过。`;
+    const content = birthdayGreeting(character.id,row.subject);
     const event: LifeEventRecord = {
       id: `birthday:${day}:${row.subject}:${character.id}`, characterId: character.id, sessionId: session,
       kind: "birthday", title: isUserBirthday ? `${character.name}的生日祝福` : `${character.name}的生日`,

@@ -26,6 +26,8 @@ const status = text => page.waitForFunction(t => document.querySelector("#calend
 const chooseMonth = async value => { await page.fill("#calendar-month", value); await page.locator("#calendar-month").dispatchEvent("change"); await page.waitForFunction(v => document.querySelector("#calendar-day-title").textContent.startsWith(`${v}-01`), value); };
 const send = async text => { await page.fill("#draft", text); await page.click("#send"); await page.waitForFunction(() => !document.querySelector("#send").disabled); };
 try {
+  // The deletion fixture uses November 7; keep today's shared note on November 3.
+  await page.clock.install({ time: new Date("2026-11-03T10:00:00+08:00") });
   await page.goto(origin); await ready();
   await page.evaluate(async () => {
     const { storage } = await import("/src/storage.ts");
@@ -67,7 +69,7 @@ try {
   await chooseMonth("2026-02");
   assert.match(await page.locator('[data-calendar-day="2026-02-14"]').getAttribute("aria-label"), /调休上班/);
   assert.match(await page.locator('[data-calendar-day="2026-02-17"]').getAttribute("aria-label"), /春节/);
-  await page.click("#calendar-birthdays summary"); assert.equal(await page.locator(".calendar-birthday-row").count(), 16);
+  await page.click("#calendar-birthdays summary"); assert.equal(await page.locator(".calendar-birthday-row").count(), 27);
   assert.match(await page.locator('.calendar-birthday-row:has([data-calendar-birthday="zhang-qiling"])').textContent(), /生日季/);
   await page.fill('[data-calendar-birthday="wu-xie"]', "2000-02-20"); await page.click('[data-calendar-birthday-save="wu-xie"]'); await status("生日簿已更新");
   assert.match(await page.locator('[data-calendar-day="2026-02-20"]').getAttribute("aria-label"), /吴邪生日/);
@@ -78,7 +80,7 @@ try {
   assert(birthdayCount >= 16);
   await close(); await page.reload(); await ready(); await open();
   assert.equal(await page.evaluate(async () => (await (await import("/src/storage.ts")).storage.messages()).filter(m => m.metadata?.event === "birthday").length), birthdayCount);
-  check("official rest/work days, 16-person birthday book, custom override, reset and idempotent birthday interactions");
+  check("official rest/work days, 27-person birthday book, custom override, reset and idempotent birthday interactions");
   const ics = "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:calendar-test\r\nDTSTART;VALUE=DATE:20261103\r\nSUMMARY:一起出门\r\nRRULE:FREQ=YEARLY\r\nEND:VEVENT\r\nEND:VCALENDAR";
   for (let i = 0; i < 2; i++) { await page.setInputFiles("#calendar-import", { name: "days.ics", mimeType: "text/calendar", buffer: Buffer.from(ics) }); await status(`新增 ${i ? 0 : 1} 条`); }
   assert.equal((await read()).events.length, 1);
@@ -128,7 +130,7 @@ try {
     localStorage.setItem("xiaozhang-auto-diary", "true");
     await storage.saveActiveSession("private");
   });
-  await page.clock.install({ time: new Date("2026-11-03T21:10:00+08:00") });
+  await page.clock.setSystemTime(new Date("2026-11-03T21:10:00+08:00"));
   await page.reload(); await ready(); await open();
   await page.waitForFunction(() => document.querySelector("#diary-generation-status").textContent.includes("已经写好"));
   await page.waitForSelector('[data-diary-entry="auto-diary:2026-11-03"]');

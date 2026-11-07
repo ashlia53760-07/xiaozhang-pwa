@@ -3,8 +3,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import ts from "typescript";
 const folder = new URL("../.local-review/calendar-tests/modules/", import.meta.url);
 await mkdir(folder, { recursive: true });
-for (const name of ["calendar", "calendar-data"]) {
-  const code = ts.transpileModule(await readFile(new URL(`../src/${name}.ts`, import.meta.url), "utf8"), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText.replaceAll('"./calendar-data"', '"./calendar-data.mjs"');
+for (const name of ["calendar", "calendar-data", "calendar-observances", "solar-term-data"]) {
+  const code = ts.transpileModule(await readFile(new URL(`../src/${name}.ts`, import.meta.url), "utf8"), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText.replace(/from "\.\/([^".]+)"/g, 'from "./$1.mjs"');
   await writeFile(new URL(`${name}.mjs`, folder), code);
 }
 const c = await import(new URL("calendar.mjs", folder)), { birthdaySources } = await import(new URL("calendar-data.mjs", folder));

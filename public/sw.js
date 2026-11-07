@@ -1,4 +1,4 @@
-const CACHE = "xiaozhang-pwa-shell-v46";
+const CACHE = "xiaozhang-pwa-shell-v47";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./character/system_prompt.txt", "./character/offline_system_prompt.txt", "./character/images/standing.png", "./character/images/stretch.png", "./character/images/hold_chick.png", "./character/images/sword_chick.png", "./character/images/draw_sword.png", "./landscapes/mountain.svg", "./landscapes/seaside.svg"];
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {

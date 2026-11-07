@@ -1,5 +1,6 @@
 import type { BirthdayDate, BirthdaySettings, DiaryRecord } from "./types";
 import { birthdaySources, builtInHolidays } from "./calendar-data";
+import { observancesOnDay } from "./calendar-observances";
 
 export const moods = ["开心", "平静", "期待", "疲惫", "难过", "焦虑", "烦躁"] as const;
 export const moodEmoji: Record<string, string> = { 开心: "🥰", 平静: "😌", 期待: "🤩", 疲惫: "😴", 难过: "🥺", 焦虑: "🥲", 烦躁: "😣" };
@@ -41,9 +42,9 @@ export function lunarInfo(key: string): { label: string; festival?: string } {
 }
 export function dayLabels(key: string, data: CalendarData): { labels: string[]; holiday?: HolidayYear["days"][number] } {
   const year = key.slice(0, 4), row = (data.holidays[year] ?? builtInHolidays[year])?.days.find(d => d.date === key);
-  const fixed: Record<string, string> = { "01-01": "元旦", "03-08": "妇女节", "05-01": "劳动节", "06-01": "儿童节", "10-01": "国庆节" };
-  // 清明日通过随包官方安排标注；其他年份未核实前不臆测放假和调休。
-  return { labels: [...new Set([fixed[key.slice(5)], lunarInfo(key).festival, row?.name].filter((v): v is string => !!v))], holiday: row };
+  const fixed: Record<string, string> = { "01-01": "元旦", "03-08": "国际妇女节", "05-01": "劳动节", "06-01": "儿童节", "10-01": "国庆节" };
+  // Observances never create rest/work entries. Those still require an official holiday notice.
+  return { labels: [...new Set([...observancesOnDay(key).map(e=>e.name), fixed[key.slice(5)], lunarInfo(key).festival, row?.name].filter((v): v is string => !!v))], holiday: row };
 }
 export function eventOnDay(event: CalendarEvent, key: string): boolean {
   if (!event.yearly) return key >= event.date && key < event.endDate;
