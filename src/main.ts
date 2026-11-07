@@ -49,6 +49,7 @@ import { adventureWorldPrompt, emptyFieldwork, evidencePrompt, fieldworkPrompt, 
 import type { TravelState, PlayState } from "./leisure-types";
 import type { ApiProfile, AudioAnalysisProfile, BirthdaySettings, CharacterSettings, ChatMessage, CustomGift, DiaryRecord, FieldworkAdventure, FieldworkData, FieldworkEvidence, GroupRecord, ImageProfile, InteractionRecord, LifeEventRecord, MomentRecord, MusicTrack, StickerRecord, TtsProfile } from "./types";
 import type { SharedCharacterSettings } from "./types";
+import "./classic-themes.css";
 
 const root = document.querySelector<HTMLDivElement>("#app")!;
 let messages: ChatMessage[] = [];
