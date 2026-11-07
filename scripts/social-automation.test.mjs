@@ -72,6 +72,7 @@ await page.waitForFunction(() => document.documentElement.dataset.appReady === "
 await db("kv", "put", { key: "api-profile", value: { baseUrl: "https://social-test.invalid/v1", model: "synthetic", apiKey: "test-key", temperature: 0.4, protocol: "openai" } });
 await db("kv", "put", { key: "image-profile", value: { baseUrl: "https://social-image.invalid/v1", model: "synthetic-image", apiKey: "test-image-key" } });
 await db("messages", "put", { id: "social-source", role: "user", content: "今天聊过雨后的山路和旧档案。", kind: "text", createdAt: Date.now() - 1000, sessionId: "private" });
+await db("moments", "put", { id: "public-social-source", author: "npc", authorName: "吴邪", content: "雨后的山路很安静。", liked: false, comments: [], createdAt: Date.now() - 1000 });
 await page.evaluate(() => { localStorage.setItem("xiaozhang-auto-moments", "true"); localStorage.setItem("xiaozhang-auto-moment-images", "true"); localStorage.setItem("xiaozhang-auto-diary", "true"); });
 const fixedNow = await page.evaluate(() => Date.now());
 await db("kv", "put", { key: "social-automation-state", value: { momentNextAt: fixedNow } });

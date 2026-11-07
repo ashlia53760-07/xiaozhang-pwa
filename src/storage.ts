@@ -527,6 +527,18 @@ export const storage = {
   async leisure<T extends TravelState | PlayState>(key: "travel-state" | "play-state"): Promise<T | undefined> { return readKv<T>(key); },
   async fieldwork<T extends FieldworkData>(): Promise<T | undefined> { return readKv<T>("fieldwork-data"); },
   saveFieldwork<T extends FieldworkData>(value: T): Promise<void> { return writeKv("fieldwork-data", value); },
+  /** Match presence and its chat notices from the same committed transaction. */
+  async travelSnapshot(): Promise<{ travel: TravelState | undefined; messages: ChatMessage[] }> {
+    const database = await db();
+    const tx = database.transaction(["kv", "messages"], "readonly");
+    const [row, rows] = await Promise.all([
+      request(tx.objectStore("kv").get("travel-state")),
+      request(tx.objectStore("messages").getAll())
+    ]);
+    return { travel: row?.value as TravelState | undefined, messages: (rows as ChatMessage[])
+      .filter(message => (message.sessionId ?? "private") === "private" && !message.metadata?.hiddenAt && !message.metadata?.retractedAt)
+      .sort((a, b) => a.createdAt - b.createdAt) };
+  },
   /** Serialize read/modify/write across tabs; write resulting events in the same transaction. */
   async changeLeisure<T extends TravelState | PlayState>(key: "travel-state" | "play-state", initial: () => T, change: (state: T) => LeisureEffects | void): Promise<T> {
     const database = await db();
