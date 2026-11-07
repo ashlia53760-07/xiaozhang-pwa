@@ -77,3 +77,5 @@ npx wrangler pages deploy dist --project-name xiaozhang-pwa --branch main
 ```
 
 打开旧页面后刷新即可接收新的 Service Worker；不应清理站点数据，以免误删本地聊天。发布后的生产入口、构建资源、缓存版本和长按操作另存于本轮 `deployment-result.json`。
+
+2026-11-07 已发布并在正式站点 `https://xiaozhang-pwa.pages.dev` 通过独立浏览器验收。本次部署 `https://5dfa8b7e.xiaozhang-pwa.pages.dev`；生产入口为 `index-DdywcQY-.js`、`index-KW5QVyBl.css`，与本地构建一致，缓存 v47。正式站点真实触摸长按、当日立冬留笺、原日常轮换、27 角色/55 日期预览、角色文案区别及断网重载后长按均通过，无页面异常和 API POST。
