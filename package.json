@@ -11,6 +11,7 @@
   "scripts": {
     "test:model-cost": "node scripts/model-cost-scene-context.test.mjs",
     "test:model-cost:offline": "node scripts/model-cost-offline.test.mjs",
+    "test:travel-meeting-lock": "node scripts/travel-meeting-lock.test.mjs",
     "test:script-library": "node scripts/script-library.test.mjs",
     "test:date-isolation": "node scripts/date-isolation.test.mjs",
     "test:group-scenes": "node scripts/group-scenes.test.mjs",

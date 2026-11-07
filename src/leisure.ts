@@ -133,7 +133,12 @@ export class Leisure {
     if (this.running) return; this.running = true;
     try {
       let changed = false;
-      const canPlan = !document.hidden && !this.hooks.busy();
+      // Do not even create a departure notice while a physical scene is active.
+      // The previous guard only deferred the actual departure, which made a
+      // travel notification appear in the middle of an offline/date scene.
+      const busy = this.hooks.busy();
+      const hasMeeting = !document.hidden && !busy ? await this.hooks.hasMeeting() : false;
+      const canPlan = !document.hidden && !busy && !hasMeeting;
       this.travel = await storage.changeLeisure("travel-state", this.initial, s => {
         const now = Date.now(), advanced = advanceJourney(s, now), effects: LeisureEffects = {};
         changed = advanced.events.length > 0 || !!advanced.returned;
