@@ -1,5 +1,7 @@
 import type { ApiProfile, AudioAnalysisProfile, ChatMessage, ImageProfile, TtsProfile } from "./types";
 import { boundedHistory, contextUnits } from "./context-budget";
+import { modelPreferences, type RequestPurpose } from "./model-preferences";
+import { beginUsage, finishUsage, requestBreakdown, usageCounts, type UsageCounts, type ContextParts } from "./model-usage";
 
 type ApiMessage = { role: "system" | "user" | "assistant"; content: string };
 
@@ -10,7 +12,7 @@ type RequestCost = { inputEstimate: number; outputLimit?: number; historyMessage
 type LimitDetail = { kind: LimitKind; code?: string; type?: string; requestId?: string; retryAfter?: string; tokenLimit?: number; tokenUsed?: number; tokenRequested?: number; request?: RequestCost };
 type TokenWindow = { remaining: number; resetAt: number; observedAt: number };
 type ChatWait = { until: number; reason: "tokens" | "spacing" };
-type ChatOptions = { maxOutputTokens?: number; onWait?: (wait: ChatWait) => void };
+type ChatOptions = { maxOutputTokens?: number; onWait?: (wait: ChatWait) => void; purpose?: RequestPurpose; historyBudget?: number; historyLimit?: number; contextParts?: ContextParts; collectUsage?: (usage: UsageCounts) => void };
 type ChatLane = { tail: Promise<void>; nextAt: number; retryAt: number; strikes: number; spacing: number; detail?: LimitDetail; tokenNextAt?: number; tokenPacingUntil?: number; tokenWindow?: TokenWindow; request?: RequestCost; sentAt?: number[] };
 const chatLanes = new Map<string, ChatLane>();
 function laneIdentity(profile: ApiProfile): string {
@@ -287,7 +289,7 @@ function geminiEndpoint(baseUrl: string, model: string, streaming: boolean, apiK
 }
 
 function geminiContents(history: ChatMessage[], current: string) {
-  const values = history.slice(-8).map((message) => ({
+  const values = history.map((message) => ({
     role: message.role === "assistant" ? "model" : "user",
     parts: [{ text: message.content }]
   }));
@@ -295,7 +297,7 @@ function geminiContents(history: ChatMessage[], current: string) {
   return values;
 }
 
-async function chatGemini(profile: ApiProfile, systemPrompt: string, history: ChatMessage[], current: string, onDelta: (full: string) => void, signal?: AbortSignal, maxOutputTokens?: number): Promise<string> {
+async function chatGemini(profile: ApiProfile, systemPrompt: string, history: ChatMessage[], current: string, onDelta: (full: string) => void, signal?: AbortSignal, maxOutputTokens?: number, collectUsage?: (usage: UsageCounts) => void): Promise<string> {
   if (!profile.apiKey.trim()) throw new Error("请先在设置中填写 API Key");
   const payload = { systemInstruction: { parts: [{ text: systemPrompt }] }, contents: geminiContents(history, current), generationConfig: { temperature: profile.temperature, ...(maxOutputTokens ? { maxOutputTokens } : {}) } };
   recordChatRequest(profile);
@@ -306,6 +308,7 @@ async function chatGemini(profile: ApiProfile, systemPrompt: string, history: Ch
   const type = response.headers.get("content-type")?.toLowerCase() ?? "";
   if (!type.includes("event-stream") || !response.body) {
     const root = await response.json() as Record<string, unknown>;
+    const usage = usageCounts(root, "gemini"); if (usage) collectUsage?.(usage);
     const result = geminiText(root);
     if (!result.trim()) throw new Error("Gemini 没有返回文字");
     onDelta(result);
@@ -320,13 +323,14 @@ async function chatGemini(profile: ApiProfile, systemPrompt: string, history: Ch
     if (!text || text === "[DONE]") return;
     let root: Record<string, unknown>;
     try { root = JSON.parse(text) as Record<string, unknown>; } catch { return; }
+    const usage = usageCounts(root, "gemini"); if (usage) collectUsage?.(usage);
     const delta = geminiText(root);
     if (!delta) return;
     output += delta;
     if (output.length > 20000) throw new Error("模型回复过长");
     onDelta(output);
   };
-  while (true) {
+  try { while (true) {
     const part = await reader.read();
     if (part.done) break;
     buffer += decoder.decode(part.value, { stream: true });
@@ -335,12 +339,14 @@ async function chatGemini(profile: ApiProfile, systemPrompt: string, history: Ch
     for (const line of lines) if (line.startsWith("data:")) consume(line);
   }
   if (buffer.startsWith("data:")) consume(buffer);
+  } catch (error) { await reader.cancel().catch(() => undefined); throw error; }
+  finally { reader.releaseLock(); }
   if (!output.trim()) throw new Error("Gemini 没有返回文字");
   return output.trim();
 }
 
 function historyMessages(history: ChatMessage[]): ApiMessage[] {
-  return history.slice(-8).map((message) => ({
+  return history.map((message) => ({
     role: message.role,
     content: message.content
   }));
@@ -357,7 +363,11 @@ export async function chat(
 ): Promise<string> {
   // Local estimate for admission only, never a billing/tokenizer claim. Include
   // system/persona, current input and requested output, not just chat history.
-  const selected = boundedHistory(history);
+  const preferences = modelPreferences(), purpose = options.purpose ?? "other";
+  const cap = purpose === "private" ? preferences.privateOutput : purpose === "scene" ? preferences.sceneOutput : undefined;
+  options = { ...options, historyBudget: options.historyBudget ?? (purpose === "scene" ? preferences.sceneHistory : preferences.privateHistory), historyLimit: options.historyLimit ?? 8,
+    maxOutputTokens: cap ? Math.min(options.maxOutputTokens ?? cap, cap) : options.maxOutputTokens };
+  const selected = boundedHistory(history, options.historyBudget, options.historyLimit);
   const cost: RequestCost = { inputEstimate: Math.ceil(contextUnits([systemPrompt, ...selected.map(m => m.content), current].join("\n")) * 1.5) + 128, outputLimit: options.maxOutputTokens, historyMessages: selected.length };
   const estimate = cost.inputEstimate + (options.maxOutputTokens ?? 0);
   return pacedChat(profile, () => requestChat(profile, systemPrompt, history, current, onDelta, signal, options), signal, estimate, options.onWait, cost);
@@ -367,13 +377,29 @@ async function requestChat(
   profile: ApiProfile, systemPrompt: string, history: ChatMessage[], current: string,
   onDelta: (full: string) => void, signal?: AbortSignal, options: ChatOptions = {}
 ): Promise<string> {
-  history = boundedHistory(history);
-  if (profile.protocol === "gemini") return chatGemini(profile, systemPrompt, history, current, onDelta, signal, options.maxOutputTokens);
+  history = boundedHistory(history, options.historyBudget, options.historyLimit);
+  if (!profile.apiKey.trim()) throw new Error("请先在设置中填写 API Key");
+  const breakdown = requestBreakdown(systemPrompt, history.map(m => m.content), current,options.contextParts);
+  const model = profile.model.replaceAll(profile.apiKey.trim(), "[redacted]").slice(0, 100);
+  const id = beginUsage({ purpose: options.purpose ?? "other", model, breakdown, estimate: Math.ceil(contextUnits([systemPrompt, ...history.map(m => m.content), current].join("\n")) * 1.5) + 128, outputLimit: options.maxOutputTokens, historyCount: history.length });
+  let actual: UsageCounts | undefined;
+  try {
+    const result = await requestChatRaw(profile, systemPrompt, history, current, onDelta, signal, { ...options, collectUsage: usage => { actual = { ...actual, ...Object.fromEntries(Object.entries(usage).filter(([,v]) => v !== undefined)) }; } });
+    finishUsage(id, "success", actual); return result;
+  } catch (error) { finishUsage(id, signal?.aborted ? "cancelled" : "failed", actual); throw error; }
+}
+
+async function requestChatRaw(
+  profile: ApiProfile, systemPrompt: string, history: ChatMessage[], current: string,
+  onDelta: (full: string) => void, signal: AbortSignal | undefined, options: ChatOptions
+): Promise<string> {
+  if (profile.protocol === "gemini") return chatGemini(profile, systemPrompt, history, current, onDelta, signal, options.maxOutputTokens, options.collectUsage);
   if (!profile.apiKey.trim()) throw new Error("请先在设置中填写 API Key");
   const payload = {
     model: profile.model.trim(),
     temperature: profile.temperature,
     stream: true,
+    ...(modelPreferences().requestUsage ? { stream_options: { include_usage: true } } : {}),
     ...(options.maxOutputTokens ? { max_tokens: options.maxOutputTokens } : {}),
     messages: [{ role: "system", content: systemPrompt }, ...historyMessages(history), { role: "user", content: current }]
   };
@@ -390,6 +416,7 @@ async function requestChat(
   const type = response.headers.get("content-type")?.toLowerCase() ?? "";
   if (!type.includes("event-stream") || !response.body) {
     const root = await response.json() as Record<string, unknown>;
+    const usage = usageCounts(root); if (usage) options.collectUsage?.(usage);
     const choice = (root.choices as Array<Record<string, unknown>> | undefined)?.[0];
     const result = contentOf((choice?.message as Record<string, unknown> | undefined)?.content);
     if (!result.trim()) throw new Error("模型没有返回文字");
@@ -405,6 +432,7 @@ async function requestChat(
     if (!payloadText || payloadText === "[DONE]") return;
     let root: Record<string, unknown>;
     try { root = JSON.parse(payloadText) as Record<string, unknown>; } catch { return; }
+    const usage = usageCounts(root); if (usage) options.collectUsage?.(usage);
     const choice = (root.choices as Array<Record<string, unknown>> | undefined)?.[0];
     const delta = (choice?.delta ?? choice?.message) as Record<string, unknown> | undefined;
     const text = contentOf(delta?.content);
@@ -413,7 +441,7 @@ async function requestChat(
     if (output.length > 20000) throw new Error("模型回复过长");
     onDelta(output);
   };
-  while (true) {
+  try { while (true) {
     const part = await reader.read();
     if (part.done) break;
     buffer += decoder.decode(part.value, { stream: true });
@@ -422,6 +450,8 @@ async function requestChat(
     for (const line of lines) if (line.startsWith("data:")) consume(line);
   }
   if (buffer.startsWith("data:")) consume(buffer);
+  } catch (error) { await reader.cancel().catch(() => undefined); throw error; }
+  finally { reader.releaseLock(); }
   if (!output.trim()) throw new Error("模型没有返回文字");
   return output.trim();
 }

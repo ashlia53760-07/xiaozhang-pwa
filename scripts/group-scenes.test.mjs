@@ -144,7 +144,8 @@ try {
   await data("saveGroupScene", longScene, longScene.revision);
   await action("life", "continue"); current = await scene("life");
   assert.equal(current.messages.length, longScene.messages.length + 1); assert.deepEqual(current.messages.slice(0, 40), longScene.messages.slice(0, 40));
-  assert(calls.some(row => row.summary)); assert(calls.at(-1).body.messages[0].content.includes("历史压缩笔记 · 本群连续线下见面"));
+  assert(!calls.some(row => row.summary), "线下不再自动调用总结模型；由用户手动全文总结");
+  assert(!calls.at(-1).body.messages[0].content.includes("历史压缩笔记 · 本群连续线下见面"));
   for (const theme of ["ink", "warm", "night", "rococo", "bronze"]) for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 1280, height: 900 }]) await scrolling("life", viewport.width, viewport.height, theme);
   // Expanding cast details must still scroll away, including after a rerender.
   await page.locator("#life-state-card .group-scene-settings").evaluate(el => { el.open = true; });
@@ -154,7 +155,7 @@ try {
   await page.screenshot({ path: new URL("life-top.png", folder).pathname.replace(/^\/([A-Za-z]:)/, "$1") });
   await page.click("#life-end"); await idle();
   assert((await data("sessionMessages", group.id)).some(row => row.metadata?.event === "group_life_summary"));
-  pass("旧版逐人楼层原样保留并接入统一叙事和独立摘要；线下卡片在五主题、320/390/1280屏宽下随记录完全滚走");
+  pass("旧版逐人楼层原样保留并接入统一叙事，线下不自动生成摘要；卡片在五主题、320/390/1280屏宽下随记录完全滚走");
 
   await feature("#date-open");
   const script = "雨村旧书店夜谈。吴邪辨认来信，胖子守着门，解雨臣坐在灯下。按情节分配笔墨，别轮流报幕。".repeat(60);

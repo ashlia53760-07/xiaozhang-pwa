@@ -14,8 +14,9 @@ export function rememberDate(session: DateSession): void {
   }].slice(-12);
   session.updatedAt = Date.now();
 }
-export function dateMemoryContext(session?: DateSession): string {
+export function dateMemoryContext(session?: DateSession, excluded = new Set<string>()): string {
   return (session?.localMemories ?? []).filter(memory => {
+    if (memory.sourceMessageIds.some(id => excluded.has(id))) return false;
     const sources = memory.sourceMessageIds.map(id => session!.messages.find(row => row.id === id));
     return sources.every((row): row is ChatMessage => !!row) && dateSourceSignature(sources as ChatMessage[]) === memory.sourceSignature;
   }).slice(-3).map(row => row.content).join("\n").slice(0, 2400);
@@ -57,7 +58,8 @@ export function boundedHistory(history: ChatMessage[], budget = 3200, limit = 8)
 export function relevantMemories(values: MemoryRecord[], query: string): string {
   const terms = new Set((query.toLowerCase().match(/[a-z0-9]{2,}|[\u3400-\u9fff]{2,}/g) ?? [])
     .flatMap(term => /[\u3400-\u9fff]/.test(term) ? Array.from({ length: term.length - 1 }, (_, i) => term.slice(i, i + 2)) : [term]));
-  const ranked = values.filter(value => value.enabled).map(value => ({ value,
+  const seen = new Set<string>();
+  const ranked = values.filter(value => value.enabled).filter(value => { const key = `${value.category}:${value.content.trim()}`; if (seen.has(key)) return false; seen.add(key); return true; }).map(value => ({ value,
     score: [...terms].filter(term => `${value.category} ${value.content}`.toLowerCase().includes(term)).length
   })).sort((a, b) => b.score - a.score || b.value.updatedAt - a.value.updatedAt);
   return clipContext(ranked.slice(0, 3).map(({ value }) => `- ${value.category}：${clipContext(value.content, 320)}`).join("\n"), 800);

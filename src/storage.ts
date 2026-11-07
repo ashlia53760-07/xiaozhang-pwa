@@ -7,6 +7,7 @@ import { emptyCalendar, validCalendar, type CalendarData } from "./calendar";
 import type { GroupLifeScene } from "./types";
 import type { TheatreScript } from "./types";
 import { validTheatreScript } from "./script-library";
+import { emptySceneContext, validSceneContext, validSceneScope, type SceneContextState } from "./scene-context-data";
 export interface LeisureEffects { messages?: ChatMessage[]; diary?: DiaryRecord[]; lifeEvents?: LifeEventRecord[]; memories?: MemoryRecord[]; moments?: MomentRecord[] }
 export type SceneFloorScope = { kind: "life"; characterId: string } | { kind: "date"; characterId: string; id: string } | { kind: "theatre"; id: string } | { kind: "adventure"; id: string } | { kind: "group-life"; groupId: string } | { kind: "group-date"; groupId: string; id: string };
 export type SceneFloorRow = Pick<ChatMessage, "id" | "role" | "content" | "createdAt" | "speakerId" | "metadata">;
@@ -154,7 +155,8 @@ export interface RelationshipArchiveFile {
 }
 function cleanArchiveKv(rows: ArchiveRows["kv"]): ArchiveRows["kv"] {
   return rows.filter(row => typeof row.key === "string" && !sharedKey(row.key)
-    && /^(?:script-library|shopping-workspace|calendar-data|character-settings|birthday-settings|birthday-claims|affection-state|music-tracks|music-active|continuous-life(?::[^\s]+)?|group-life:[^\s]+|date-sessions|fieldwork-data|active-session|travel-state|play-state|social-automation-state|starter-moments-seeded|contact:[^\s]+|draft:[^\s]+|read:[^\s]+|conversation-revision:[^\s]+)$/.test(row.key)).map(row => {
+    && /^(?:scene-notes:[^\s]+|script-library|shopping-workspace|calendar-data|character-settings|birthday-settings|birthday-claims|affection-state|music-tracks|music-active|continuous-life(?::[^\s]+)?|group-life:[^\s]+|date-sessions|fieldwork-data|active-session|travel-state|play-state|social-automation-state|starter-moments-seeded|contact:[^\s]+|draft:[^\s]+|read:[^\s]+|conversation-revision:[^\s]+)$/.test(row.key)
+    && (!row.key.startsWith("scene-notes:") || (validSceneScope(row.key.slice(12)) && validSceneContext(row.value)))).map(row => {
       if (!String(row.key).startsWith("contact:")) return row;
       const prefs = row.value as ContactPreferences;
       return { key: row.key, value: { settings: prefs.settings, affection: prefs.affection, updatedAt: prefs.updatedAt } };
@@ -378,15 +380,47 @@ export const storage = {
   },
   contextCache<T>(key: string): Promise<T | undefined> { return readKv<T>(key); },
   saveContextCache<T>(key: string, value: T): Promise<void> { return writeKv(key, value); },
+  async sceneContext(scope: string): Promise<SceneContextState> {
+    if (!validSceneScope(scope)) throw Error("无效的场景归属，未读取其他记录。");
+    const value = await readKv<SceneContextState>(`scene-notes:${scope}`);
+    return validSceneContext(value) ? value : emptySceneContext();
+  },
+  async saveSceneContext(scope: string, value: SceneContextState, expectedRevision: number): Promise<SceneContextState> {
+    if (!validSceneScope(scope) || !validSceneContext(value)) throw Error("场景总结或楼层范围无效，原记录保留。");
+    const next = { ...value, revision: expectedRevision + 1 };
+    const tx = (await db()).transaction("kv", "readwrite"), done = transactionDone(tx), kv = tx.objectStore("kv");
+    let conflict = false;
+    const get = kv.get(`scene-notes:${scope}`);
+    get.onsuccess = () => {
+      if ((get.result?.value?.revision ?? 0) !== expectedRevision) { conflict = true; tx.abort(); return; }
+      kv.put({ key: `scene-notes:${scope}`, value: next });
+      kv.delete(`context-summary:${scope}`);
+    };
+    try { await done; } catch (error) { if (conflict) throw Error("本场设置已在其他页面修改，请重新打开；已有总结保留。"); throw error; }
+    return next;
+  },
+  async sceneContextsBackup(): Promise<Array<{ scope: string; state: SceneContextState }>> {
+    const rows = await request((await db()).transaction("kv", "readonly").objectStore("kv").getAll());
+    return rows.filter(row => typeof row.key === "string" && row.key.startsWith("scene-notes:") && validSceneScope(row.key.slice(12)) && validSceneContext(row.value)).map(row => ({ scope: row.key.slice(12), state: row.value }));
+  },
+  async importSceneContexts(rows: Array<{ scope: string; state: SceneContextState }>): Promise<void> {
+    if (!Array.isArray(rows) || rows.length > 10000 || rows.some(row => !row || !validSceneScope(row.scope) || !validSceneContext(row.state))) throw Error("场景总结备份无效，尚未导入。");
+    const tx = (await db()).transaction("kv", "readwrite"), done = transactionDone(tx), kv = tx.objectStore("kv");
+    for (const row of rows) {
+      const key = `scene-notes:${row.scope}`, get = kv.get(key);
+      get.onsuccess = () => { if (!get.result) kv.put({ key, value: row.state }); };
+    }
+    await done;
+  },
   /** IndexedDB transaction lease prevents duplicate paid summaries in different tabs. */
-  async claimContextLease(scope: string): Promise<string | undefined> {
+  async claimContextLease(scope: string, duration = 30_000): Promise<string | undefined> {
     const tx = (await db()).transaction("kv", "readwrite"), store = tx.objectStore("kv");
     const token = newId("summary-lease");
     let acquired = false;
     const get = store.get(`context-lease:${scope}`);
     get.onsuccess = () => {
       if ((get.result?.value?.until ?? 0) > Date.now()) return;
-      acquired = true; store.put({ key: `context-lease:${scope}`, value: { token, until: Date.now() + 30_000 } });
+      acquired = true; store.put({ key: `context-lease:${scope}`, value: { token, until: Date.now() + Math.min(30 * 60_000, duration) } });
     };
     await transactionDone(tx);
     return acquired ? token : undefined;

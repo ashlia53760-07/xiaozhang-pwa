@@ -4,7 +4,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import ts from 'typescript';
 const folder = new URL('../.local-review/group-fixes-20261026/api-modules/', import.meta.url);
 await mkdir(folder, { recursive: true });
-for (const name of ['api', 'context-budget', 'checkup', 'phone-messages']) {
+for (const name of ['model-preferences', 'model-usage', 'api', 'context-budget', 'checkup', 'phone-messages']) {
   const js = ts.transpileModule(await readFile(new URL(`../src/${name}.ts`, import.meta.url), 'utf8'), {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext }
   }).outputText.replace(/from "\.\/([^".]+)"/g, 'from "./$1.js"');

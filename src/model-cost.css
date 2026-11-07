@@ -1,0 +1,10 @@
+.model-cost-controls { margin:18px 0; padding:12px; border:1px solid var(--ui-line); border-radius:10px; }
+.model-cost-controls > summary { cursor:pointer; font-weight:700; }
+.model-cost-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 12px; }
+.model-cost-fields label { min-width:0; }
+.model-cost-fields input { width:100%; min-width:0; box-sizing:border-box; }
+.model-cost-presets { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+#model-usage-list { max-height:320px; overflow:auto; font-size:12px; overflow-wrap:anywhere; }
+#model-usage-list details { padding:8px 0; border-top:1px dashed var(--ui-line); }
+#model-usage-list p { white-space:pre-wrap; line-height:1.7; }
+@media(max-width:360px) { .model-cost-fields { grid-template-columns:minmax(0,1fr); } }

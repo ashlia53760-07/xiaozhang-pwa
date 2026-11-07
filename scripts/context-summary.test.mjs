@@ -8,7 +8,7 @@ const origin = process.env.CONTEXT_TEST_URL || 'http://127.0.0.1:4175';
 const artifacts = new URL('../.local-review/context-built-in-20261025/', import.meta.url);
 await mkdir(artifacts, { recursive: true });
 const modules = {};
-for (const name of ['context', 'context-budget', 'api', 'storage', 'characters', 'checkup', 'phone-messages', 'groups', 'calendar', 'calendar-data', 'calendar-observances', 'solar-term-data', 'script-library']) {
+for (const name of ['model-preferences', 'model-usage', 'scene-context-data', 'context', 'context-budget', 'api', 'storage', 'characters', 'checkup', 'phone-messages', 'groups', 'calendar', 'calendar-data', 'calendar-observances', 'solar-term-data', 'script-library']) {
   modules[name] = ts.transpileModule(await readFile(new URL(`../src/${name}.ts`, import.meta.url), 'utf8'), {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext }
   }).outputText.replace(/from "\.\/([^".]+)"/g, 'from "./$1.js"');
@@ -220,10 +220,11 @@ try {
   assert.ok(calls.length > beforeDate, 'date must make a real reply request');
   sceneCall = calls.filter(call => !call.summary).at(-1);
   assert.match(sceneCall.body.messages[0].content, /DATE_ONLY_MARKER/);
-  assert.match(sceneCall.body.messages[0].content, /历史压缩笔记/);
+  assert.doesNotMatch(sceneCall.body.messages[0].content, /历史压缩笔记/);
+  assert.equal(calls.slice(beforeDate).filter(call => call.summary).length, 0);
   assert.equal(await page.evaluate(async () => (await st.allMemories()).length), 0);
   await page.locator('#date-dialog').evaluate(el => el.close());
-  check('built date scene performs free-text API interaction with its own summary and no permanent-memory write');
+  check('built date scene performs free-text API interaction without automatic summaries or permanent-memory writes');
 
   await page.evaluate(async () => {
     for (const session of ['private', 'life']) await st.addMessage({ id: `oversized-event-${session}`, sessionId: session, role: 'user', kind: 'event', content: '旧查岗记录', createdAt: Date.now(), metadata: { event: 'checkup', topic: '膨'.repeat(18000) } });

@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { chatEventText } from "./checkup";
 import { boundedHistory, clipContext, contextUnits } from "./context-budget";
 import { collapsePhoneMessages } from "./phone-messages";
+import { modelPreferences } from "./model-preferences";
 
 export interface ContextSummary {
   version: 1;
@@ -49,11 +50,12 @@ export async function cachedSummary(scope: string, rows: ChatMessage[]): Promise
 export async function prepareContext(scope: string, rows: ChatMessage[], profile: ApiProfile, signal?: AbortSignal): Promise<{ summary: string; history: ChatMessage[] }> {
   rows = collapsePhoneMessages(rows);
   try { return await prepareStoredContext(scope, rows, profile, signal); }
-  catch { return { summary: "", history: boundedHistory(rows) }; }
+  catch { return { summary: "", history: boundedHistory(rows, modelPreferences().privateHistory) }; }
 }
 
 async function prepareStoredContext(scope: string, rows: ChatMessage[], profile: ApiProfile, signal?: AbortSignal): Promise<{ summary: string; history: ChatMessage[] }> {
-  const history = boundedHistory(rows);
+  const preferences = modelPreferences();
+  const history = boundedHistory(rows, preferences.privateHistory);
   let cached = await storage.contextCache<ContextSummary>(PREFIX + scope);
   if (!valid(cached, rows)) cached = undefined;
   const covered = cached?.covered ?? 0;
@@ -81,11 +83,11 @@ async function prepareStoredContext(scope: string, rows: ChatMessage[], profile:
       batch.push(line); budget -= contextUnits(line);
     }
     if (!batch.length) return { summary: summaryPrompt(cached?.text ?? "", scope), history };
-    const text = (await chat(profile, SUMMARY_INSTRUCTION, [], `旧摘要：\n${cached?.text || "无"}\n新增记录（按发生顺序，部分长消息为节选）：\n${batch.join("\n")}`, () => undefined, controller.signal, { maxOutputTokens: 1200 })).trim();
+    const text = (await chat(profile, SUMMARY_INSTRUCTION, [], `旧摘要：\n${cached?.text || "无"}\n新增记录（按发生顺序，部分长消息为节选）：\n${batch.join("\n")}`, () => undefined, controller.signal, { maxOutputTokens: 1200, purpose: "auto-summary" })).trim();
     if (!text || /^(?:null|undefined)+$/i.test(text)) throw Error("摘要为空");
     if (controller.signal.aborted) throw Error("摘要已取消");
     const value: ContextSummary = { version: 1, scope, text: clipContext(text, 650), covered: covered + batch.length,
-      fingerprint: fingerprint(rows.slice(0, covered + batch.length)), updatedAt: Date.now(), retryAt: Date.now() + 10 * 60_000, status: "已缓存，至少间隔10分钟且达到下一批阈值才更新" };
+      fingerprint: fingerprint(rows.slice(0, covered + batch.length)), updatedAt: Date.now(), retryAt: Date.now() + preferences.summaryMinutes * 60_000, status: `已缓存，至少间隔${preferences.summaryMinutes}分钟且达到下一批阈值才更新` };
     await storage.saveContextCache(PREFIX + scope, value);
     cached = value;
   } catch {
