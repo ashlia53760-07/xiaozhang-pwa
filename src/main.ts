@@ -134,7 +134,7 @@ root.innerHTML = `
   <dialog id="checkup-dialog"><form method="dialog" id="checkup-form"><div class="dialog-head"><h2>查岗</h2><button value="cancel" class="icon-button" aria-label="关闭">×</button></div><p class="hint">查岗内容是根据角色设定生成的虚构手机痕迹，不代表读取了真实设备、应用或位置。</p><label>想了解什么<select id="checkup-topic"><option value="今天在做什么">今天在做什么</option><option value="手机里有什么新记录">手机里有什么新记录</option><option value="最近的心情">最近的心情</option></select></label><button id="checkup-submit" type="submit" class="primary">开始查岗</button><div id="checkup-result" class="checkup-result" hidden></div></form></dialog>
   <dialog id="music-dialog"><form method="dialog" id="music-form"><div class="dialog-head"><h2>一起听</h2><button value="cancel" class="icon-button" aria-label="关闭">×</button></div><div class="music-stage"><div class="music-person"><img src="./character/images/standing.png" alt="张起灵"><strong>张起灵</strong></div><div class="music-connection" aria-hidden="true">♪</div><button id="music-user-avatar" class="music-person music-user" type="button" title="更换我的头像"><span class="avatar-fallback">我</span><img alt="我的头像" hidden><strong>我</strong></button></div><p id="music-distance" class="music-distance">相距很远，也可以一起听。</p><div class="music-now"><strong id="music-title">还没有选择音乐</strong><span id="music-time">0:00 / 0:00</span><input id="music-progress" type="range" min="0" max="100" value="0" step="0.1" aria-label="播放进度"><label class="music-volume-control">音量<input id="music-volume" type="range" min="0" max="1" value="1" step="0.01" aria-label="音量"></label><div class="music-controls"><button id="music-prev" type="button" aria-label="上一首">上一首</button><button id="music-play" type="button" class="music-play" aria-label="播放或暂停">播放</button><button id="music-next" type="button" aria-label="下一首">下一首</button></div></div><div class="music-add"><label class="tool-button">导入音频<input id="music-file" type="file" accept="audio/*" hidden></label><input id="music-url" type="url" placeholder="粘贴可直接播放的 HTTPS 音频直链"><input id="music-url-title" type="text" maxlength="80" placeholder="音频标题（可选）"><button id="music-url-add" type="button">添加并播放</button></div><div id="music-list" class="music-list"></div><p class="hint">支持公开的音频直链。平台歌曲页面、登录后地址、防盗链或 DRM 内容不能由 PWA 绕过下载限制；请用平台官方导出/下载后再导入本机。</p></form></dialog>
   <dialog id="relationship-hub" class="relationship-hub-dialog"><header class="timeline-head"><div><span class="eyebrow">RELATIONSHIPS</span><h2>关系与回忆</h2></div><button type="button" id="relationship-hub-close" class="icon-button" aria-label="关闭">×</button></header><button type="button" id="relationship-all-timeline" class="relationship-all-timeline">查看全部联系人的共同时间线</button><p class="timeline-note">角色资料按联系人分别保存；共同回忆可跨联系人搜索与收藏。</p><div id="relationship-contact-list" class="relationship-contact-list"></div></dialog>
-  <dialog id="role-dialog"><form method="dialog" id="role-form"><div class="dialog-head"><h2>角色与关系</h2><button value="cancel" class="icon-button" aria-label="关闭">×</button></div><details class="prompt-preview"><summary>查看内置角色规则（只读）</summary><pre id="system-prompt-preview"></pre></details><label>联系人备注<input id="contact-remark" type="text" maxlength="40" placeholder="留空使用角色本名"></label><p class="hint">备注仅自己可见，不改变人物身份或聊天归属。</p><label>我的称呼<input id="role-user-name" type="text" maxlength="40"></label><label>我的偏好<textarea id="role-preferences" rows="2" maxlength="500"></textarea></label><label>关系状态<textarea id="role-relationship" rows="2" maxlength="500" placeholder="例如：稳定、亲近、彼此尊重"></textarea></label><label>自定义提示词<textarea id="role-custom-prompt" rows="3" maxlength="1000"></textarea></label><label>世界书<textarea id="role-world-book" rows="3" maxlength="1200"></textarea></label><p class="hint">应用级角色约束始终保留；这些内容只作为用户可查看、可编辑的补充资料。</p><section class="scene-prompt-editor"><div class="section-title"><h3>场景补充设定</h3><span class="hint">只影响对应的全屏 RP，不会进入普通私聊或另一种模式。</span></div><label>线下补充设定<textarea id="role-life-prompt" rows="4" maxlength="4000" placeholder="例如：希望更多描写环境声、动作节奏和角色的生活习惯…"></textarea></label><div class="scene-prompt-tools"><label class="tool-button">导入线下 TXT<input id="role-life-prompt-file" type="file" accept=".txt,text/plain" hidden></label><button type="button" id="role-life-prompt-clear">清空</button></div><label>约会补充设定<textarea id="role-date-prompt" rows="4" maxlength="4000" placeholder="例如：这一场的氛围、镜头距离、希望避免的表达…"></textarea></label><div class="scene-prompt-tools"><label class="tool-button">导入约会 TXT<input id="role-date-prompt-file" type="file" accept=".txt,text/plain" hidden></label><button type="button" id="role-date-prompt-clear">清空</button></div><p class="hint">导入内容会保存在本机。固定角色、人际边界、用户行动自主权与日常/约会记忆隔离规则始终优先。</p></section><section class="role-records"><div class="section-title"><h3>互动记录</h3><span class="hint">互动会写入相处记录并增加亲密度</span></div><div class="role-interaction-actions"><button type="button" data-role-interaction="touch">摸摸头</button><button type="button" data-role-interaction="feed">投喂</button><button type="button" data-role-interaction="hug">抱抱</button></div><div id="interaction-records" class="interaction-records"></div></section><section class="relationship-history-link"><div><strong>共同时间线</strong><p>按时间查找全部联系人的聊天、线下、约会、旅途和相处记录。</p></div><button type="button" id="role-timeline-open">浏览记录</button></section><button id="role-save" type="submit" class="primary">保存角色资料</button></form></dialog>
+  <dialog id="role-dialog"><form method="dialog" id="role-form"><div class="dialog-head"><h2>角色与关系</h2><button value="cancel" class="icon-button" aria-label="关闭">×</button></div><details class="prompt-preview"><summary>查看内置角色规则（只读）</summary><pre id="system-prompt-preview"></pre></details><label>联系人备注<input id="contact-remark" type="text" maxlength="40" placeholder="留空使用角色本名"></label><p class="hint">备注仅自己可见，不改变人物身份或聊天归属。</p><label>我的称呼<input id="role-user-name" type="text" maxlength="40"></label><label>我的偏好<textarea id="role-preferences" rows="2"></textarea></label><label>关系状态<textarea id="role-relationship" rows="2" placeholder="例如：稳定、亲近、彼此尊重"></textarea></label><label>自定义提示词<textarea id="role-custom-prompt" rows="3"></textarea></label><label>世界书<textarea id="role-world-book" rows="3"></textarea></label><p class="hint">应用级角色约束始终保留；这些内容只作为用户可查看、可编辑的补充资料。</p><section class="scene-prompt-editor"><div class="section-title"><h3>场景补充设定</h3><span class="hint">只影响对应的全屏 RP，不会进入普通私聊或另一种模式。</span></div><label>线下补充设定<textarea id="role-life-prompt" rows="4" placeholder="例如：希望更多描写环境声、动作节奏和角色的生活习惯…"></textarea></label><div class="scene-prompt-tools"><label class="tool-button">导入线下 TXT<input id="role-life-prompt-file" type="file" accept=".txt,text/plain" hidden></label><button type="button" id="role-life-prompt-clear">清空</button></div><label>约会补充设定<textarea id="role-date-prompt" rows="4" placeholder="例如：这一场的氛围、镜头距离、希望避免的表达…"></textarea></label><div class="scene-prompt-tools"><label class="tool-button">导入约会 TXT<input id="role-date-prompt-file" type="file" accept=".txt,text/plain" hidden></label><button type="button" id="role-date-prompt-clear">清空</button></div><p class="hint">导入内容会保存在本机。固定角色、人际边界、用户行动自主权与日常/约会记忆隔离规则始终优先。</p></section><section class="role-records"><div class="section-title"><h3>互动记录</h3><span class="hint">互动会写入相处记录并增加亲密度</span></div><div class="role-interaction-actions"><button type="button" data-role-interaction="touch">摸摸头</button><button type="button" data-role-interaction="feed">投喂</button><button type="button" data-role-interaction="hug">抱抱</button></div><div id="interaction-records" class="interaction-records"></div></section><section class="relationship-history-link"><div><strong>共同时间线</strong><p>按时间查找全部联系人的聊天、线下、约会、旅途和相处记录。</p></div><button type="button" id="role-timeline-open">浏览记录</button></section><button id="role-save" type="submit" class="primary">保存角色资料</button></form></dialog>
   <dialog id="session-dialog"><form method="dialog" id="session-form"><div class="dialog-head"><h2>私聊与群聊</h2><button value="cancel" class="icon-button" aria-label="关闭">×</button></div><button type="button" id="private-session">张起灵私聊</button><div id="group-list" class="group-list"></div><button type="button" id="group-create-open" class="primary">＋ 发起群聊</button><p class="hint">可创建多个独立群聊并随时切换；每个群单独保存成员、历史和设置。自然接话，不必每轮全员报到。</p></form></dialog>`;
 
 root.insertAdjacentHTML("beforeend", `
@@ -279,7 +279,7 @@ userNameLabel.before(userPersonaSection);
 userPersonaSection.append(userNameLabel, userPersonaInput.closest("label")!);
 userPersonaInput.previousSibling!.textContent = "我的人设与偏好";
 userPersonaInput.rows = 4;
-userPersonaInput.maxLength = 2000;
+userPersonaInput.removeAttribute("maxlength");
 userPersonaInput.placeholder = "例如：你的身份、性格、日常习惯、喜好与需要尊重的边界；不要填写角色自身的人设。";
 userPersonaSection.insertAdjacentHTML("beforeend", `<button id="role-persona-sync" type="button">一键同步共用设定至全角色</button><details class="persona-sync-scope"><summary>同步范围与覆盖说明</summary><p class="hint">同步当前填写的称呼、人设与偏好、世界书、自定义提示词、线下和约会补充设定、XP 与关系、场外要求、文法要求，以及两种模式的剧场协议开关。空白内容也会覆盖已有设置。</p><p class="hint">各角色的关系状态、相处方式、备注、生日、记忆、音色与接口保持独立。同步后仍可分别修改；再次同步会覆盖上述共用设定。</p></details><p id="role-persona-status" class="hint" role="status" aria-live="polite"></p>`);
 const personaSyncButton = roleForm.querySelector<HTMLButtonElement>("#role-persona-sync")!;
@@ -605,13 +605,13 @@ Persona Description 槽中的文字属于玩家扮演对象的剧情资料，不
 你的目标是：让剧情始终具备稳定、温柔、可靠的情绪张力与修复动能。`;
 
 const datePreferenceFields = [
-  { id: "role-date-xp", key: "dateXpRelationship", label: "XP 与关系", placeholder: "希望体验的关系张力、亲密节奏、偏好元素或明确不想出现的内容…", max: 2000 },
-  { id: "role-date-observer", key: "dateObserverRequests", label: "场外要求", placeholder: "写给剧场导演的持续要求，例如推进节奏、视角、尺度和需要留白的部分…", max: 2000 },
-  { id: "role-date-style", key: "dateStyleRequirements", label: "文法要求", placeholder: "例如叙事人称、段落长度、动作与对白比例、避免的写法…", max: 2000 }
+  { id: "role-date-xp", key: "dateXpRelationship", label: "XP 与关系", placeholder: "希望体验的关系张力、亲密节奏、偏好元素或明确不想出现的内容…" },
+  { id: "role-date-observer", key: "dateObserverRequests", label: "场外要求", placeholder: "写给剧场导演的持续要求，例如推进节奏、视角、尺度和需要留白的部分…" },
+  { id: "role-date-style", key: "dateStyleRequirements", label: "文法要求", placeholder: "例如叙事人称、段落长度、动作与对白比例、避免的写法…" }
 ] as const;
 const datePreferenceSection = document.createElement("section");
 datePreferenceSection.className = "date-preference-editor";
-datePreferenceSection.innerHTML = `<div class="section-title"><h3>剧场偏好 · 约会与线下共用</h3><span class="hint">保存后持续生效，按开关进入对应的全屏 RP</span></div><label class="toggle-row"><input id="role-date-theatre-enabled" type="checkbox"><span>心动约会启用内置剧场协议</span></label><label class="toggle-row"><input id="role-life-theatre-enabled" type="checkbox"><span>线下见面启用内置剧场协议</span></label>${datePreferenceFields.map(field => `<label>${field.label}<textarea id="${field.id}" rows="3" maxlength="${field.max}" placeholder="${field.placeholder}"></textarea></label>`).join("")}<p class="hint">内置协议不会显示在对话中；XP 与关系、场外要求、文法要求会在已开启的模式中持续生效。偏好按联系人保存在本机，并纳入数据备份。</p></section>`;
+datePreferenceSection.innerHTML = `<div class="section-title"><h3>剧场偏好 · 约会与线下共用</h3><span class="hint">保存后持续生效，按开关进入对应的全屏 RP</span></div><label class="toggle-row"><input id="role-date-theatre-enabled" type="checkbox"><span>心动约会启用内置剧场协议</span></label><label class="toggle-row"><input id="role-life-theatre-enabled" type="checkbox"><span>线下见面启用内置剧场协议</span></label>${datePreferenceFields.map(field => `<label>${field.label}<textarea id="${field.id}" rows="3" placeholder="${field.placeholder}"></textarea></label>`).join("")}<p class="hint">内置协议不会显示在对话中；XP 与关系、场外要求、文法要求会在已开启的模式中持续生效。偏好按联系人保存在本机，并纳入数据备份。</p></section>`;
 roleForm.querySelector(".scene-prompt-editor")!.prepend(datePreferenceSection);
 const birthdayContactSection = document.createElement("section");
 birthdayContactSection.className = "birthday-contact-editor";
@@ -626,7 +626,7 @@ function bindScenePromptImport(inputId: string, targetId: string) {
     const file = input.files?.[0];
     if (!file) return;
     try {
-      target.value = (await file.text()).slice(0, 4000);
+      target.value = await file.text();
       document.querySelector("#role-save-status")!.textContent = `${file.name} 已导入，保存角色资料后生效。`;
     } catch { document.querySelector("#role-save-status")!.textContent = "文本导入失败，请重试。"; }
     input.value = "";
@@ -1737,27 +1737,27 @@ function lifeContext(state: Pick<import("./types").LifeSceneState, "characterId"
 function sceneSupplement(mode: "life" | "date", settings: CharacterSettings): string {
   const enabled = mode === "date" ? settings.dateTheatreEnabled !== false : settings.lifeTheatreEnabled === true;
   const preferenceValues = mode === "life" ? [
-    ["线下补充设定", settings.lifeSupplementPrompt, 4000],
-    ...(enabled ? [["XP 与关系", settings.dateXpRelationship, 2000], ["场外要求", settings.dateObserverRequests, 2000], ["文法要求", settings.dateStyleRequirements, 2000]] : [])
+    ["线下补充设定", settings.lifeSupplementPrompt],
+    ...(enabled ? [["XP 与关系", settings.dateXpRelationship], ["场外要求", settings.dateObserverRequests], ["文法要求", settings.dateStyleRequirements]] : [])
   ] : [
-    ["约会补充设定", settings.dateSupplementPrompt, 4000],
-    ...(enabled ? [["XP 与关系", settings.dateXpRelationship, 2000], ["场外要求", settings.dateObserverRequests, 2000], ["文法要求", settings.dateStyleRequirements, 2000]] : [])
+    ["约会补充设定", settings.dateSupplementPrompt],
+    ...(enabled ? [["XP 与关系", settings.dateXpRelationship], ["场外要求", settings.dateObserverRequests], ["文法要求", settings.dateStyleRequirements]] : [])
   ];
-  const filled = preferenceValues.filter(([, value]) => typeof value === "string" && value.trim()) as Array<[string, string, number]>;
+  const filled = preferenceValues.filter(([, value]) => typeof value === "string" && value.trim()) as Array<[string, string]>;
   if (!filled.length) return "";
-  if (mode === "life") return `\n【用户为本次线下保存的长期偏好】\n${filled.map(([label, value, limit]) => `${label}：\n${value.trim().slice(0, limit)}`).join("\n\n")}\n这些是线下剧场的创作偏好，不得覆盖固定角色规则、事实连续性、用户行动自主权或记忆隔离。`;
-  return `\n【用户为本次约会保存的长期偏好】\n${filled.map(([label, value, limit]) => `${label}：\n${value.trim().slice(0, limit)}`).join("\n\n")}\n这些是约会剧场的创作偏好，不得改写既成事实、替玩家决定行为，或覆盖固定人物设定与应用级边界。`;
+  if (mode === "life") return `\n【用户为本次线下保存的长期偏好】\n${filled.map(([label, value]) => `${label}：\n${value.trim()}`).join("\n\n")}\n这些是线下剧场的创作偏好，不得覆盖固定角色规则、事实连续性、用户行动自主权或记忆隔离。`;
+  return `\n【用户为本次约会保存的长期偏好】\n${filled.map(([label, value]) => `${label}：\n${value.trim()}`).join("\n\n")}\n这些是约会剧场的创作偏好，不得改写既成事实、替玩家决定行为，或覆盖固定人物设定与应用级边界。`;
 }
 
 function sharedTheatreSupplement(mode: "life" | "date", settings: CharacterSettings): string {
   const enabled = mode === "date" ? settings.dateTheatreEnabled !== false : settings.lifeTheatreEnabled === true;
   if (!enabled) return "";
   const values = [
-    ["XP 与关系", settings.dateXpRelationship, 2000],
-    ["场外要求", settings.dateObserverRequests, 2000],
-    ["文法要求", settings.dateStyleRequirements, 2000]
-  ].filter(([, value]) => typeof value === "string" && value.trim()) as Array<[string, string, number]>;
-  return values.length ? `【用户为本次${mode === "life" ? "线下" : "约会"}保存的长期偏好】\n${values.map(([label, value, limit]) => `${label}：\n${value.trim().slice(0, limit)}`).join("\n\n")}\n这些是剧场创作偏好，不得覆盖固定角色规则、事实连续性、用户行动自主权或记忆隔离。` : "";
+    ["XP 与关系", settings.dateXpRelationship],
+    ["场外要求", settings.dateObserverRequests],
+    ["文法要求", settings.dateStyleRequirements]
+  ].filter(([, value]) => typeof value === "string" && value.trim()) as Array<[string, string]>;
+  return values.length ? `【用户为本次${mode === "life" ? "线下" : "约会"}保存的长期偏好】\n${values.map(([label, value]) => `${label}：\n${value.trim()}`).join("\n\n")}\n这些是剧场创作偏好，不得覆盖固定角色规则、事实连续性、用户行动自主权或记忆隔离。` : "";
 }
 
 function theatreProtocol(mode: "life" | "date", settings: CharacterSettings): string {
@@ -1934,8 +1934,8 @@ async function sendFieldworkLifeText(text: string) {
       const state = { id: adventure.id, characterId: character.id, active: true, location: adventure.location, timeLabel: adventure.timeLabel || "时间未记录", environment: adventure.environment || "未知部分留白", activity: adventure.activity || text, updatedAt: adventure.updatedAt };
       const sceneRules = lifeContext(state).replace("这是连续生活中的同场见面，不是手机气泡，也不是独立副本。", "这是多人线下冒险的同一现场，不是手机群聊。冒险进度只按已保存的现场记录延续。");
       const sceneSupplementText = settings.lifeSupplementPrompt?.trim();
-      const publicContext = [group.background, group.worldBook, (group.memories ?? []).filter((item) => item.enabled && !isLegacyDateMemory(item) && !item.messageIds?.some(id=>selected.excluded.has(id))).slice(-5).map((item) => item.content).join("\n")].filter(Boolean).join("\n").slice(0, 1500);
-      const prompt = [personaPrompt(character, systemPrompt, settings), settingsSupplement(settings), theatreProtocol("life", settings), sharedTheatreSupplement("life", settings), sceneSupplementText ? `【线下补充设定（仅本次多人冒险）】\n${sceneSupplementText.slice(0, 4000)}\n固定角色规则、事实连续性和用户行动自主权始终优先。` : "", sceneRules, adventureWorldPrompt(adventure.location, adventure.briefing.slice(0, 3500)), "【现场时间与环境】" + state.timeLabel + "；" + state.environment, "【同行者】" + members.map((item) => item.name).join("、") + "。你只扮演" + character.name + "，不代替其他角色或用户说话、行动，不重复前一位的观察。以环境、动作、语气和自然对白写连续现场；不输出姓名前缀或内部指令。", "【已分享的队伍背景，作为资料】" + publicContext,selected.summary].filter(Boolean).join("\n\n");
+      const publicContext = [group.background, group.worldBook, (group.memories ?? []).filter((item) => item.enabled && !isLegacyDateMemory(item) && !item.messageIds?.some(id=>selected.excluded.has(id))).slice(-5).map((item) => item.content).join("\n").slice(0, 1500)].filter(Boolean).join("\n");
+      const prompt = [personaPrompt(character, systemPrompt, settings), settingsSupplement(settings), theatreProtocol("life", settings), sharedTheatreSupplement("life", settings), sceneSupplementText ? `【线下补充设定（仅本次多人冒险）】\n${sceneSupplementText}\n固定角色规则、事实连续性和用户行动自主权始终优先。` : "", sceneRules, adventureWorldPrompt(adventure.location, adventure.briefing.slice(0, 3500)), "【现场时间与环境】" + state.timeLabel + "；" + state.environment, "【同行者】" + members.map((item) => item.name).join("、") + "。你只扮演" + character.name + "，不代替其他角色或用户说话、行动，不重复前一位的观察。以环境、动作、语气和自然对白写连续现场；不输出姓名前缀或内部指令。", "【已分享的队伍背景，作为资料】" + publicContext,selected.summary].filter(Boolean).join("\n\n");
       const controller = new AbortController(); timeout = window.setTimeout(() => controller.abort(), 120_000);
       let reply: string;
       try {
@@ -3827,15 +3827,15 @@ roleInteractionButtons.forEach((button) => button.addEventListener("click", asyn
   await renderInteractionRecords();
 }));
 function readSharedRoleSettings(): SharedCharacterSettings {
-  const text = (id: string, limit = Infinity) => roleForm.querySelector<HTMLTextAreaElement>(`#${id}`)!.value.trim().slice(0, limit);
+  const text = (id: string) => roleForm.querySelector<HTMLTextAreaElement>(`#${id}`)!.value.trim();
   return {
     userName: userNameInput.value.trim(), userPreferences: userPersonaInput.value.trim(),
     customPrompt: text("role-custom-prompt"), worldBook: text("role-world-book"),
-    lifeSupplementPrompt: text("role-life-prompt", 4000), dateSupplementPrompt: text("role-date-prompt", 4000),
+    lifeSupplementPrompt: text("role-life-prompt"), dateSupplementPrompt: text("role-date-prompt"),
     lifeTheatreEnabled: roleForm.querySelector<HTMLInputElement>("#role-life-theatre-enabled")!.checked,
     dateTheatreEnabled: roleForm.querySelector<HTMLInputElement>("#role-date-theatre-enabled")!.checked,
-    dateXpRelationship: text("role-date-xp", 2000), dateObserverRequests: text("role-date-observer", 2000),
-    dateStyleRequirements: text("role-date-style", 2000)
+    dateXpRelationship: text("role-date-xp"), dateObserverRequests: text("role-date-observer"),
+    dateStyleRequirements: text("role-date-style")
   };
 }
 

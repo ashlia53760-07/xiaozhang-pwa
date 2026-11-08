@@ -52,7 +52,7 @@ export class GroupUI {
             <label>群氛围<select id="group-atmosphere"><option value="daily">日常陪伴</option><option value="lively">轻松热闹</option><option value="quiet">安静闲聊</option></select></label>
             <label>群背景<textarea id="group-background" maxlength="1200" rows="3" placeholder="例如：大家平时在这里分享日常、商量出游"></textarea></label>
             <label>群公告<textarea id="group-announcement" maxlength="500" rows="2"></textarea></label>
-            <label>本群世界书<textarea id="group-world-book" maxlength="2000" rows="3" placeholder="仅本群生效的公开背景，不会自动读取私聊世界书"></textarea></label>
+            <label>本群世界书<textarea id="group-world-book" rows="3" placeholder="仅本群生效的公开背景，不会自动读取私聊世界书"></textarea></label>
             <fieldset><legend>在群里公开的关系</legend><p class="hint">只填写你愿意公开的关系。私聊里的秘密、称呼和经历不会自动公开；未填写不默认恋爱。</p><div id="group-relationships"></div></fieldset>
             <label>默认接话方式<select id="group-reply-mode"><option value="natural">自然接话</option><option value="selected">指定角色</option><option value="all">全员讨论</option></select></label>
             <label>活跃程度<select id="group-activity"><option value="quiet">安静 · 通常 1–2 人</option><option value="normal">适中 · 通常 2–4 人</option><option value="lively">热闹 · 通常 3–5 人，合适时更多</option></select></label>
@@ -169,7 +169,7 @@ export class GroupUI {
     return id ? this.options.displayName(id) : member.name;
   }
   private captureRelationships() {
-    document.querySelectorAll<HTMLInputElement>("[data-group-relation]").forEach(input => { const member = this.selected.get(input.dataset.groupRelation!); if (member) member.relationship = input.value.trim().slice(0, 300); });
+    document.querySelectorAll<HTMLInputElement>("[data-group-relation]").forEach(input => { const member = this.selected.get(input.dataset.groupRelation!); if (member) member.relationship = input.value.trim(); });
   }
   private async renderPicker() {
     const revision = ++this.pickerRevision;
@@ -185,7 +185,7 @@ export class GroupUI {
       void this.renderPicker();
     }));
     document.querySelector("#group-selected")!.textContent = this.selected.size ? `已选 ${this.selected.size} 人：${[...this.selected.values()].map(m => this.memberName(m)).join("、")}` : "选择联系人后即可创建，你会自动加入。";
-    document.querySelector("#group-relationships")!.innerHTML = [...this.selected].map(([key, m]) => `<label>${esc(this.memberName(m))}<input data-group-relation="${esc(key)}" maxlength="300" value="${esc(m.relationship ?? "")}" placeholder="例如：亲近的朋友；愿意公开的感情关系"></label>`).join("");
+    document.querySelector("#group-relationships")!.innerHTML = [...this.selected].map(([key, m]) => `<label>${esc(this.memberName(m))}<input data-group-relation="${esc(key)}" value="${esc(m.relationship ?? "")}" placeholder="例如：亲近的朋友；愿意公开的感情关系"></label>`).join("");
     for (const c of candidates) {
       if (!characters.some(character => character.id === c.key)) continue;
       const media = await storage.contactAvatar(c.key);
@@ -203,7 +203,7 @@ export class GroupUI {
       const now = Date.now(), original = this.editing, members = [...this.selected.values()];
       let avatarMediaId = this.avatarRemoved ? undefined : original?.avatarMediaId;
       const fields = { title: this.value("group-title") || members.slice(0, 3).map(m => m.name).join("、"), members,
-        avatarMediaId, userName: this.value("group-user-name").slice(0, 40), atmosphere: this.value("group-atmosphere") as GroupRecord["atmosphere"], background: this.value("group-background").slice(0, 1200), announcement: this.value("group-announcement").slice(0, 500), worldBook: this.value("group-world-book").slice(0, 2000), replyMode: this.value("group-reply-mode") as GroupRecord["replyMode"], activity: this.value("group-activity") as GroupRecord["activity"], replyLimit: this.value("group-reply-limit") ? Math.max(1, Math.min(MAX_GROUP_MEMBERS, Number(this.value("group-reply-limit")))) : undefined, proactive: document.querySelector<HTMLInputElement>("#group-proactive")!.checked, updatedAt: now };
+        avatarMediaId, userName: this.value("group-user-name").slice(0, 40), atmosphere: this.value("group-atmosphere") as GroupRecord["atmosphere"], background: this.value("group-background").slice(0, 1200), announcement: this.value("group-announcement").slice(0, 500), worldBook: this.value("group-world-book"), replyMode: this.value("group-reply-mode") as GroupRecord["replyMode"], activity: this.value("group-activity") as GroupRecord["activity"], replyLimit: this.value("group-reply-limit") ? Math.max(1, Math.min(MAX_GROUP_MEMBERS, Number(this.value("group-reply-limit")))) : undefined, proactive: document.querySelector<HTMLInputElement>("#group-proactive")!.checked, updatedAt: now };
       if (this.avatarFile) { const file = this.avatarFile; fields.avatarMediaId = newId("group-avatar"); await storage.saveMedia({ id: fields.avatarMediaId, blob: file, mime: file.type, origin: "group_avatar", createdAt: now }); }
       const id = original?.id ?? newId("group");
       if (original) { const saved = await storage.changeGroup(id, group => Object.assign(group, fields)); if (!saved) throw Error("群聊已被移除，未覆盖其他资料"); }
