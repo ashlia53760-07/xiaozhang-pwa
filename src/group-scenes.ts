@@ -5,6 +5,7 @@ import { sceneModelContext } from "./scene-context";
 import { groupEventText, groupMemberKey, isLegacyDateMemory } from "./groups";
 import { newId, storage } from "./storage";
 import { theatreCast, validTheatreScript } from "./script-library";
+import { assertUserPersona, assertPersonaText, groupUserPersona, scriptUserPersona } from "./user-persona-policy";
 import type { ApiProfile, ChatMessage, DateSession, GroupLifeScene, GroupRecord, TheatreScript } from "./types";
 
 type Mode = "life" | "date";
@@ -114,6 +115,9 @@ export class GroupScenes {
   }
   private async narrativeCast(mode: Mode, scene: GroupScene): Promise<{ members: Member[]; profile: ApiProfile }> {
     const group = this.groups[mode]!;
+    assertUserPersona(groupUserPersona(group));
+    if ("scriptSnapshot" in scene && scene.scriptSnapshot) assertUserPersona(scriptUserPersona(scene.scriptSnapshot));
+    else if ("setting" in scene) assertPersonaText(scene.setting);
     // Scene membership is independent of online replyMode, selected speakers and @mentions.
     const members = group.members.filter(member => member.enabled && (!scene.memberIds || scene.memberIds.includes(member.id)));
     if (!members.length) throw Error("本场没有启用的同行者，请先检查群成员设置。");
@@ -131,6 +135,7 @@ export class GroupScenes {
   async send(mode: Mode, text: string) {
     const scene = await this.reload(mode);
     if (!scene?.active || !text.trim()) return;
+    assertPersonaText(text);
     const cast = await this.narrativeCast(mode, scene);
     const next = structuredClone(scene), userId = newId("group-scene-user");
     next.continuationState = undefined;
@@ -172,7 +177,7 @@ export class GroupScenes {
       if (this.stopped) return;
       prompt += selected.summary;
       const history = previous.map(row => ({ ...row, kind: "text" as const, metadata: undefined, content: clean(`${row.role === "user" ? group.userName || "我" : row.speakerId || "场景叙事"}：${row.content}`) }));
-      const reply = clean(await chat(profile, prompt, history, text, () => undefined, controller.signal, { maxOutputTokens: 3072, purpose: "scene", historyLimit: 16, contextParts: { rules: ruleSection, memories: memorySection, summary: selected.summary } }));
+      const reply = clean(await chat(profile, prompt, history, text, () => undefined, controller.signal, { userPersona: groupUserPersona(group), maxOutputTokens: 3072, purpose: "scene", historyLimit: 16, contextParts: { rules: ruleSection, memories: memorySection, summary: selected.summary } }));
       if (this.stopped) return;
       if (!reply || /^(?:null|undefined)+$/i.test(reply)) throw Error("未收到有效的场景回应，可用底部菜单重新生成。");
       const next = structuredClone(scene), original = next.messages.find(row => row.id === replacementId);

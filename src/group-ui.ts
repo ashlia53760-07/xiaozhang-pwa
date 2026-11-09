@@ -1,4 +1,5 @@
 import { storage, newId } from "./storage";
+import { assertUserPersona, groupUserPersona } from "./user-persona-policy";
 import { characters, characterByName } from "./characters";
 import { groupEventText, MAX_GROUP_MEMBERS, isLegacyDateMemory, type GroupMember } from "./groups";
 import type { ChatMessage, GroupRecord, GroupQuote } from "./types";
@@ -204,6 +205,7 @@ export class GroupUI {
       let avatarMediaId = this.avatarRemoved ? undefined : original?.avatarMediaId;
       const fields = { title: this.value("group-title") || members.slice(0, 3).map(m => m.name).join("、"), members,
         avatarMediaId, userName: this.value("group-user-name").slice(0, 40), atmosphere: this.value("group-atmosphere") as GroupRecord["atmosphere"], background: this.value("group-background").slice(0, 1200), announcement: this.value("group-announcement").slice(0, 500), worldBook: this.value("group-world-book"), replyMode: this.value("group-reply-mode") as GroupRecord["replyMode"], activity: this.value("group-activity") as GroupRecord["activity"], replyLimit: this.value("group-reply-limit") ? Math.max(1, Math.min(MAX_GROUP_MEMBERS, Number(this.value("group-reply-limit")))) : undefined, proactive: document.querySelector<HTMLInputElement>("#group-proactive")!.checked, updatedAt: now };
+      assertUserPersona(groupUserPersona({ id: original?.id ?? "draft", ...fields, createdAt: now }));
       if (this.avatarFile) { const file = this.avatarFile; fields.avatarMediaId = newId("group-avatar"); await storage.saveMedia({ id: fields.avatarMediaId, blob: file, mime: file.type, origin: "group_avatar", createdAt: now }); }
       const id = original?.id ?? newId("group");
       if (original) { const saved = await storage.changeGroup(id, group => Object.assign(group, fields)); if (!saved) throw Error("群聊已被移除，未覆盖其他资料"); }

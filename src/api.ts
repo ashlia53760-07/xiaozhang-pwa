@@ -2,6 +2,7 @@ import type { ApiProfile, AudioAnalysisProfile, ChatMessage, ImageProfile, TtsPr
 import { boundedHistory, contextUnits } from "./context-budget";
 import { modelPreferences, type RequestPurpose } from "./model-preferences";
 import { beginUsage, finishUsage, requestBreakdown, usageCounts, type UsageCounts, type ContextParts } from "./model-usage";
+import { assertUserPersona, assertPersonaText, assertPersonaReply, PERSONA_CONFLICT, USER_PERSONA_RULE, type UserPersona } from "./user-persona-policy";
 
 type ApiMessage = { role: "system" | "user" | "assistant"; content: string };
 
@@ -12,7 +13,7 @@ type RequestCost = { inputEstimate: number; outputLimit?: number; historyMessage
 type LimitDetail = { kind: LimitKind; code?: string; type?: string; requestId?: string; retryAfter?: string; tokenLimit?: number; tokenUsed?: number; tokenRequested?: number; request?: RequestCost };
 type TokenWindow = { remaining: number; resetAt: number; observedAt: number };
 type ChatWait = { until: number; reason: "tokens" | "spacing" };
-type ChatOptions = { maxOutputTokens?: number; onWait?: (wait: ChatWait) => void; purpose?: RequestPurpose; historyBudget?: number; historyLimit?: number; contextParts?: ContextParts; collectUsage?: (usage: UsageCounts) => void };
+type ChatOptions = { maxOutputTokens?: number; onWait?: (wait: ChatWait) => void; purpose?: RequestPurpose; historyBudget?: number; historyLimit?: number; contextParts?: ContextParts; collectUsage?: (usage: UsageCounts) => void; userPersona?: UserPersona };
 type ChatLane = { tail: Promise<void>; nextAt: number; retryAt: number; strikes: number; spacing: number; detail?: LimitDetail; tokenNextAt?: number; tokenPacingUntil?: number; tokenWindow?: TokenWindow; request?: RequestCost; sentAt?: number[] };
 const chatLanes = new Map<string, ChatLane>();
 function laneIdentity(profile: ApiProfile): string {
@@ -364,13 +365,27 @@ export async function chat(
   // Local estimate for admission only, never a billing/tokenizer claim. Include
   // system/persona, current input and requested output, not just chat history.
   const preferences = modelPreferences(), purpose = options.purpose ?? "other";
+  if (options.userPersona || purpose === "private" || purpose === "scene") {
+    assertUserPersona(options.userPersona ?? {});
+    assertPersonaText(current);
+    systemPrompt = USER_PERSONA_RULE + "\n\n" + systemPrompt;
+    if (options.contextParts) options = { ...options, contextParts: { ...options.contextParts, rules: USER_PERSONA_RULE + "\n\n" + (options.contextParts.rules ?? "") } };
+    const originalDelta = onDelta;
+    onDelta = full => {
+      assertPersonaReply(full);
+      // Do not briefly render a conflict marker split across streaming chunks.
+      if (!PERSONA_CONFLICT.startsWith(full.trimStart())) originalDelta(full);
+    };
+  }
   const cap = purpose === "private" ? preferences.privateOutput : purpose === "scene" ? preferences.sceneOutput : undefined;
   options = { ...options, historyBudget: options.historyBudget ?? (purpose === "scene" ? preferences.sceneHistory : preferences.privateHistory), historyLimit: options.historyLimit ?? 8,
     maxOutputTokens: cap ? Math.min(options.maxOutputTokens ?? cap, cap) : options.maxOutputTokens };
   const selected = boundedHistory(history, options.historyBudget, options.historyLimit);
   const cost: RequestCost = { inputEstimate: Math.ceil(contextUnits([systemPrompt, ...selected.map(m => m.content), current].join("\n")) * 1.5) + 128, outputLimit: options.maxOutputTokens, historyMessages: selected.length };
   const estimate = cost.inputEstimate + (options.maxOutputTokens ?? 0);
-  return pacedChat(profile, () => requestChat(profile, systemPrompt, history, current, onDelta, signal, options), signal, estimate, options.onWait, cost);
+  const reply = await pacedChat(profile, () => requestChat(profile, systemPrompt, history, current, onDelta, signal, options), signal, estimate, options.onWait, cost);
+  assertPersonaReply(reply);
+  return reply;
 }
 
 async function requestChat(

@@ -1,6 +1,7 @@
 import { characters } from "./characters";
 import { newId, storage } from "./storage";
 import { scriptFromPerformance, validTheatreScript } from "./script-library";
+import { assertUserPersona, scriptUserPersona } from "./user-persona-policy";
 import type { DateSceneKind, TheatreScript } from "./types";
 
 type Preset = { id: DateSceneKind; title: string; setting: string; atmosphere: string };
@@ -140,6 +141,7 @@ export class ScriptLibraryUI {
       arrangement: this.value("#script-arrangement").value.trim(), userName: this.value("#script-user-name").value.trim(), mode: this.mode(), characterIds: this.selected(),
       backgroundMediaId: this.options.background(), createdAt: old?.createdAt || now, updatedAt: now });
     if (!draft) throw Error(this.mode() === "multi" ? "多人剧本请至少选择两位角色，指令最多 6000 字。" : "单人剧本请选择一位角色，指令最多 6000 字。");
+    assertUserPersona(scriptUserPersona(draft));
     const saved = await storage.saveTheatreScript(draft, old?.revision);
     this.loaded = saved; this.value("#script-title").value = saved.title; this.label(); this.savedFingerprint = this.fingerprint(); await this.refresh(); return structuredClone(saved);
   }

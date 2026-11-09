@@ -9,7 +9,7 @@ const origin = process.env.CONTACT_TEST_URL || 'http://127.0.0.1:4175';
 const folder = new URL('../.local-review/phone-messages-20261025/', import.meta.url);
 await mkdir(new URL('modules/', folder), { recursive: true });
 const modules = {};
-for (const name of ['calendar', 'calendar-data', 'calendar-observances', 'solar-term-data', 'script-library', 'model-preferences', 'model-usage', 'scene-context-data', 'phone-messages', 'context-budget', 'context', 'storage', 'api', 'characters', 'groups', 'checkup']) {
+for (const name of ['user-persona-policy', 'calendar', 'calendar-data', 'calendar-observances', 'solar-term-data', 'script-library', 'model-preferences', 'model-usage', 'scene-context-data', 'phone-messages', 'context-budget', 'context', 'storage', 'api', 'characters', 'groups', 'checkup']) {
   modules[name] = ts.transpileModule(await readFile(new URL(`../src/${name}.ts`, import.meta.url), 'utf8'), {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext }
   }).outputText.replace(/from "\.\/([^".]+)"/g, 'from "./$1.js"');

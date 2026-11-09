@@ -27,6 +27,7 @@
     "test:calendar:surprises:ui": "node scripts/calendar-surprises-ui.test.mjs",
     "test:user-persona": "node scripts/user-persona.test.mjs",
     "test:prompt-length": "node scripts/prompt-length.test.mjs",
+    "test:user-persona-policy": "node scripts/user-persona-policy.test.mjs",
     "test:chat-limits": "node scripts/chat-limits.test.mjs",
     "test:group-tools": "node scripts/group-tools.test.mjs",
     "test:group-identity": "node scripts/group-identity.test.mjs",
