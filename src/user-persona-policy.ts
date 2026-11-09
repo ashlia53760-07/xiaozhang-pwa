@@ -45,7 +45,7 @@ export function assertPersonaText(raw: string, personaDescription = false): void
   const gender = new RegExp(`${subject}(?:(?:的)?(?:性别|设定|身份|人设))?(?:是|为|[:：=]|设为|设成|改为|改成|设定为|扮演|扮作)(?:一?(?:个|名|位))?(?:成年)?(?:${male})`, "g");
   const negateFemale = new RegExp(`${subject}(?:(?:的)?性别)?(?:不是|并非|不再是|不能是)(?:女性|女生|女人|女孩|女的|女(?=$|[，。；;！!、]))`, "g");
   const assignMale = new RegExp(`(?:把|将|让)${subject}(?:设定为|设为|设成|改成|当作|当成|写成|变成|成为|扮演)(?:一?(?:个|名|位))?(?:${male})`, "g");
-  const fieldGender = /(?:^|[，。；;、])(?:性别|gender)[:：=]?(?:男(?:性|生|人|孩|的)?|male|非二元|无性别)(?=$|[，。；;！!、])/g;
+  const fieldGender = /(?:^|[，。；;、])(?:(?:我的|用户的?|玩家的?))?(?:性别|gender)(?:[:：=]|是|为)?(?:男(?:性|生|人|孩|的)?|male|非二元|无性别)(?=$|[，。；;！!、])/g;
   if (positiveMatch(text, gender) || positiveMatch(text, negateFemale) || positiveMatch(text, assignMale) || personaDescription && (positiveMatch(text, fieldGender) || /^(?:男(?:性|生|人|孩|的)?|male|非二元|无性别)$/.test(text))) throw new UserPersonaConflictError("用户性别设定与女性身份规则冲突");
   const identity = new RegExp(`${subject}(?:(?:的)?(?:姓名|名字|身份|角色|人设|称呼|昵称))?(?:就是|是|为|叫|名叫|名为|[:：=]|扮演|扮作|演|设定为)(?:原著中的?|盗墓笔记中的?|女版|性转版|性转后的?|女性版|一个)?(?:${namePattern})(?!的)(?=$|[，。；;！？!?、:：]|本人|性转|女版|女性版|转世|本尊|\\(|（)`, "g");
   const rename = new RegExp(`(?:叫我|称我为|称呼我为|称呼用户为|称呼玩家为|叫用户|叫玩家|把我叫作|把用户叫作|把玩家叫作|把我当成|把用户当成|让我扮演|将我设为|把我设为)(?:女版|性转版|女性版)?(?:${namePattern})(?=$|[，。；;！？!?、:：]|本人|性转|女版|本尊|\\(|（)`, "g");

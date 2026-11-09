@@ -285,6 +285,10 @@ userPersonaInput.placeholder = "例如：你的身份、性格、日常习惯、
 userPersonaSection.insertAdjacentHTML("beforeend", `<button id="role-persona-sync" type="button">一键同步共用设定至全角色</button><details class="persona-sync-scope"><summary>同步范围与覆盖说明</summary><p class="hint">同步当前填写的称呼、人设与偏好、世界书、自定义提示词、线下和约会补充设定、XP 与关系、场外要求、文法要求，以及两种模式的剧场协议开关。空白内容也会覆盖已有设置。</p><p class="hint">各角色的关系状态、相处方式、备注、生日、记忆、音色与接口保持独立。同步后仍可分别修改；再次同步会覆盖上述共用设定。</p></details><p id="role-persona-status" class="hint" role="status" aria-live="polite"></p>`);
 const personaSyncButton = roleForm.querySelector<HTMLButtonElement>("#role-persona-sync")!;
 const personaStatus = roleForm.querySelector<HTMLParagraphElement>("#role-persona-status")!;
+userPersonaInput.closest("label")!.insertAdjacentHTML("afterend", `<p id="role-persona-validation" class="hint" role="alert" hidden></p>`);
+const personaValidation = roleForm.querySelector<HTMLParagraphElement>("#role-persona-validation")!;
+userPersonaInput.setAttribute("aria-describedby", "role-persona-validation");
+userNameInput.setAttribute("aria-describedby", "role-persona-validation");
 let roleSettingsBusy = false;
 const sessionDialog = document.querySelector<HTMLDialogElement>("#session-dialog")!;
 const groupList = document.querySelector<HTMLDivElement>("#group-list")!;
@@ -3815,6 +3819,7 @@ document.querySelector("#role-form h2")!.textContent = `${character.name} · 关
   const birthday = contactBirthday(roleEditorId, birthdaySettings);
   document.querySelector<HTMLInputElement>("#role-birthday")!.value = birthday ? `2000-${String(birthday.month).padStart(2, "0")}-${String(birthday.day).padStart(2, "0")}` : "";
   document.querySelector<HTMLElement>("#system-prompt-preview")!.textContent = personaPrompt(character, systemPrompt, savedSettings);
+  validateRolePersona();
   roleDialog.showModal();
   await Promise.all([renderUserAvatar(), renderCharacterAvatar()]);
   await renderInteractionRecords();
@@ -3846,9 +3851,23 @@ function readSharedRoleSettings(): SharedCharacterSettings {
   };
 }
 
+function validateRolePersona(): boolean {
+  try {
+    assertUserPersona({ ...readSharedRoleSettings(), relationship: roleForm.querySelector<HTMLTextAreaElement>("#role-relationship")!.value });
+    personaValidation.textContent = "";
+    personaValidation.hidden = true;
+    return true;
+  } catch (error) {
+    personaValidation.textContent = (error as Error).message;
+    personaValidation.hidden = false;
+    return false;
+  }
+}
+
 personaSyncButton.addEventListener("click", async () => {
   if (roleSettingsBusy) return;
   const shared = readSharedRoleSettings();
+  if (!validateRolePersona()) { personaStatus.textContent = personaValidation.textContent; return; }
   try { assertUserPersona(shared); } catch (error) { personaStatus.textContent = (error as Error).message; return; }
   if (!window.confirm(`将当前填写的共用设定保存到全部 ${characters.length} 位角色？\n\n包括：称呼、人设与偏好、世界书、自定义提示词、线下和约会补充设定、XP 与关系、场外要求、文法要求，以及剧场协议开关。\n\n空白内容也会覆盖已有设置；各角色的关系状态和相处方式、记忆、备注、生日、音色及接口不变。之后仍可分别修改。`)) return;
   roleSettingsBusy = true;
@@ -3867,8 +3886,12 @@ personaSyncButton.addEventListener("click", async () => {
     document.querySelector<HTMLButtonElement>("#role-save")!.disabled = false;
   }
 });
-for (const id of ["role-user-name", "role-preferences", "role-custom-prompt", "role-world-book", "role-life-prompt", "role-date-prompt", ...datePreferenceFields.map(field => field.id), "role-life-theatre-enabled", "role-date-theatre-enabled"]) {
-  roleForm.querySelector(`#${id}`)!.addEventListener("input", () => { if (!roleSettingsBusy) personaStatus.textContent = "当前修改尚未保存；保存角色资料仅影响这位角色，同步按钮会保存全部共用设定到所有角色。"; });
+for (const id of ["role-user-name", "role-preferences", "role-relationship", "role-custom-prompt", "role-world-book", "role-life-prompt", "role-date-prompt", ...datePreferenceFields.map(field => field.id), "role-life-theatre-enabled", "role-date-theatre-enabled"]) {
+  roleForm.querySelector(`#${id}`)!.addEventListener("input", () => {
+    if (roleSettingsBusy) return;
+    validateRolePersona();
+    personaStatus.textContent = personaValidation.hidden ? "当前修改尚未保存；保存角色资料仅影响这位角色，同步按钮会保存全部共用设定到所有角色。" : personaValidation.textContent;
+  });
 }
 
 document.querySelector("#role-form")!.addEventListener("submit", async (event) => {
@@ -3877,7 +3900,7 @@ document.querySelector("#role-form")!.addEventListener("submit", async (event) =
   if (roleSettingsBusy) return;
   const editorId = roleEditorId;
   const settings: CharacterSettings = { ...readSharedRoleSettings(), relationship: document.querySelector<HTMLTextAreaElement>("#role-relationship")!.value.trim(), updatedAt: Date.now(), relationshipMode: document.querySelector<HTMLSelectElement>("#role-relationship-mode")!.value === "romance" ? "romance" : document.querySelector<HTMLSelectElement>("#role-relationship-mode")!.value === "friendship" ? "friendship" : undefined };
-  try { assertUserPersona(settings); } catch (error) { document.querySelector("#role-save-status")!.textContent = (error as Error).message; return; }
+  if (!validateRolePersona()) { document.querySelector("#role-save-status")!.textContent = personaValidation.textContent; return; }
   const enabled = document.querySelector<HTMLInputElement>("#contact-api-enabled")!.checked;
   const baseUrl = document.querySelector<HTMLInputElement>("#contact-api-url")!.value.trim(), model = document.querySelector<HTMLInputElement>("#contact-api-model")!.value.trim();
   const apiKey = document.querySelector<HTMLInputElement>("#contact-api-key")!.value.trim();
@@ -4922,4 +4945,4 @@ void load().then(async () => {
   proactiveTimer = window.setInterval(() => { void maybeProactive(); }, 60 * 1000);
   window.setInterval(() => { void runSocialAutomation(); }, 60 * 1000);
 });
-if ("serviceWorker" in navigator) void navigator.serviceWorker.register("./sw.js");
+if ("serviceWorker" in navigator) void navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" }).catch(() => undefined);
